@@ -6,7 +6,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration
-API_KEY = os.getenv("TMDB_API_KEY")
+# Use Streamlit secrets with fallback to environment variables
+API_KEY = st.secrets.get("TMDB_API_KEY") or os.getenv("TMDB_API_KEY")
+
+if not API_KEY:
+    st.error("TMDB API Key not found. Please check your Streamlit secrets or .env file.")
+    st.stop()
+
 BASE_URL = "https://api.themoviedb.org/3"
 IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500"
 BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/original"
