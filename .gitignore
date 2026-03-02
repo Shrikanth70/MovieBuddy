@@ -1,0 +1,30 @@
+# API Keys and Environment Variables
+.env
+
+# Large Data Files (Exceeding GitHub 100MB limit or unnecessary)
+movies.pkl
+tmdb_5000_credits.csv
+tmdb_5000_movies.csv
+tmdb_movies.csv
+
+# Python byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE settings
+.vscode/
+.idea/
+
+# Notebooks
+.ipynb_checkpoints/
