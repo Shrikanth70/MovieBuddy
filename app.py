@@ -2,6 +2,7 @@ import streamlit as st
 import tmdb_service as tmdb
 import components as ui
 import time
+import recommendation as rec_engine
 
 # Set page config
 # Set page config
@@ -36,8 +37,21 @@ def render_detail_view(movie_id):
     with st.spinner("Loading movie details..."):
         movie = tmdb.get_movie_details(movie_id)
         trailers = tmdb.get_movie_videos(movie_id)
-        # Fix: Fetch its own recommendations dynamically
-        recommendations = tmdb.get_movie_recommendations(movie_id, limit=8)
+        
+        # Enhanced Recommendation Logic: Local ML -> TMDB Fallback
+        local_rec_ids = rec_engine.recommend_by_id(movie_id)
+        recommendations = []
+        
+        if local_rec_ids:
+            # If we have local recommendations, fetch their TMDB details for posters/titles
+            for r_id in local_rec_ids:
+                r_details = tmdb.get_movie_details(r_id)
+                if r_details:
+                    recommendations.append(r_details)
+        
+        # Fallback to TMDB recommendations if local ones are empty or failed
+        if not recommendations:
+            recommendations = tmdb.get_movie_recommendations(movie_id, limit=8)
     
     if not movie:
         st.error("Could not load movie details.")

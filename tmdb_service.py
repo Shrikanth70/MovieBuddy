@@ -72,11 +72,17 @@ def get_movie_videos(movie_id):
     return []
 
 def get_movie_recommendations(movie_id, limit=10):
-    """Fetch movie recommendations based on a movie ID."""
+    """Fetch movie recommendations based on a movie ID. Falls back to similar movies if empty."""
+    # 1. Try recommendations endpoint
     data = fetch_from_tmdb(f"movie/{movie_id}/recommendations")
-    if data and data.get("results"):
-        return data["results"][:limit]
-    return []
+    recs = data.get("results", []) if data else []
+    
+    # 2. If empty, try similar movies endpoint
+    if not recs:
+        data_similar = fetch_from_tmdb(f"movie/{movie_id}/similar")
+        recs = data_similar.get("results", []) if data_similar else []
+        
+    return recs[:limit]
 
 def search_movies(query):
     """Search movies by title."""
