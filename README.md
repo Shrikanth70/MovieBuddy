@@ -1,6 +1,8 @@
 # MovieBuddy
 **MovieBuddy** is a dynamic movie discovery web app built with Streamlit and powered by the TMDB API, delivering real-time trending films and personalized recommendations. Explore detailed movie insights, ratings, and related titles through a sleek, cinematic interface designed for effortless browsing. 🎬✨
 
+https://moviebuddy-12.streamlit.app/
+
 **MovieBuddy** is a dynamic movie discovery web application built using **Streamlit** and powered by the **TMDB (The Movie Database) API**.
 It allows users to explore trending movies, view detailed information, and receive intelligent movie recommendations — all in a sleek, cinematic dark-themed interface.
 
