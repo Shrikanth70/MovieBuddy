@@ -183,10 +183,14 @@ def main():
                 st.session_state.selected_movie_id = current_slide.get("id")
                 st.rerun()
 
-    # Recommendations Section (Top Rated)
+    # Recommendations Section (Randomized Top Rated for variety on every reload)
     st.markdown('<h2 style="margin-top: 40px;">Featured <span class="gold-text">Movies</span></h2>', unsafe_allow_html=True)
-    top_rated = tmdb.get_top_rated_movies(limit=10)
-    render_movie_grid(top_rated, key_prefix="home")
+    all_top_rated = tmdb.get_top_rated_movies(limit=40)
+    if all_top_rated:
+        random_featured = random.sample(all_top_rated, min(len(all_top_rated), 10))
+        render_movie_grid(random_featured, key_prefix="home")
+    else:
+        st.info("No featured movies available.")
 
     # Footer
     st.markdown("""
