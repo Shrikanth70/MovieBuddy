@@ -99,6 +99,15 @@ def search_movies(query):
         return data["results"]
     return []
 
+def get_watch_providers(movie_id):
+    """Fetch watch providers (OTT) for a movie."""
+    data = fetch_from_tmdb(f"movie/{movie_id}/watch/providers")
+    if data and data.get("results"):
+        results = data.get("results", {})
+        # Prioritize IN, then US, then any available
+        return results.get("IN") or results.get("US") or next(iter(results.values()), None)
+    return None
+
 def get_image_url(path, size="w500"):
     """Format full image URL. Returns local placeholder if path is missing."""
     if not path:

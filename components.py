@@ -186,6 +186,106 @@ def inject_custom_css():
         box-shadow: 0 0 10px var(--gold-glow) !important;
     }
 
+    /* FIX: Robust Button Styling for Production */
+    div.stButton > button {
+        background: var(--gold) !important;
+        color: #000000 !important;
+        border: none !important;
+        padding: 0.6rem 1.5rem !important;
+        border-radius: 10px !important;
+        font-weight: 700 !important;
+        font-size: 14px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+        transition: all 0.3s ease !important;
+        width: 100% !important;
+        box-shadow: 0 4px 15px rgba(230, 179, 90, 0.2) !important;
+    }
+
+    div.stButton > button:hover {
+        background: #FFFFFF !important;
+        color: #000000 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3) !important;
+    }
+
+    div.stButton > button:active {
+        transform: translateY(0) !important;
+    }
+
+    /* OTT Section Styling */
+    .ott-container {
+        margin-top: 20px;
+        padding: 20px;
+        background: rgba(255,255,255,0.03);
+        border-radius: var(--radius-md);
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .ott-title {
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 15px;
+        color: var(--gold);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .provider-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .provider-logo {
+        width: 45px;
+        height: 45px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: transform 0.2s;
+    }
+
+    .provider-logo:hover {
+        transform: scale(1.1);
+        border-color: var(--gold);
+    }
+
+    /* MOBILE RESPONSIVENESS */
+    @media (max-width: 768px) {
+        .hero {
+            height: 400px !important;
+            padding: 30px !important;
+        }
+        .hero-title {
+            font-size: 32px !important;
+        }
+        .logo-text {
+            font-size: 30px !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .hero {
+            height: 350px !important;
+            padding: 20px !important;
+        }
+        .hero-title {
+            font-size: 24px !important;
+        }
+        .hero-content p {
+            font-size: 13px !important;
+            -webkit-line-clamp: 4 !important;
+        }
+        /* Mobile Grid Adjustment */
+        [data-testid="column"] {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+            margin-bottom: 10px !important;
+        }
+    }
+
     .gold-text { color: var(--gold); }
     </style>
     """, unsafe_allow_html=True)
