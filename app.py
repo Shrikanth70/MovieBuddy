@@ -106,6 +106,8 @@ def main():
         st.session_state.selected_movie_id = None
         if "last_search" in st.session_state:
             del st.session_state["last_search"]
+        if "featured_movies" in st.session_state:
+            del st.session_state["featured_movies"]
         st.query_params.clear()
         st.rerun()
 
@@ -151,6 +153,16 @@ def main():
         render_detail_view(st.session_state.selected_movie_id)
         return
 
+    # Initialize or Refresh Randomized Featured Movies (Home Page Only)
+    if "featured_movies" not in st.session_state:
+        st.session_state.featured_movies = []
+    
+    # We only refresh if it's empty to ensure button clicks work on the current set
+    if not st.session_state.featured_movies:
+        all_top_rated = tmdb.get_top_rated_movies(limit=40)
+        if all_top_rated:
+            st.session_state.featured_movies = random.sample(all_top_rated, min(len(all_top_rated), 10))
+
     # Home Page - Featured Movie (Daily Rotation)
     trending_all = tmdb.get_trending_weekly(limit=20)
     # Filter valid movies (must have backdrop and overview)
@@ -183,12 +195,10 @@ def main():
                 st.session_state.selected_movie_id = current_slide.get("id")
                 st.rerun()
 
-    # Recommendations Section (Randomized Top Rated for variety on every reload)
+    # Recommendations Section (Randomized Top Rated for variety)
     st.markdown('<h2 style="margin-top: 40px;">Featured <span class="gold-text">Movies</span></h2>', unsafe_allow_html=True)
-    all_top_rated = tmdb.get_top_rated_movies(limit=40)
-    if all_top_rated:
-        random_featured = random.sample(all_top_rated, min(len(all_top_rated), 10))
-        render_movie_grid(random_featured, key_prefix="home")
+    if st.session_state.featured_movies:
+        render_movie_grid(st.session_state.featured_movies, key_prefix="home")
     else:
         st.info("No featured movies available.")
 
