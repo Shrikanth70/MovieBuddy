@@ -379,3 +379,36 @@ def render_detail_hero(movie, backdrop_url):
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+def render_watch_providers(providers):
+    """Render streaming availability logos."""
+    if not providers:
+        st.markdown('<div class="ott-container"><div class="ott-title">Streaming Info</div><div style="color: var(--text-muted);">Not available in your region.</div></div>', unsafe_allow_html=True)
+        return
+
+    # Categories: flatrate (Stream), buy, rent
+    categories = [
+        ("Stream", providers.get("flatrate", [])),
+        ("Rent", providers.get("rent", [])),
+        ("Buy", providers.get("buy", []))
+    ]
+
+    st.markdown('<div class="ott-container">', unsafe_allow_html=True)
+    st.markdown('<div class="ott-title">Where to Watch</div>', unsafe_allow_html=True)
+    
+    found_any = False
+    for label, items in categories:
+        if items:
+            found_any = True
+            st.markdown(f'<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">{label}</div>', unsafe_allow_html=True)
+            st.markdown('<div class="provider-grid">', unsafe_allow_html=True)
+            for item in items:
+                logo_url = f"https://image.tmdb.org/t/p/original{item.get('logo_path')}"
+                name = item.get("provider_name")
+                st.markdown(f'<img src="{logo_url}" title="{name}" class="provider-logo">', unsafe_allow_html=True)
+            st.markdown('</div><div style="height: 15px;"></div>', unsafe_allow_html=True)
+    
+    if not found_any:
+        st.markdown('<div style="color: var(--text-muted);">Streaming info not available.</div>', unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
