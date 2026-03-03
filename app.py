@@ -3,6 +3,8 @@ import tmdb_service as tmdb
 import components as ui
 import time
 import recommendation as rec_engine
+import datetime
+import random
 
 # Set page config
 # Set page config
@@ -63,6 +65,10 @@ def render_detail_view(movie_id):
     # Detail Hero
     backdrop_url = tmdb.get_image_url(movie.get("backdrop_path"), size="original")
     ui.render_detail_hero(movie, backdrop_url)
+
+    # OTT Providers Section
+    providers = tmdb.get_watch_providers(movie_id)
+    ui.render_watch_providers(providers)
 
     # Action Buttons
     col1, _ = st.columns([1, 4])
@@ -145,12 +151,19 @@ def main():
         render_detail_view(st.session_state.selected_movie_id)
         return
 
-    # Home Page - Trending Slideshow
-    trending = tmdb.get_trending_weekly(limit=5)
-    if trending:
-        # Auto-rotate logic (simplified for Streamlit)
-        # Every rerun increases the index, or use a manual button
-        current_slide = trending[st.session_state.slide_index]
+    # Home Page - Featured Movie (Daily Rotation)
+    trending_all = tmdb.get_trending_weekly(limit=20)
+    # Filter valid movies (must have backdrop and overview)
+    valid_trending = [m for m in trending_all if m.get("backdrop_path") and m.get("overview")]
+    
+    if valid_trending:
+        # Option A: Daily rotation (deterministic based on date)
+        today_seed = int(datetime.date.today().strftime("%Y%m%d"))
+        featured_index = today_seed % len(valid_trending)
+        
+        # Calculate current slide index based on user navigation + daily rotation
+        current_slide_index = (st.session_state.slide_index + featured_index) % len(valid_trending)
+        current_slide = valid_trending[current_slide_index]
         
         backdrop_url = tmdb.get_image_url(current_slide.get("backdrop_path"), size="original")
         ui.render_slideshow(current_slide, backdrop_url)
@@ -159,11 +172,11 @@ def main():
         ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1, 1, 8])
         with ctrl_col1:
             if st.button("❮ Prev"):
-                st.session_state.slide_index = (st.session_state.slide_index - 1) % len(trending)
+                st.session_state.slide_index = (st.session_state.slide_index - 1) % len(valid_trending)
                 st.rerun()
         with ctrl_col2:
             if st.button("Next ❯"):
-                st.session_state.slide_index = (st.session_state.slide_index + 1) % len(trending)
+                st.session_state.slide_index = (st.session_state.slide_index + 1) % len(valid_trending)
                 st.rerun()
         with ctrl_col3:
             if st.button("▶ WATCH NOW", key=f"hero_watch_{current_slide.get('id')}"):
