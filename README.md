@@ -8,15 +8,16 @@ It allows users to explore trending movies, view detailed information, and recei
 
 ## 🚀 Live Features
 
-* 🔥 Weekly Trending Movies Slideshow
+* 🔥 Daily Featured Movie Rotation
 * 🎥 Detailed Movie Information Page
 * ⭐ Ratings & Overview Display
+* 📺 OTT Streaming Availability (Watch Providers)
 * 🎯 Dynamic Movie Recommendations
 * 🔄 Real-Time Data via TMDB API
 * 🖤 Modern Cinematic UI (Dark + Gold Theme)
 * ⚡ Fast Performance with Caching
 * 🏠 Clickable Logo Navigation to Home
-* 📱 Wide Layout Responsive Design
+* 📱 Premium Mobile Responsive Layout
 
 ---
 
