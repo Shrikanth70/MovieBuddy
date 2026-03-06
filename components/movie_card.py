@@ -12,12 +12,14 @@ def render_movie_card(movie, key_prefix="card"):
     if st.button("Details", key=f"{key_prefix}_{movie.get('id')}", use_container_width=True):
         state.navigate_to("details", movie.get("id"))
 
-def render_movie_grid(movies, key_prefix="grid", cols_per_row=5):
-    """Grid display for collections of movies."""
+def render_movie_grid(movies, key_prefix="grid", cols_per_row=4):
+    """Refined grid display (Senior Designer Audit - 4 Columns)."""
     if not movies: return
     for i in range(0, len(movies), cols_per_row):
         cols = st.columns(cols_per_row)
         for j, col in enumerate(cols):
             if i + j < len(movies):
                 with col:
-                    render_movie_card(movies[i + j], f"{key_prefix}_{i+j}")
+                    # Using a container for consistent spacing/alignment
+                    with st.container(border=True):
+                        render_movie_card(movies[i + j], f"{key_prefix}_{i+j}")

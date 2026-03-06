@@ -9,10 +9,10 @@ def render_search_page():
         st.info("Start typing in the search bar above to find movies.")
         return
         
-    st.markdown(f"## Results for :orange['{query}']")
+    st.markdown(f"## Results for: {query}")
     results = tmdb.search_movies(query)
     
     if results:
-        mc.render_movie_grid(results, key_prefix="search_res")
+        mc.render_movie_grid(results, key_prefix="search_res", cols_per_row=4)
     else:
         st.warning(f"No movies found for '{query}'.")

@@ -66,5 +66,21 @@ def inject_global_css():
         ::-webkit-scrollbar-track { background: #0D0F12; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #444; }
+
+        /* Grid & Container Polish */
+        [data-testid="stVerticalBlockBorderWrapper"] {
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+            padding: 10px !important;
+            border-radius: 15px !important;
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        /* Section Headers */
+        h3 {
+            margin-top: 2rem !important;
+            margin-bottom: 1rem !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.5px;
+        }
         </style>
     """, unsafe_allow_html=True)
