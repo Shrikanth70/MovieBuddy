@@ -5,15 +5,20 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Configuration
 # Use Streamlit secrets with fallback to environment variables
 try:
     # st.secrets.get can raise StreamlitSecretNotFoundError if no secrets file exists at all
     API_KEY = st.secrets.get("TMDB_API_KEY")
+    OMDB_API_KEY = st.secrets.get("OMDB_API_KEY")
 except Exception:
     API_KEY = None
+    OMDB_API_KEY = None
 
 if not API_KEY:
     API_KEY = os.getenv("TMDB_API_KEY")
+if not OMDB_API_KEY:
+    OMDB_API_KEY = os.getenv("OMDB_API_KEY")
 
 if not API_KEY:
     st.error("TMDB API Key not found. Please check your config.")
@@ -113,6 +118,32 @@ def get_watch_providers(movie_id):
         # Prioritize IN, then US, then any available
         return results.get("IN") or results.get("US") or next(iter(results.values()), None)
     return None
+
+def get_imdb_id(movie_id):
+    """Fetch IMDb ID from TMDB external IDs endpoint."""
+    data = fetch_from_tmdb(f"movie/{movie_id}/external_ids")
+    if data:
+        return data.get("imdb_id")
+    return None
+
+def get_omdb_data(imdb_id):
+    """Fetch enriched metadata from OMDb API using IMDb ID."""
+    if not imdb_id or not OMDB_API_KEY:
+        return None
+    
+    url = "http://www.omdbapi.com/"
+    params = {
+        "i": imdb_id,
+        "apikey": OMDB_API_KEY
+    }
+    
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(f"Error fetching from OMDb: {e}")
+        return None
 
 def get_image_url(path, size="w500"):
     """Format full image URL. Returns local placeholder if path is missing."""

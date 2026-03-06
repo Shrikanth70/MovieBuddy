@@ -36,10 +36,26 @@ def render_movie_grid(movies, key_prefix="grid"):
                     st.rerun()
 
 def render_detail_view(movie_id):
-    ui.reset_scroll()
+    # Fix: Inline JS Scroll Reset (Streamlit Cloud Compatible)
+    st.markdown(
+        """
+        <script>
+            window.parent.window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
+    
     with st.spinner("Loading movie details..."):
         movie = tmdb.get_movie_details(movie_id)
         trailers = tmdb.get_movie_videos(movie_id)
+        
+        # OMDb Enriched Data
+        imdb_id = tmdb.get_imdb_id(movie_id)
+        omdb_data = tmdb.get_omdb_data(imdb_id) if imdb_id else None
         
         # Enhanced Recommendation Logic: Local ML -> TMDB Fallback
         local_rec_ids = rec_engine.recommend_by_id(movie_id)
@@ -66,6 +82,28 @@ def render_detail_view(movie_id):
     # Detail Hero
     backdrop_url = tmdb.get_image_url(movie.get("backdrop_path"), size="original")
     ui.render_detail_hero(movie, backdrop_url)
+
+    # OMDb Metadata Section (Ratings, Awards, Box Office)
+    if omdb_data and omdb_data.get("Response") == "True":
+        st.markdown('<h3 style="margin-top: 20px; color: var(--gold);">Movie <span class="gold-text">Insight</span></h3>', unsafe_allow_html=True)
+        
+        meta_col1, meta_col2, meta_col3 = st.columns(3)
+        with meta_col1:
+            st.markdown(f"**⭐ IMDb Rating:** {omdb_data.get('imdbRating', 'N/A')}")
+            if "Ratings" in omdb_data:
+                for r in omdb_data["Ratings"]:
+                    if r["Source"] == "Rotten Tomatoes":
+                        st.markdown(f"**🍅 Rotten Tomatoes:** {r['Value']}")
+                    elif r["Source"] == "Metacritic":
+                        st.markdown(f"**📊 Metacritic:** {r['Value']}")
+        
+        with meta_col2:
+            st.markdown(f"**🏆 Awards:** {omdb_data.get('Awards', 'N/A')}")
+        
+        with meta_col3:
+            st.markdown(f"**💰 Box Office:** {omdb_data.get('BoxOffice', 'N/A')}")
+        
+        st.markdown("---")
 
     # OTT Providers Section
     providers = tmdb.get_watch_providers(movie_id)

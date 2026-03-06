@@ -290,19 +290,6 @@ def inject_custom_css():
     </style>
     """, unsafe_allow_html=True)
 
-def reset_scroll():
-    """Inject JavaScript to reset scroll position to the top of the page."""
-    # window.parent.window.scrollTo(0, 0) is needed because Streamlit apps 
-    # are often embedded in an iframe. This ensures the top-level container scrolls.
-    st.markdown("""
-        <script>
-            window.parent.window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-        </script>
-    """, unsafe_allow_html=True)
-
 def render_slideshow(movie, image_url):
     """Render a single slide for the trending movies slideshow."""
     if not movie:
