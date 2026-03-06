@@ -20,7 +20,7 @@ BASE_URL = "https://api.themoviedb.org/3"
 IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500"
 BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/original"
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=43200)
 def fetch_from_tmdb(endpoint, params=None):
     """Generic fetcher for TMDB with caching."""
     if not API_KEY:
@@ -54,9 +54,70 @@ def get_top_rated_movies(limit=12):
         return data["results"][:limit]
     return []
 
+import datetime
+
+def get_now_playing_movies(limit=10):
+    """Fetch newly released movies for the hero section."""
+    data = fetch_from_tmdb("movie/now_playing", params={"page": 1})
+    if data and data.get("results"):
+        return data["results"][:limit]
+    return []
+
 def get_trending_weekly(limit=5):
     """Fetch weekly trending movies for the sidebar."""
     data = fetch_from_tmdb("trending/movie/week")
+    if data and data.get("results"):
+        return data["results"][:limit]
+    return []
+
+def get_trending_by_language(language_code, limit=20):
+    """Fetch trending OTT movies by original language."""
+    # Date ~90 days ago
+    ninety_days_ago = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime("%Y-%m-%d")
+    
+    # Use discover endpoint to filter by language, sort by popularity
+    # We require OTT by filtering on monetization type "flatrate" in the discover endpoint usually.
+    # TMDB supports `with_watch_monetization_types` natively.
+    params = {
+        "with_original_language": language_code,
+        "sort_by": "popularity.desc",
+        "primary_release_date.gte": ninety_days_ago,
+        "vote_count.gte": 100,
+        "with_watch_monetization_types": "flatrate",
+        "watch_region": "IN"
+    }
+    data = fetch_from_tmdb("discover/movie", params=params)
+    if data and data.get("results"):
+        return data["results"][:limit]
+    return []
+    
+def get_recent_ott_movies(limit=20):
+    """Fetch newly arrived OTT movies generically."""
+    sixty_days_ago = (datetime.datetime.now() - datetime.timedelta(days=60)).strftime("%Y-%m-%d")
+    params = {
+        "sort_by": "popularity.desc",
+        "primary_release_date.gte": sixty_days_ago,
+        "vote_count.gte": 20,
+        "with_watch_monetization_types": "flatrate",
+        "watch_region": "IN"
+    }
+    data = fetch_from_tmdb("discover/movie", params=params)
+    if data and data.get("results"):
+        return data["results"][:limit]
+    return []
+
+def get_other_languages_ott(limit=20):
+    """Fetch OTT movies excluding English, Hindi, and Telugu."""
+    ninety_days_ago = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime("%Y-%m-%d")
+    params = {
+        "sort_by": "popularity.desc",
+        "primary_release_date.gte": ninety_days_ago,
+        "vote_count.gte": 50,
+        "without_original_language": "en,hi,te",
+        "with_watch_monetization_types": "flatrate",
+        "watch_region": "IN"
+    }
+    data = fetch_from_tmdb("discover/movie", params=params)
     if data and data.get("results"):
         return data["results"][:limit]
     return []
@@ -78,6 +139,13 @@ def get_movie_videos(movie_id):
     if data and data.get("results"):
         trailers = [v for v in data["results"] if v.get("site") == "YouTube" and v.get("type") == "Trailer"]
         return trailers
+    return []
+
+def get_movie_reviews(movie_id, limit=3):
+    """Fetch user reviews for a movie from TMDB."""
+    data = fetch_from_tmdb(f"movie/{movie_id}/reviews")
+    if data and data.get("results"):
+        return data["results"][:limit]
     return []
 
 def get_movie_recommendations(movie_id, limit=10):

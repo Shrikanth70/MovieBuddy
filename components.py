@@ -47,7 +47,12 @@ def inject_custom_css():
 
     /* Hide Streamlit default elements */
     #MainMenu, footer, header {visibility: hidden;}
-    .block-container {padding-top: 1rem; padding-bottom: 2rem;}
+    .block-container {
+        padding-top: 1rem; 
+        padding-bottom: 2rem;
+        max-width: 1400px !important;
+        margin: auto !important;
+    }
 
     /* Background Texture */
     .bg-texture {
@@ -59,6 +64,43 @@ def inject_custom_css():
         background-image: radial-gradient(circle at 50% 50%, rgba(230, 179, 90, 0.05) 0%, transparent 100%);
         pointer-events: none;
         z-index: 0;
+    }
+
+    /* Horizontal Movie Row */
+    .movie-row-container {
+        display: flex;
+        overflow-x: auto;
+        gap: 15px;
+        padding-bottom: 20px;
+        scrollbar-width: none; /* Firefox */
+    }
+    .movie-row-container::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
+    }
+    
+    .movie-card-wrapper {
+        flex: 0 0 calc(20% - 12px); /* 5 cards per row */
+        min-width: 180px;
+    }
+
+    .see-more-card {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255,255,255,0.05);
+        border-radius: var(--radius-md);
+        height: 100%;
+        min-height: 270px;
+        color: var(--gold);
+        font-weight: 700;
+        text-decoration: none;
+        transition: var(--transition);
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+    .see-more-card:hover {
+        background: rgba(230, 179, 90, 0.1);
+        border-color: var(--gold);
+        transform: translateY(-5px);
     }
 
     /* Hero Section */
@@ -250,6 +292,41 @@ def inject_custom_css():
         transform: scale(1.1);
         border-color: var(--gold);
     }
+    
+    /* Movie Details 2-Column */
+    .details-container {
+        display: flex;
+        gap: 40px;
+        margin-top: 20px;
+        margin-bottom: 40px;
+        background: rgba(14,17,23,0.8);
+        border-radius: var(--radius-lg);
+        padding: 40px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    
+    .details-poster {
+        flex: 0 0 300px;
+    }
+    
+    .details-poster img {
+        width: 100%;
+        border-radius: var(--radius-md);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+    
+    .details-info {
+        flex: 1;
+    }
+    
+    .review-card {
+        background: rgba(255,255,255,0.05);
+        border-radius: var(--radius-md);
+        padding: 15px;
+        margin-bottom: 12px;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
 
     /* MOBILE RESPONSIVENESS */
     @media (max-width: 768px) {
@@ -277,12 +354,23 @@ def inject_custom_css():
             font-size: 13px !important;
             -webkit-line-clamp: 4 !important;
         }
-        /* Mobile Grid Adjustment */
-        [data-testid="column"] {
-            width: 100% !important;
-            flex: 1 1 100% !important;
-            min-width: 100% !important;
-            margin-bottom: 10px !important;
+        /* Mobile Grid Adjustment for Horizontal Scrolling */
+        [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(6)) {
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+            padding-bottom: 15px !important;
+            gap: 12px !important;
+        }
+        [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(6))::-webkit-scrollbar {
+            display: none !important;
+        }
+        [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(6)) > [data-testid="column"] {
+            flex: 0 0 140px !important; /* Fixed width on mobile */
+            width: 140px !important;
+            min-width: 140px !important;
+            margin-bottom: 0 !important;
         }
     }
 
@@ -304,48 +392,69 @@ def render_slideshow(movie, image_url):
         b64_img = get_base64_image("placeholder.png")
         image_url = f"data:image/png;base64,{b64_img}"
     
-    st.markdown(f"""
-    <div class="hero" style="background-image: url('{image_url}');">
-        <div class="hero-content">
-            <div class="hero-title">{title}</div>
-            <div style="color: var(--gold); font-size: 18px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
-                <span>{year}</span>
-                <span style="color: rgba(255,255,255,0.4);">|</span>
-                <span class="rating">⭐ {rating}</span>
-                <span style="color: rgba(255,255,255,0.4);">|</span>
-                <span style="color: var(--text-muted); font-weight: 400;">Trending This Week</span>
-            </div>
-            <p style="color: rgba(255,255,255,0.9); font-size: 14px; line-height: 1.6; margin-bottom: 24px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-width: 650px;">
-                {overview}
-            </p>
+    st.markdown(f"""<div class="hero" style="background-image: url('{image_url}');">
+    <div class="hero-content">
+        <div class="hero-title">{title}</div>
+        <div style="color: var(--gold); font-size: 18px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+            <span>{year}</span>
+            <span style="color: rgba(255,255,255,0.4);">|</span>
+            <span class="rating">⭐ {rating}</span>
+            <span style="color: rgba(255,255,255,0.4);">|</span>
+            <span style="color: var(--text-muted); font-weight: 400;">Trending This Week</span>
         </div>
+        <p style="color: rgba(255,255,255,0.9); font-size: 14px; line-height: 1.6; margin-bottom: 24px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-width: 650px;">
+            {overview}
+        </p>
     </div>
-    """, unsafe_allow_html=True)
+</div>""", unsafe_allow_html=True)
 
 def render_movie_card(movie, poster_url):
     """Helper for internal markdown movie card markup."""
     title = movie.get("title")
     year = movie.get("release_date", "N/A")[:4]
     rating = round(movie.get("vote_average", 0), 1)
+    lang = movie.get("original_language", "xx").upper()
     
     if poster_url == "placeholder.png":
         b64_img = get_base64_image("placeholder.png")
         poster_url = f"data:image/png;base64,{b64_img}"
         
-    return f"""
-    <div class="movie-card">
-        <img src="{poster_url}" class="card-img">
-        <div class="card-info">
-            <div class="card-title">{title}</div>
-            <div class="card-meta">
-                <span>{year}</span>
-                <span class="rating">★ {rating}</span>
-            </div>
+    return f"""<div class="movie-card" style="height: 100%; display: flex; flex-direction: column;">
+    <div style="position: relative;">
+        <img src="{poster_url}" class="card-img" style="aspect-ratio: 2/3; object-fit: cover; width: 100%;">
+        <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: var(--gold); padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid rgba(230,179,90,0.3); backdrop-filter: blur(4px);">
+            {lang}
         </div>
     </div>
-    """
+    <div class="card-info" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+        <div class="card-title">{title}</div>
+        <div class="card-meta">
+            <span>{year}</span>
+            <span class="rating">★ {rating}</span>
+        </div>
+    </div>
+</div>"""
 
-def render_detail_hero(movie, backdrop_url):
+def render_see_more_card():
+    """Render a clickable card styled EXACTLY like a movie card for perfect grid alignment."""
+    return f"""<div class="movie-card see-more-card" style="height: 100%; display: flex; flex-direction: column;">
+    <div style="position: relative; width: 100%; padding-top: 150%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.02);">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%;">
+            <div style="font-size: 32px; margin-bottom: 8px;">➕</div>
+            <div style="color: var(--text-main); font-weight: 700; letter-spacing: 1px; font-size: 14px;">SEE MORE</div>
+            <div style="color: var(--gold); font-size: 20px; margin-top: 8px;">➔</div>
+        </div>
+    </div>
+    <div class="card-info" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; visibility: hidden;">
+        <div class="card-title">Placeholder Title</div>
+        <div class="card-meta">
+            <span>2099</span>
+            <span class="rating">★ 0.0</span>
+        </div>
+    </div>
+</div>"""
+
+def render_detail_hero(movie, backdrop_url, poster_url):
     """Render the high-impact movie detail hero."""
     title = movie.get("title")
     year = movie.get("release_date", "N/A")[:4]
@@ -358,27 +467,13 @@ def render_detail_hero(movie, backdrop_url):
         b64_img = get_base64_image("placeholder.png")
         backdrop_url = f"data:image/png;base64,{b64_img}"
         
-    st.markdown(f"""
-    <div class="hero" style="height: 550px; background-image: url('{backdrop_url}'); background-position: top center;">
-        <div class="hero-content" style="max-width: 900px;">
-            <div class="hero-title" style="font-size: 56px;">{title}</div>
-            <div style="color: var(--gold); font-weight: 700; margin-bottom: 12px; font-size: 18px; display: flex; align-items: center; gap: 15px;">
-                <span>{year}</span>
-                <span style="color: rgba(255,255,255,0.4);">|</span>
-                <span>{runtime}</span>
-                <span style="color: rgba(255,255,255,0.4);">|</span>
-                <span class="rating">⭐ {rating}</span>
-            </div>
-            <div style="color: var(--text-muted); font-size: 15px; margin-bottom: 30px;">
-                {genres}
-            </div>
-            <h3 style="color: var(--text-main); font-size: 22px; margin-bottom: 15px;">Synopsis</h3>
-            <p style="color: rgba(255,255,255,0.9); font-size: 16px; line-height: 1.8; margin-bottom: 32px;">
-                {overview}
-            </p>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    if poster_url == "placeholder.png":
+        b64_img = get_base64_image("placeholder.png")
+        poster_url = f"data:image/png;base64,{b64_img}"
+        
+    # We will use st.columns in app.py for the layout to allow Streamlit buttons,
+    # but we can provide the backdrop container here.
+    st.markdown(f"""<div style="position: absolute; top: 0; left: 0; right: 0; height: 60vh; background-image: url('{backdrop_url}'); background-size: cover; background-position: center 20%; opacity: 0.2; z-index: -1; mask-image: linear-gradient(to bottom, black 50%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);"></div>""", unsafe_allow_html=True)
 
 def render_watch_providers(providers):
     """Render streaming availability logos."""
@@ -415,36 +510,32 @@ def render_watch_providers(providers):
     st.markdown(html_output, unsafe_allow_html=True)
 
 def render_omdb_reviews(omdb_data):
-    """Render the OMDB Reviews & Ratings block."""
-    st.markdown('<div class="ott-container">', unsafe_allow_html=True)
-    st.markdown('<div class="ott-title">Reviews & Ratings</div>', unsafe_allow_html=True)
+    """Render the OMDB aggregate ratings block."""
+    st.markdown('<h4 style="color: var(--gold); margin-top: 10px; margin-bottom: 20px; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">⭐ Ratings</h4>', unsafe_allow_html=True)
 
-    if not omdb_data:
-        st.markdown('<div style="color: var(--text-muted);">Reviews not available</div></div>', unsafe_allow_html=True)
-        return
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        imdb = omdb_data.get("imdbRating", "N/A")
-        st.markdown(f'<div style="text-align: center;"><div style="font-size: 24px; color: var(--gold); font-weight: bold;">⭐ {imdb}</div><div style="font-size: 13px; color: var(--text-muted);">IMDb Rating</div></div>', unsafe_allow_html=True)
+    if omdb_data:
+        col1, col2, col3, col4 = st.columns(4)
         
-    with col2:
-        meta = omdb_data.get("Metascore", "N/A")
-        st.markdown(f'<div style="text-align: center;"><div style="font-size: 24px; color: #66CC33; font-weight: bold;">🎬 {meta}</div><div style="font-size: 13px; color: var(--text-muted);">Metascore</div></div>', unsafe_allow_html=True)
-        
-    with col3:
-        votes = omdb_data.get("imdbVotes", "N/A")
-        st.markdown(f'<div style="text-align: center;"><div style="font-size: 24px; color: #4DA6FF; font-weight: bold;">👥 {votes}</div><div style="font-size: 13px; color: var(--text-muted);">IMDb Votes</div></div>', unsafe_allow_html=True)
-        
-    with col4:
-        rotten = "N/A"
-        ratings = omdb_data.get("Ratings", [])
-        for r in ratings:
-            if r.get("Source") == "Rotten Tomatoes":
-                rotten = r.get("Value")
-                break
-        st.markdown(f'<div style="text-align: center;"><div style="font-size: 24px; color: #FA320A; font-weight: bold;">🍅 {rotten}</div><div style="font-size: 13px; color: var(--text-muted);">Rotten Tomatoes</div></div>', unsafe_allow_html=True)
-        
-    st.markdown('</div>', unsafe_allow_html=True)
+        with col1:
+            imdb = omdb_data.get("imdbRating", "N/A")
+            st.markdown(f'<div style="text-align: center; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);"><div style="font-size: 24px; color: var(--gold); font-weight: bold;">⭐ {imdb}</div><div style="font-size: 13px; color: var(--text-muted);">IMDb Rating</div></div>', unsafe_allow_html=True)
+            
+        with col2:
+            meta = omdb_data.get("Metascore", "N/A")
+            st.markdown(f'<div style="text-align: center; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);"><div style="font-size: 24px; color: #66CC33; font-weight: bold;">🎬 {meta}</div><div style="font-size: 13px; color: var(--text-muted);">Metascore</div></div>', unsafe_allow_html=True)
+            
+        with col3:
+            votes = omdb_data.get("imdbVotes", "N/A")
+            st.markdown(f'<div style="text-align: center; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);"><div style="font-size: 24px; color: #4DA6FF; font-weight: bold;">👥 {votes}</div><div style="font-size: 13px; color: var(--text-muted);">IMDb Votes</div></div>', unsafe_allow_html=True)
+            
+        with col4:
+            rotten = "N/A"
+            ratings = omdb_data.get("Ratings", [])
+            for r in ratings:
+                if r.get("Source") == "Rotten Tomatoes":
+                    rotten = r.get("Value")
+                    break
+            st.markdown(f'<div style="text-align: center; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);"><div style="font-size: 24px; color: #FA320A; font-weight: bold;">🍅 {rotten}</div><div style="font-size: 13px; color: var(--text-muted);">Rotten Tomatoes</div></div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div style="color: var(--text-muted);">Aggregate ratings not available</div>', unsafe_allow_html=True)
 
