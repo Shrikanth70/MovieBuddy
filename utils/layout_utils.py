@@ -4,7 +4,7 @@ def set_global_page_config():
     st.set_page_config(
         page_title="MovieBuddy",
         layout="wide",
-        initial_sidebar_state="expanded"
+        initial_sidebar_state="collapsed"
     )
 
 def inject_global_css():
@@ -20,16 +20,10 @@ def inject_global_css():
         [data-testid="stSidebarNav"] {display: none;}
         header {visibility: hidden;}
         
-        /* Premium Background & Sidebar */
+        /* Premium Background */
         .stApp {
             background: #0D0F12;
             color: #E0E0E0;
-        }
-        
-        [data-testid="stSidebar"] {
-            background-color: rgba(18, 22, 27, 0.8) !important;
-            backdrop-filter: blur(20px);
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         /* Card Hover Effects */
