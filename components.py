@@ -39,46 +39,75 @@ def inject_custom_css():
 
     /* Hide Streamlit default elements */
     #MainMenu, footer, header {visibility: hidden;}
+    [data-testid="stSidebarNav"] {display: none;}
+    
     .stApp {
         background-color: var(--bg-dark);
         color: var(--text-main);
     }
-    .block-container {padding-top: 0rem; padding-bottom: 2rem; max-width: 100% !important;}
+    .block-container {
+        padding-top: 1rem; 
+        padding-bottom: 2rem; 
+        padding-left: 2rem;
+        padding-right: 2rem;
+        max-width: 100% !important;
+    }
 
-    /* Sidebar Navigation */
+    /* Fixed Sidebar Navigation */
     [data-testid="stSidebar"] {
         background-color: var(--bg-sidebar) !important;
         border-right: 1px solid rgba(255,255,255,0.05);
+        position: fixed !important;
+        z-index: 1001;
+        width: 260px !important;
     }
     
-    .sidebar-logo {
-        padding: 2rem 1.5rem;
-        font-size: 24px;
-        font-weight: 800;
-        color: var(--gold);
-        letter-spacing: 1px;
+    /* Content Offset for Fixed Sidebar */
+    @media (min-width: 992px) {
+        .block-container {
+            margin-left: 260px !important;
+            max-width: calc(100% - 260px) !important;
+            padding-left: 3rem !important;
+            padding-right: 3rem !important;
+        }
     }
 
-    .nav-item {
-        padding: 12px 20px;
-        margin: 4px 15px;
-        border-radius: 12px;
-        cursor: pointer;
-        transition: var(--transition);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        color: var(--text-muted);
-        text-decoration: none;
-    }
-
-    .nav-item:hover, .nav-item.active {
-        background: rgba(255, 176, 0, 0.1);
-        color: var(--gold);
+    @media (max-width: 991px) {
+        [data-testid="stSidebar"] {
+            position: relative !important;
+            width: 100% !important;
+        }
+        .block-container {
+            margin-left: 0 !important;
+            max-width: 100% !important;
+        }
     }
     
-    .nav-item.active {
-        border-left: 3px solid var(--gold);
+    /* Navigation items styling */
+    div[data-testid="stVerticalBlock"] > div.stButton > button {
+        background: transparent !important;
+        color: var(--text-muted) !important;
+        border: none !important;
+        text-align: left !important;
+        justify-content: flex-start !important;
+        padding: 12px 20px !important;
+        width: 100% !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        border-radius: 12px !important;
+        margin-bottom: 4px !important;
+    }
+
+    div[data-testid="stVerticalBlock"] > div.stButton > button:hover {
+        background: rgba(255, 176, 0, 0.1) !important;
+        color: var(--gold) !important;
+        transform: translateX(5px);
+    }
+
+    .stButton > button[kind="primary"] {
+        background: var(--gold) !important;
+        color: black !important;
+        border: none !important;
     }
 
     /* Auth Page Styling */
@@ -136,23 +165,23 @@ def inject_custom_css():
     .hero-banner {
         position: relative;
         width: 100%;
-        height: 600px;
+        height: 500px;
         background-size: cover;
         background-position: center 20%;
-        border-radius: 30px;
+        border-radius: 20px;
         overflow: hidden;
         margin-bottom: 40px;
         display: flex;
         align-items: center;
-        padding: 0 60px;
-        border: 1px solid rgba(255,255,255,0.05);
+        padding-left: 50px;
+        border: 1px solid rgba(255,255,255,0.1);
     }
 
     .hero-banner::after {
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(90deg, rgba(7,9,13,0.9) 0%, rgba(7,9,13,0.5) 50%, rgba(7,9,13,0) 100%);
+        background: linear-gradient(90deg, rgba(7,9,13,0.95) 0%, rgba(7,9,13,0.7) 40%, rgba(7,9,13,0) 100%);
     }
 
     .hero-content {
@@ -227,12 +256,13 @@ def inject_custom_css():
         width: 100%;
         aspect-ratio: 2/3;
         object-fit: cover;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
     }
 
-    .card-info { padding: 15px; }
-    .card-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; color: var(--text-main); }
-    .card-meta { font-size: 13px; color: var(--text-muted); display: flex; justify-content: space-between; }
-    .rating { color: var(--gold); font-weight: 700; }
+    .card-info { padding: 12px; }
+    .card-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-meta { font-size: 12px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; }
+    .rating { color: var(--gold); font-weight: 700; display: flex; align-items: center; gap: 4px; }
 
     /* Button Styling */
     div.stButton > button {
@@ -366,44 +396,10 @@ def render_movie_card(movie, poster_url):
     """
     
 def render_carousel(movies, tmdb_helper, key_prefix="carousel"):
-    """Render a horizontal movie carousel using HTML/CSS."""
-    if not movies:
-        return
-        
-    html = '<div class="carousel-container">'
-    for movie in movies:
-        poster_url = tmdb_helper.get_image_url(movie.get("poster_path"))
-        title = movie.get("title")
-        rating = round(movie.get("vote_average", 0), 1)
-        
-        # We need a way to make these clickable. In Streamlit, we'll use a button below for now
-        # OR we can inject a script to handle clicks if we have a way to pass the ID back.
-        # For pure Streamlit, a horizontal scroll with st.columns is hard, so we'll use this for visual
-        # and standard columns for interaction, OR just use st.columns with a scrollbar container.
-        html += f'''
-        <div class="carousel-item">
-            <div class="movie-card">
-                <img src="{poster_url}" class="card-img">
-                <div class="card-info">
-                    <div class="card-title">{title}</div>
-                    <div class="card-meta">
-                        <span class="rating">★ {rating}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        '''
-    html += '</div>'
-    st.markdown(html, unsafe_allow_html=True)
-    
-    # Interaction: Individual detail buttons below for the carousel items
-    # (Since JS callbacks to Streamlit are complex without components)
-    cols = st.columns(len(movies))
-    for idx, movie in enumerate(movies):
-        with cols[idx]:
-            if st.button("Details", key=f"{key_prefix}_{movie.get('id')}_{idx}", use_container_width=True):
-                st.session_state.selected_movie_id = movie.get("id")
-                st.rerun()
+    """
+    REMOVED: Use render_movie_grid in app.py for native-only rendering.
+    """
+    pass
 
 def render_detail_hero(movie, backdrop_url):
     """Render the high-impact movie detail hero."""
@@ -419,21 +415,20 @@ def render_detail_hero(movie, backdrop_url):
         backdrop_url = f"data:image/png;base64,{b64_img}"
         
     st.markdown(f"""
-    <div class="hero" style="height: 550px; background-image: url('{backdrop_url}'); background-position: top center;">
-        <div class="hero-content" style="max-width: 900px;">
-            <div class="hero-title" style="font-size: 56px;">{title}</div>
-            <div style="color: var(--gold); font-weight: 700; margin-bottom: 12px; font-size: 18px; display: flex; align-items: center; gap: 15px;">
+    <div class="hero" style="height: 500px; background-image: url('{backdrop_url}'); background-position: center 20%;">
+        <div class="hero-content" style="max-width: 800px;">
+            <div class="hero-title" style="font-size: 52px; margin-bottom: 10px;">{title}</div>
+            <div style="color: var(--gold); font-weight: 700; margin-bottom: 15px; font-size: 16px; display: flex; align-items: center; gap: 15px;">
                 <span>{year}</span>
-                <span style="color: rgba(255,255,255,0.4);">|</span>
+                <span style="color: rgba(255,255,255,0.4);">•</span>
                 <span>{runtime}</span>
-                <span style="color: rgba(255,255,255,0.4);">|</span>
+                <span style="color: rgba(255,255,255,0.4);">•</span>
                 <span class="rating">⭐ {rating}</span>
             </div>
-            <div style="color: var(--text-muted); font-size: 15px; margin-bottom: 30px;">
+            <div style="color: var(--text-muted); font-size: 14px; margin-bottom: 25px; letter-spacing: 0.5px;">
                 {genres}
             </div>
-            <h3 style="color: var(--text-main); font-size: 22px; margin-bottom: 15px;">Synopsis</h3>
-            <p style="color: rgba(255,255,255,0.9); font-size: 16px; line-height: 1.8; margin-bottom: 32px;">
+            <p style="color: rgba(255,255,255,0.9); font-size: 16px; line-height: 1.7; margin-bottom: 0;">
                 {overview}
             </p>
         </div>

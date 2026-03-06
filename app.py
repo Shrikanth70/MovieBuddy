@@ -194,22 +194,32 @@ def render_detail_view(movie_id):
     render_movie_grid(recommendations, key_prefix="detail_rec", cols_per_row=4)
 
 def render_home_page():
-    # Hero Banner (Trending Daily #1)
+    # Featured Hero Banner (Top trending)
     daily_trending = tmdb.get_trending_daily(limit=20)
     if daily_trending:
         hero_movie = daily_trending[0]
         backdrop_url = tmdb.get_image_url(hero_movie.get("backdrop_path"), size="original")
         ui.render_hero_banner(hero_movie, backdrop_url)
-        if st.button("▶ WATCH NOW", key="hero_watch", use_container_width=True):
-            st.session_state.selected_movie_id = hero_movie.get("id")
-            st.rerun()
+        c1, c2 = st.columns([1, 4])
+        with c1:
+            if st.button("▶ WATCH NOW", key="hero_watch", type="primary", use_container_width=True):
+                st.session_state.selected_movie_id = hero_movie.get("id")
+                st.rerun()
+        with c2:
+            # Fetch trailer for hero movie
+            hero_trailers = tmdb.get_movie_videos(hero_movie.get("id"))
+            if hero_trailers:
+                # Use a transparent button look for trailer if possible, or just standard
+                if st.button("📺 WATCH TRAILER", key="hero_trailer", use_container_width=False):
+                    st.session_state.selected_movie_id = hero_movie.get("id")
+                    st.rerun()
 
-    # Trending Now Carousel (Part 5)
-    st.markdown('<h2 style="margin: 40px 0 20px 0;">Trending <span class="gold-text">Now</span></h2>', unsafe_allow_html=True)
-    ui.render_carousel(daily_trending[1:11], tmdb, key_prefix="home_trending")
+    # Trending Now Section (Native Grid)
+    st.markdown('<h2 style="margin: 30px 0 10px 0;">Trending <span class="gold-text">Now</span></h2>', unsafe_allow_html=True)
+    render_movie_grid(daily_trending[1:11], key_prefix="home_trending", cols_per_row=5)
 
     # Top Rated Section
-    st.markdown('<h2 style="margin: 40px 0 20px 0;">Top <span class="gold-text">Rated</span></h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="margin: 40px 0 10px 0;">Top <span class="gold-text">Rated</span></h2>', unsafe_allow_html=True)
     top_rated = tmdb.get_top_rated_movies(limit=10)
     render_movie_grid(top_rated, key_prefix="home_top", cols_per_row=5)
 
@@ -236,6 +246,14 @@ def main():
     if st.session_state.selected_movie_id:
         render_detail_view(st.session_state.selected_movie_id)
         return
+
+    # Unified Search Bar (Issue 9)
+    search_query = st.text_input("🔍 Search for movies, actors, or genres...", key="global_search_input")
+    if search_query:
+        st.markdown(f'<h2>Search Results for: <span class="gold-text">"{search_query}"</span></h2>', unsafe_allow_html=True)
+        search_results = tmdb.search_movies(search_query)
+        render_movie_grid(search_results, key_prefix="search_results_grid")
+        st.markdown("---")
 
     # Routing
     page = st.session_state.active_page
