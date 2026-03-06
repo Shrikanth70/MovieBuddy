@@ -69,6 +69,13 @@ def get_trending_weekly(limit=5):
         return data["results"][:limit]
     return []
 
+def get_trending_daily(limit=10):
+    """Fetch daily trending movies for the home carousel."""
+    data = fetch_from_tmdb("trending/movie/day")
+    if data and data.get("results"):
+        return data["results"][:limit]
+    return []
+
 def get_popular_actors(limit=8):
     """Fetch popular people for the actors section."""
     data = fetch_from_tmdb("person/popular")

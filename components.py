@@ -20,11 +20,13 @@ def inject_custom_css():
     st.markdown("""
     <style>
     :root {
-        --bg-dark: #0E1117;
-        --bg-card: #1C212B;
-        --gold: #E6B35A;
-        --gold-white: linear-gradient(135deg, #E6B35A 0%, #FFFFFF 50%, #E6B35A 100%);
-        --gold-glow: rgba(230, 179, 90, 0.4);
+        --bg-dark: #07090D;
+        --bg-card: #12161F;
+        --bg-sidebar: #0D1117;
+        --gold: #FFB000;
+        --green: #2ECC71;
+        --gold-glow: rgba(255, 176, 0, 0.3);
+        --green-glow: rgba(46, 204, 113, 0.3);
         --text-main: #FFFFFF;
         --text-muted: #8B949E;
         --radius-lg: 20px;
@@ -35,67 +37,173 @@ def inject_custom_css():
 
     * { font-family: var(--font-main); }
 
-    /* Hide Sidebar toggle and sidebar itself */
-    [data-testid="stSidebarNav"] {display: none;}
-    [data-testid="collapsedControl"] {display: none;}
-    section[data-testid="stSidebar"] {display: none;}
-    
+    /* Hide Streamlit default elements */
+    #MainMenu, footer, header {visibility: hidden;}
     .stApp {
         background-color: var(--bg-dark);
         color: var(--text-main);
     }
+    .block-container {padding-top: 0rem; padding-bottom: 2rem; max-width: 100% !important;}
 
-    /* Hide Streamlit default elements */
-    #MainMenu, footer, header {visibility: hidden;}
-    .block-container {padding-top: 1rem; padding-bottom: 2rem;}
+    /* Sidebar Navigation */
+    [data-testid="stSidebar"] {
+        background-color: var(--bg-sidebar) !important;
+        border-right: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .sidebar-logo {
+        padding: 2rem 1.5rem;
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--gold);
+        letter-spacing: 1px;
+    }
 
-    /* Background Texture */
-    .bg-texture {
+    .nav-item {
+        padding: 12px 20px;
+        margin: 4px 15px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--text-muted);
+        text-decoration: none;
+    }
+
+    .nav-item:hover, .nav-item.active {
+        background: rgba(255, 176, 0, 0.1);
+        color: var(--gold);
+    }
+    
+    .nav-item.active {
+        border-left: 3px solid var(--gold);
+    }
+
+    /* Auth Page Styling */
+    .auth-container {
+        display: flex;
+        height: 100vh;
+        width: 100vw;
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
-        background-image: radial-gradient(circle at 50% 50%, rgba(230, 179, 90, 0.05) 0%, transparent 100%);
-        pointer-events: none;
-        z-index: 0;
+        z-index: 1000;
+        background: var(--bg-dark);
     }
 
-    /* Hero Section */
+    .auth-left {
+        flex: 1;
+        background: linear-gradient(135deg, #1A4D2E 0%, #07090D 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 4rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .auth-left::after {
+        content: '🎬';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        font-size: 300px;
+        opacity: 0.05;
+        transform: rotate(15deg);
+    }
+
+    .auth-right {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .auth-card {
+        width: 100%;
+        max-width: 450px;
+        background: var(--bg-card);
+        padding: 3rem;
+        border-radius: 24px;
+        border: 1px solid rgba(255,255,255,0.05);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    /* Hero Banner Redesign */
+    .hero-banner {
+        position: relative;
+        width: 100%;
+        height: 600px;
+        background-size: cover;
+        background-position: center 20%;
+        border-radius: 30px;
+        overflow: hidden;
+        margin-bottom: 40px;
+        display: flex;
+        align-items: center;
+        padding: 0 60px;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .hero-banner::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, rgba(7,9,13,0.9) 0%, rgba(7,9,13,0.5) 50%, rgba(7,9,13,0) 100%);
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 600px;
+    }
+
+    .hero-title {
+        font-size: 64px;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 20px;
+    }
+
+    /* Detail Hero */
     .hero {
         position: relative;
-        height: 500px;
-        border-radius: var(--radius-lg);
+        height: 550px;
+        border-radius: 30px;
         background-size: cover;
         background-position: center 20%;
         margin-bottom: 40px;
         overflow: hidden;
         display: flex;
-        align-items: flex-end;
-        padding: 60px;
-        border: 1px solid rgba(255,255,255,0.08);
-        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        align-items: center;
+        padding: 0 60px;
+        border: 1px solid rgba(255,255,255,0.05);
     }
 
     .hero::after {
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(0deg, rgba(14,17,23,1) 0%, rgba(14,17,23,0.6) 50%, rgba(14,17,23,0) 100%);
+        background: linear-gradient(0deg, rgba(7,9,13,1) 0%, rgba(7,9,13,0.7) 50%, rgba(7,9,13,0.3) 100%);
     }
 
-    .hero-content {
-        position: relative;
-        z-index: 1;
-        max-width: 800px;
+    /* Movie Carousel Styling */
+    .carousel-container {
+        display: flex;
+        overflow-x: auto;
+        gap: 20px;
+        padding: 10px 5px 30px 5px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
     }
+    .carousel-container::-webkit-scrollbar { display: none; }
 
-    .hero-title {
-        font-size: 48px;
-        font-weight: 800;
-        line-height: 1.1;
-        margin-bottom: 16px;
-        text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    .carousel-item {
+        min-width: 200px;
+        flex: 0 0 auto;
     }
 
     /* Movie Cards */
@@ -104,16 +212,15 @@ def inject_custom_css():
         border-radius: var(--radius-md);
         overflow: hidden;
         transition: var(--transition);
-        cursor: pointer;
         border: 1px solid rgba(255,255,255,0.05);
-        margin-bottom: 15px;
+        min-width: 220px;
         position: relative;
     }
 
     .movie-card:hover {
-        transform: translateY(-10px);
+        transform: translateY(-8px) scale(1.02);
         border-color: var(--gold);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 20px var(--gold-glow);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 20px var(--gold-glow);
     }
 
     .card-img {
@@ -122,200 +229,117 @@ def inject_custom_css():
         object-fit: cover;
     }
 
-    .card-info {
-        padding: 15px;
-    }
+    .card-info { padding: 15px; }
+    .card-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; color: var(--text-main); }
+    .card-meta { font-size: 13px; color: var(--text-muted); display: flex; justify-content: space-between; }
+    .rating { color: var(--gold); font-weight: 700; }
 
-    .card-title {
-        font-size: 15px;
-        font-weight: 700;
-        margin-bottom: 6px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        color: var(--text-main);
-    }
-
-    .card-meta {
-        font-size: 13px;
-        color: var(--text-muted);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .rating { color: var(--gold); font-weight: 700; display: flex; align-items: center; gap: 4px; }
-
-    /* Premium Text Logo Styling */
-    .logo-link {
-        text-decoration: none !important;
-        display: inline-block;
-        transition: var(--transition);
-        margin-bottom: 5px;
-        font-family: 'Poppins', sans-serif;
-    }
-
-    .logo-text {
-        font-size: 40px;
-        font-weight: 800;
-        letter-spacing: 1.02px;
-        line-height: 1;
-        cursor: pointer;
-        display: block;
-    }
-
-    .logo-movie { color: #FFAA00; }
-    .logo-buddy { color: #FFFFFF; }
-
-    .logo-link:hover {
-        transform: scale(1.03);
-        filter: drop-shadow(0 0 15px rgba(230, 179, 90, 0.3));
-    }
-
-    /* Search Input Styling */
-    .stTextInput input {
-        background-color: rgba(255,255,255,0.05) !important;
-        border: 1px solid rgba(255,255,255,0.1) !important;
-        border-radius: 12px !important;
-        color: white !important;
-        padding: 12px 20px !important;
-    }
-    
-    .stTextInput input:focus {
-        border-color: var(--gold) !important;
-        box-shadow: 0 0 10px var(--gold-glow) !important;
-    }
-
-    /* FIX: Robust Button Styling for Production */
+    /* Button Styling */
     div.stButton > button {
         background: var(--gold) !important;
-        color: #000000 !important;
+        color: #000 !important;
         border: none !important;
-        padding: 0.6rem 1.5rem !important;
-        border-radius: 10px !important;
+        border-radius: 12px !important;
         font-weight: 700 !important;
-        font-size: 14px !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
         transition: all 0.3s ease !important;
-        width: 100% !important;
-        box-shadow: 0 4px 15px rgba(230, 179, 90, 0.2) !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     div.stButton > button:hover {
         background: #FFFFFF !important;
-        color: #000000 !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(255,255,255,0.2);
     }
-
-    div.stButton > button:active {
-        transform: translateY(0) !important;
-    }
-
-    /* OTT Section Styling */
-    .ott-container {
-        margin-top: 20px;
-        padding: 20px;
-        background: rgba(255,255,255,0.03);
-        border-radius: var(--radius-md);
-        border: 1px solid rgba(255,255,255,0.05);
-    }
-
-    .ott-title {
-        font-size: 16px;
-        font-weight: 700;
-        margin-bottom: 15px;
-        color: var(--gold);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .provider-grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-
-    .provider-logo {
-        width: 45px;
-        height: 45px;
-        border-radius: 10px;
-        object-fit: cover;
-        border: 1px solid rgba(255,255,255,0.1);
-        transition: transform 0.2s;
-    }
-
-    .provider-logo:hover {
-        transform: scale(1.1);
-        border-color: var(--gold);
-    }
-
-    /* MOBILE RESPONSIVENESS */
-    @media (max-width: 768px) {
-        .hero {
-            height: 400px !important;
-            padding: 30px !important;
-        }
-        .hero-title {
-            font-size: 32px !important;
-        }
-        .logo-text {
-            font-size: 30px !important;
-        }
-    }
-
-    @media (max-width: 480px) {
-        .hero {
-            height: 350px !important;
-            padding: 20px !important;
-        }
-        .hero-title {
-            font-size: 24px !important;
-        }
-        .hero-content p {
-            font-size: 13px !important;
-            -webkit-line-clamp: 4 !important;
-        }
-        /* Mobile Grid Adjustment */
-        [data-testid="column"] {
-            width: 100% !important;
-            flex: 1 1 100% !important;
-            min-width: 100% !important;
-            margin-bottom: 10px !important;
-        }
-    }
-
-    .gold-text { color: var(--gold); }
     </style>
     """, unsafe_allow_html=True)
 
-def render_slideshow(movie, image_url):
-    """Render a single slide for the trending movies slideshow."""
-    if not movie:
-        return
-    
+def render_auth_page():
+    """Render the premium modern authentication page."""
+    st.markdown("""
+        <div class="auth-container">
+            <div class="auth-left">
+                <div style="font-size: 32px; font-weight: 800; color: #FFB000; margin-bottom: 2rem;">MovieBuddy</div>
+                <h1 style="font-size: 48px; color: white; margin-bottom: 2rem;">Get started with us</h1>
+                <p style="color: rgba(255,255,255,0.7); margin-bottom: 3rem;">Complete these easy steps to register your account and start your cinematic journey.</p>
+                
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div style="display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 16px;">
+                        <span style="font-size: 24px;">✎</span>
+                        <div>
+                            <div style="font-weight: 700;">Sign up your account</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.5);">Create your profile in seconds</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 16px;">
+                        <span style="font-size: 24px;">🔍</span>
+                        <div>
+                            <div style="font-weight: 700;">Discover movies</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.5);">Get AI-powered recommendations</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 16px;">
+                        <span style="font-size: 24px;">🎬</span>
+                        <div>
+                            <div style="font-weight: 700;">Start watching</div>
+                            <div style="font-size: 13px; color: rgba(255,255,255,0.5);">Personalize your experience</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="auth-right">
+                <div id="auth-form-container"></div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+def render_sidebar(user_email=None):
+    """Render the vertical sidebar navigation."""
+    with st.sidebar:
+        st.markdown('<div class="sidebar-logo">MovieBuddy</div>', unsafe_allow_html=True)
+        
+        # Navigation items
+        pages = {
+            "Home": "🏠",
+            "Trending": "🔥",
+            "Genres": "🎭",
+            "Watchlist": "❤️",
+            "Recently Viewed": "🕒"
+        }
+        
+        selection = None
+        for page, icon in pages.items():
+            if st.button(f"{icon} {page}", key=f"nav_{page}", use_container_width=True):
+                st.session_state.active_page = page
+                st.rerun()
+        
+        st.markdown('<div style="margin-top: auto; padding: 20px;">', unsafe_allow_html=True)
+        if user_email:
+            st.markdown(f'<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">👤 {user_email}</div>', unsafe_allow_html=True)
+        if st.button("Logout", key="logout_btn", use_container_width=True):
+            st.session_state.user = None
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+def render_hero_banner(movie, backdrop_url):
+    """Render the redesigned widescreen hero banner."""
     title = movie.get("title")
     year = movie.get("release_date", "N/A")[:4]
     overview = movie.get("overview", "")
     rating = movie.get("vote_average", "N/A")
     
-    if image_url == "placeholder.png":
-        b64_img = get_base64_image("placeholder.png")
-        image_url = f"data:image/png;base64,{b64_img}"
-    
     st.markdown(f"""
-    <div class="hero" style="background-image: url('{image_url}');">
+    <div class="hero-banner" style="background-image: url('{backdrop_url}');">
         <div class="hero-content">
-            <div class="hero-title">{title}</div>
-            <div style="color: var(--gold); font-size: 18px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+            <h1 class="hero-title">{title}</h1>
+            <div style="color: var(--gold); font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
                 <span>{year}</span>
-                <span style="color: rgba(255,255,255,0.4);">|</span>
-                <span class="rating">⭐ {rating}</span>
-                <span style="color: rgba(255,255,255,0.4);">|</span>
-                <span style="color: var(--text-muted); font-weight: 400;">Trending This Week</span>
+                <span style="color: rgba(255,255,255,0.3);">|</span>
+                <span>⭐ {rating}</span>
+                <span style="color: rgba(255,255,255,0.3);">|</span>
+                <span style="color: var(--text-muted); font-weight: 400;">Featured Recommendation</span>
             </div>
-            <p style="color: rgba(255,255,255,0.9); font-size: 14px; line-height: 1.6; margin-bottom: 24px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-width: 650px;">
+            <p style="color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; margin-bottom: 30px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
                 {overview}
             </p>
         </div>
@@ -323,15 +347,11 @@ def render_slideshow(movie, image_url):
     """, unsafe_allow_html=True)
 
 def render_movie_card(movie, poster_url):
-    """Helper for internal markdown movie card markup."""
+    """Update movie card for the new grid/carousel look."""
     title = movie.get("title")
     year = movie.get("release_date", "N/A")[:4]
     rating = round(movie.get("vote_average", 0), 1)
     
-    if poster_url == "placeholder.png":
-        b64_img = get_base64_image("placeholder.png")
-        poster_url = f"data:image/png;base64,{b64_img}"
-        
     return f"""
     <div class="movie-card">
         <img src="{poster_url}" class="card-img">
@@ -344,6 +364,46 @@ def render_movie_card(movie, poster_url):
         </div>
     </div>
     """
+    
+def render_carousel(movies, tmdb_helper, key_prefix="carousel"):
+    """Render a horizontal movie carousel using HTML/CSS."""
+    if not movies:
+        return
+        
+    html = '<div class="carousel-container">'
+    for movie in movies:
+        poster_url = tmdb_helper.get_image_url(movie.get("poster_path"))
+        title = movie.get("title")
+        rating = round(movie.get("vote_average", 0), 1)
+        
+        # We need a way to make these clickable. In Streamlit, we'll use a button below for now
+        # OR we can inject a script to handle clicks if we have a way to pass the ID back.
+        # For pure Streamlit, a horizontal scroll with st.columns is hard, so we'll use this for visual
+        # and standard columns for interaction, OR just use st.columns with a scrollbar container.
+        html += f'''
+        <div class="carousel-item">
+            <div class="movie-card">
+                <img src="{poster_url}" class="card-img">
+                <div class="card-info">
+                    <div class="card-title">{title}</div>
+                    <div class="card-meta">
+                        <span class="rating">★ {rating}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        '''
+    html += '</div>'
+    st.markdown(html, unsafe_allow_html=True)
+    
+    # Interaction: Individual detail buttons below for the carousel items
+    # (Since JS callbacks to Streamlit are complex without components)
+    cols = st.columns(len(movies))
+    for idx, movie in enumerate(movies):
+        with cols[idx]:
+            if st.button("Details", key=f"{key_prefix}_{movie.get('id')}_{idx}", use_container_width=True):
+                st.session_state.selected_movie_id = movie.get("id")
+                st.rerun()
 
 def render_detail_hero(movie, backdrop_url):
     """Render the high-impact movie detail hero."""
