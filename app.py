@@ -276,11 +276,17 @@ def main():
 
     # ------------ HOME PAGE ------------
     if "hero_slides" not in st.session_state or not st.session_state.hero_slides:
-        slides = tmdb.get_now_playing_movies(limit=10)
+        try:
+            slides = tmdb.get_now_playing_movies(limit=10)
+        except (AttributeError, Exception):
+            slides = []
         
         # Fallback to general trending if now_playing fails or is empty
         if not slides:
-            slides = tmdb.get_trending_weekly(limit=10)
+            try:
+                slides = tmdb.get_trending_weekly(limit=10)
+            except (AttributeError, Exception):
+                slides = []
             
         st.session_state.hero_slides = slides
 
