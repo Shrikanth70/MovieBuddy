@@ -1,5 +1,6 @@
 import streamlit as st
 import tmdb_service as tmdb
+import omdb_service as omdb
 import components as ui
 import time
 import recommendation as rec_engine
@@ -36,6 +37,11 @@ def render_movie_grid(movies, key_prefix="grid"):
                     st.rerun()
 
 def render_detail_view(movie_id):
+    # Auto-scroll to top when details page loads
+    st.components.v1.html(
+        "<script>window.parent.document.querySelector('.main').scrollTo(0, 0); window.parent.scrollTo(0, 0);</script>",
+        height=0
+    )
     with st.spinner("Loading movie details..."):
         movie = tmdb.get_movie_details(movie_id)
         trailers = tmdb.get_movie_videos(movie_id)
@@ -65,6 +71,10 @@ def render_detail_view(movie_id):
     # Detail Hero
     backdrop_url = tmdb.get_image_url(movie.get("backdrop_path"), size="original")
     ui.render_detail_hero(movie, backdrop_url)
+
+    # OMDb Reviews & Ratings
+    omdb_data = omdb.get_movie_reviews(movie.get("title"))
+    ui.render_omdb_reviews(omdb_data)
 
     # OTT Providers Section
     providers = tmdb.get_watch_providers(movie_id)

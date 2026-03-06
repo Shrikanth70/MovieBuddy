@@ -413,3 +413,38 @@ def render_watch_providers(providers):
     
     html_output += '</div>'
     st.markdown(html_output, unsafe_allow_html=True)
+
+def render_omdb_reviews(omdb_data):
+    """Render the OMDB Reviews & Ratings block."""
+    st.markdown('<div class="ott-container">', unsafe_allow_html=True)
+    st.markdown('<div class="ott-title">Reviews & Ratings</div>', unsafe_allow_html=True)
+
+    if not omdb_data:
+        st.markdown('<div style="color: var(--text-muted);">Reviews not available</div></div>', unsafe_allow_html=True)
+        return
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        imdb = omdb_data.get("imdbRating", "N/A")
+        st.markdown(f'<div style="text-align: center;"><div style="font-size: 24px; color: var(--gold); font-weight: bold;">⭐ {imdb}</div><div style="font-size: 13px; color: var(--text-muted);">IMDb Rating</div></div>', unsafe_allow_html=True)
+        
+    with col2:
+        meta = omdb_data.get("Metascore", "N/A")
+        st.markdown(f'<div style="text-align: center;"><div style="font-size: 24px; color: #66CC33; font-weight: bold;">🎬 {meta}</div><div style="font-size: 13px; color: var(--text-muted);">Metascore</div></div>', unsafe_allow_html=True)
+        
+    with col3:
+        votes = omdb_data.get("imdbVotes", "N/A")
+        st.markdown(f'<div style="text-align: center;"><div style="font-size: 24px; color: #4DA6FF; font-weight: bold;">👥 {votes}</div><div style="font-size: 13px; color: var(--text-muted);">IMDb Votes</div></div>', unsafe_allow_html=True)
+        
+    with col4:
+        rotten = "N/A"
+        ratings = omdb_data.get("Ratings", [])
+        for r in ratings:
+            if r.get("Source") == "Rotten Tomatoes":
+                rotten = r.get("Value")
+                break
+        st.markdown(f'<div style="text-align: center;"><div style="font-size: 24px; color: #FA320A; font-weight: bold;">🍅 {rotten}</div><div style="font-size: 13px; color: var(--text-muted);">Rotten Tomatoes</div></div>', unsafe_allow_html=True)
+        
+    st.markdown('</div>', unsafe_allow_html=True)
+

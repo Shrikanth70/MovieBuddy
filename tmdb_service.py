@@ -7,7 +7,10 @@ load_dotenv()
 
 # Configuration
 # Use Streamlit secrets with fallback to environment variables
-API_KEY = st.secrets.get("TMDB_API_KEY") or os.getenv("TMDB_API_KEY")
+try:
+    API_KEY = st.secrets["TMDB_API_KEY"]
+except Exception:
+    API_KEY = os.getenv("TMDB_API_KEY")
 
 if not API_KEY:
     st.error("TMDB API Key not found. Please check your Streamlit secrets or .env file.")
