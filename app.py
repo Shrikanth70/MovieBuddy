@@ -1,63 +1,46 @@
 import streamlit as st
-import layout
-import navigation
-import home
-import search
-import movies
-import auth as auth_ui
-import tmdb_service as tmdb
-import supabase_service as auth_service
+from layout import sidebar, navbar
+from pages import home, search, movie_details, watchlist, trending
+from auth import supabase_auth as auth_ui
+from utils import state_manager as state
+from utils import layout_utils
 
-# 1. Global Setup (Config & CSS only - no widgets)
-layout.set_global_page_config()
-layout.inject_global_css()
+# 1. Global Setup
+layout_utils.set_global_page_config()
+layout_utils.inject_global_css()
 
-# 2. Navigation State (ISSUE 2)
-navigation.init_navigation_state()
+# 2. State Initialization
+state.init_session_state()
+
+def render_current_page():
+    """Central page router (STEP 1)."""
+    page = st.session_state.get("page", "home")
+    
+    if page == "home":
+        home.render_home_page()
+    elif page == "search":
+        search.render_search_page()
+    elif page == "details":
+        movie_details.render_movie_details_page()
+    elif page == "watchlist":
+        watchlist.render_watchlist_page()
+    elif page == "trending":
+        trending.render_trending_page()
+    else:
+        st.error(f"Page '{page}' not found.")
 
 def main():
-    # PART 1 & 5 — STRICT AUTH GATE & SINGLE PAGE RENDERING
+    # 3. Auth Gate
     if not st.session_state.get("user"):
-        # Renders the auth page EXACTLY ONCE
-        auth_ui.render_auth_page()
-        return  # Stop execution here to prevent main app from rendering
-
-    # --- MAIN APPLICATION (Only reached if logged in) ---
-    
-    # 3. Sidebar (ISSUE 3 - Icons)
-    navigation.render_sidebar()
-
-    # 4. Search Handler (ISSUE 4)
-    query = navigation.handle_search_input()
-
-    # 5. Routing Engine (Strict Single Page Rendering)
-    
-    # Priority 1: Details View
-    if st.session_state.page == "details" and st.session_state.selected_movie_id:
-        movies.render_movie_details(st.session_state.selected_movie_id)
+        auth_ui.render_login_page()
         return
 
-    # Priority 2: Search View (Mutual exclusion for homepage)
-    if st.session_state.page == "search" and query:
-        search.render_search_results(query)
-        return
-
-    # Priority 3: Standard Pages
-    if st.session_state.page == "home":
-        home.render_home()
-    elif st.session_state.page == "watchlist":
-        st.markdown("# My :orange[Watchlist]")
-        items, err = auth_service.get_watchlist(st.session_state.user.id)
-        if items:
-            movies.render_movie_grid(items, key_prefix="watch")
-        else:
-            st.info("Empty watchlist.")
-    elif st.session_state.page == "trending":
-        st.markdown("# Trending :orange[Weekly]")
-        weekly = tmdb.get_trending_weekly(limit=20)
-        movies.render_movie_grid(weekly, key_prefix="trend")
-    else:
-        st.title(f"{st.session_state.page.title()} Coming Soon")
+    # 4. Central Layout Wrapper (Persistent Navigation)
+    sidebar.render_sidebar()
+    navbar.render_navbar()
+    
+    # Render the actual content inside the layout
+    render_current_page()
 
 if __name__ == "__main__":
     main()
