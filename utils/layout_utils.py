@@ -20,16 +20,25 @@ def inject_global_css():
         [data-testid="stSidebarNav"] {display: none;}
         header {visibility: hidden;}
         
-        /* Premium Background */
+        /* Remove Unwanted Whitespace */
+        .block-container {
+            padding-top: 2rem !important;
+            padding-bottom: 0rem !important;
+            padding-left: 5% !important;
+            padding-right: 5% !important;
+        }
         .stApp {
             background: #0D0F12;
             color: #E0E0E0;
         }
-
+        [data-testid="stHeader"] { height: 0; }
+        
         /* Card Hover Effects */
         div[data-testid="stImage"] img {
             border-radius: 12px;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            aspect-ratio: 2/3;
+            object-fit: cover;
         }
         div[data-testid="stImage"] img:hover {
             transform: translateY(-5px);
@@ -38,12 +47,13 @@ def inject_global_css():
 
         /* Button Styling */
         .stButton button {
-            border-radius: 10px;
+            border-radius: 8px;
             font-weight: 600;
             transition: all 0.2s ease;
-            background: rgba(255, 176, 0, 0.1);
+            background: rgba(255, 176, 0, 0.05);
             color: #FFB000;
-            border: 1px solid #FFB000;
+            border: 1px solid rgba(255, 176, 0, 0.4);
+            height: 42px;
         }
         .stButton button:hover {
             background: #FFB000;
@@ -53,7 +63,7 @@ def inject_global_css():
         
         /* Secondary elements */
         .gold-text { color: #FFB000; font-weight: 800; }
-        .stCaption { opacity: 0.6; font-size: 0.85rem; }
+        .stCaption { opacity: 0.6; font-size: 0.85rem; margin-bottom: 5px; }
         
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
@@ -64,62 +74,53 @@ def inject_global_css():
         /* Grid & Container Polish */
         [data-testid="stVerticalBlockBorderWrapper"] {
             border: 1px solid rgba(255, 255, 255, 0.05) !important;
-            padding: 10px !important;
-            border-radius: 15px !important;
+            padding: 12px !important;
+            border-radius: 16px !important;
             background: rgba(255, 255, 255, 0.02);
+            height: 100%;
         }
         
         /* Section Headers */
         h3 {
-            margin-top: 2rem !important;
-            margin-bottom: 1rem !important;
+            margin-top: 2.5rem !important;
+            margin-bottom: 1.5rem !important;
             font-weight: 800 !important;
             letter-spacing: -0.5px;
         }
 
-        /* Movie Card Title Alignment */
+        /* PERMANENT: Movie Card Title Alignment */
         .movie-title-container {
-            height: 45px;
+            height: 40px;
             overflow: hidden;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
-            margin-bottom: 5px;
+            text-overflow: ellipsis;
+            margin-bottom: 12px;
             font-weight: 600;
             font-size: 0.95rem;
-            line-height: 1.2;
+            line-height:1.2;
+            color: white;
         }
 
-        /* Top Navbar Styling */
+        /* Navbar & Logo Styling */
         .top-navbar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 70px;
-            background: rgba(13, 15, 18, 0.95);
-            backdrop-filter: blur(15px);
-            z-index: 999;
-            display: flex;
-            align-items: center;
             padding: 0 5%;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 2rem;
+        }
+        .logo-text {
+            color: #FFB000;
+            font-size: 1.8rem;
+            font-weight: 900;
+            text-decoration: none;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .logo-text:hover {
+            opacity: 0.8;
         }
 
-        /* Content Padding for Fixed Navbar */
-        .main-content {
-            margin-top: 80px;
-        }
-        /* Logo Button Styling */
-        div[data-testid="stHeader"] + div button[key="nav_logo"], 
-        button[key="nav_logo"] {
-            background: transparent !important;
-            border: none !important;
-            color: #FFB000 !important;
-            font-size: 1.5rem !important;
-            font-weight: 800 !important;
-            padding: 0 !important;
-            text-align: left !important;
-        }
+        /* Spacing Fix */
+        .stVerticalBlock { gap: 0rem !important; }
         </style>
     """, unsafe_allow_html=True)

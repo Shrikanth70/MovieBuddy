@@ -13,6 +13,6 @@ def render_search_page():
     results = tmdb.search_movies(query)
     
     if results:
-        mc.render_movie_grid(results, key_prefix="search_res", cols_per_row=4)
+        mc.render_movie_grid(results, key_prefix="search_res", cols_per_row=5)
     else:
         st.warning(f"No movies found for '{query}'.")

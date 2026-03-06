@@ -4,13 +4,12 @@ from utils import state_manager as state
 def render_navbar():
     """Senior Architect Horizontal Navbar (LOGO | Nav | Search | User)."""
     
-    # 1. Navbar Container with Columns
-    c1, c2, c3, c4, c5, c6, c7 = st.columns([1.5, 0.8, 0.8, 0.8, 0.5, 3, 1])
+    # Navbar columns (LOGO | Home | Trending | Watchlist | Spacer | Search | Logout)
+    c1, c2, c3, c4, c5, c6, c7 = st.columns([1.8, 0.7, 0.8, 0.8, 0.4, 3, 1])
     
     with c1:
-        # Styled Logo Button
-        if st.button("MovieBuddy", key="nav_logo", use_container_width=True, type="secondary"):
-            state.navigate_to("home")
+        # Styled Text Logo (Not a button)
+        st.markdown('<a href="/" target="_self" class="logo-text">MovieBuddy</a>', unsafe_allow_html=True)
     
     with c2:
         if st.button("Home", key="nav_home", use_container_width=True):
