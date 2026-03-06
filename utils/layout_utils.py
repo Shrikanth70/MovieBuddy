@@ -82,5 +82,50 @@ def inject_global_css():
             font-weight: 800 !important;
             letter-spacing: -0.5px;
         }
+
+        /* Movie Card Title Alignment */
+        .movie-title-container {
+            height: 45px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            line-height: 1.2;
+        }
+
+        /* Top Navbar Styling */
+        .top-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: rgba(13, 15, 18, 0.95);
+            backdrop-filter: blur(15px);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            padding: 0 5%;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Content Padding for Fixed Navbar */
+        .main-content {
+            margin-top: 80px;
+        }
+        /* Logo Button Styling */
+        div[data-testid="stHeader"] + div button[key="nav_logo"], 
+        button[key="nav_logo"] {
+            background: transparent !important;
+            border: none !important;
+            color: #FFB000 !important;
+            font-size: 1.5rem !important;
+            font-weight: 800 !important;
+            padding: 0 !important;
+            text-align: left !important;
+        }
         </style>
     """, unsafe_allow_html=True)

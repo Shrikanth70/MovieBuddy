@@ -35,11 +35,10 @@ def main():
         auth_ui.render_login_page()
         return
 
-    # 4. Central Layout Wrapper (Persistent Navigation)
-    sidebar.render_sidebar()
+    # 4. Top Horizontal Navbar (Persistent Header)
     navbar.render_navbar()
     
-    # Render the actual content inside the layout
+    # Main Content Area
     render_current_page()
 
 if __name__ == "__main__":

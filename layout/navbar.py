@@ -1,16 +1,40 @@
 import streamlit as st
+from utils import state_manager as state
 
 def render_navbar():
-    """Top navigation logic (Search Bar)."""
-    # Sync visual search bar with session state
-    query = st.text_input("🔍 Search for movies...", value=st.session_state.query, key="nav_search")
+    """Senior Architect Horizontal Navbar (LOGO | Nav | Search | User)."""
     
-    if query != st.session_state.query:
-        st.session_state.query = query
-        if query:
-            st.session_state.page = "search"
-        else:
-            st.session_state.page = "home"
-        st.rerun()
+    # 1. Navbar Container with Columns
+    c1, c2, c3, c4, c5, c6, c7 = st.columns([1.5, 0.8, 0.8, 0.8, 0.5, 3, 1])
     
-    return query
+    with c1:
+        # Styled Logo Button
+        if st.button("MovieBuddy", key="nav_logo", use_container_width=True, type="secondary"):
+            state.navigate_to("home")
+    
+    with c2:
+        if st.button("Home", key="nav_home", use_container_width=True):
+            state.navigate_to("home")
+    with c3:
+        if st.button("Trending", key="nav_trend", use_container_width=True):
+            state.navigate_to("trending")
+    with c4:
+        if st.button("Watchlist", key="nav_watch", use_container_width=True):
+            state.navigate_to("watchlist")
+    
+    with c5:
+        st.write("") # Spacer column
+    
+    with c6:
+        query = st.text_input("Search", placeholder="Search movies...", value=st.session_state.query, key="nav_search", label_visibility="collapsed")
+        if query != st.session_state.query:
+            st.session_state.query = query
+            st.session_state.page = "search" if query else "home"
+            st.rerun()
+
+    with c7:
+        if st.button("Logout", key="nav_logout", use_container_width=True):
+            st.session_state.user = None
+            st.rerun()
+    
+    st.markdown("---")
