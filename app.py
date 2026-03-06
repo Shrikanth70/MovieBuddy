@@ -1,5 +1,5 @@
 import streamlit as st
-from layout import sidebar, navbar
+from layout import navbar
 from pages import home, search, movie_details, watchlist, trending
 from auth import supabase_auth as auth_ui
 from utils import state_manager as state
