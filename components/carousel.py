@@ -26,7 +26,7 @@ def render_trending_slideshow():
     c1, c2 = st.columns([2, 1])
     with c1:
         st.title(movie.get("title"))
-        st.caption(f"🗓️ {movie.get('release_date','N/A')[:4]} | ⭐ {movie.get('vote_average')}")
+        st.caption(f"{movie.get('release_date','N/A')[:4]} | Rating: {movie.get('vote_average')}")
         st.write(movie.get("overview"))
         if st.button("Learn More", key=f"slide_btn_{movie.get('id')}", type="primary"):
             state.navigate_to("details", movie.get("id"))

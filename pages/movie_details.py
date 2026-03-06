@@ -13,7 +13,7 @@ def render_movie_details_page():
         state.navigate_to("home")
         return
         
-    if st.button("❮ Back"):
+    if st.button(":material/arrow_back: Back"):
         state.navigate_to("home")
         
     movie = tmdb.get_movie_details(movie_id)
@@ -25,25 +25,22 @@ def render_movie_details_page():
     with c1:
         st.image(tmdb.get_image_url(movie.get("poster_path")), use_container_width=True)
         is_saved = auth_service.is_in_watchlist(st.session_state.user.id, movie_id)
-        if st.button("❤️ In Watchlist" if is_saved else "➕ Add to Watchlist", use_container_width=True):
+        btn_label = "In Watchlist" if is_saved else "Add to Watchlist"
+        btn_icon = "favorite" if is_saved else "add"
+        if st.button(f":material/{btn_icon}: {btn_label}", use_container_width=True):
             if is_saved: auth_service.remove_from_watchlist(st.session_state.user.id, movie_id)
             else: auth_service.add_to_watchlist(st.session_state.user.id, movie)
             st.rerun()
     
     with c2:
         st.title(movie.get("title"))
-        st.markdown(f"**{movie.get('release_date', 'N/A')[:4]}** | {movie.get('runtime', 'N/A')} min | ⭐ {movie.get('vote_average', 'N/A')}")
+        st.markdown(f"**{movie.get('release_date', 'N/A')[:4]}** | {movie.get('runtime', 'N/A')} min | Rating: {movie.get('vote_average', 'N/A')}")
         
-        # OMDb Ratings
+        # OMDb Ratings (Integrated Component)
         imdb_id = tmdb.get_imdb_id(movie_id)
         omdb_data = omdb.get_omdb_data(imdb_id)
-        if omdb_data and omdb_data.get("Response") == "True":
-            st.markdown("### Ratings")
-            r_cols = st.columns(3)
-            ext_ratings = {r['Source']: r['Value'] for r in omdb_data.get('Ratings', [])}
-            r_cols[0].metric("IMDb", omdb_data.get("imdbRating", "N/A"))
-            r_cols[1].metric("RT", ext_ratings.get("Rotten Tomatoes", "N/A"))
-            r_cols[2].metric("Metascore", omdb_data.get("Metascore", "N/A"))
+        from components import rating_display
+        rating_display.render_ratings(omdb_data)
 
         st.write(movie.get("overview"))
         

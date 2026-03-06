@@ -7,7 +7,7 @@ def render_movie_card(movie, key_prefix="card"):
     poster_url = tmdb.get_image_url(movie.get("poster_path"))
     st.image(poster_url, use_container_width=True)
     st.markdown(f"**{movie.get('title')}**")
-    st.caption(f"⭐ {movie.get('vote_average', 'N/A')}")
+    st.caption(f"Rating: {movie.get('vote_average', 'N/A')}")
     
     if st.button("Details", key=f"{key_prefix}_{movie.get('id')}", use_container_width=True):
         state.navigate_to("details", movie.get("id"))

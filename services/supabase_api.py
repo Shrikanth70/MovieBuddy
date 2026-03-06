@@ -5,8 +5,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-URL = st.secrets.get("SUPABASE_URL") or os.getenv("SUPABASE_URL")
-KEY = st.secrets.get("SUPABASE_KEY") or os.getenv("SUPABASE_KEY")
+try:
+    URL = st.secrets.get("SUPABASE_URL") or os.getenv("SUPABASE_URL")
+    KEY = st.secrets.get("SUPABASE_KEY") or os.getenv("SUPABASE_KEY")
+except Exception:
+    URL = os.getenv("SUPABASE_URL")
+    KEY = os.getenv("SUPABASE_KEY")
+
+if not URL or not KEY:
+    st.error("Supabase configuration missing (URL/KEY).")
+    st.stop()
 
 supabase: Client = create_client(URL, KEY)
 
