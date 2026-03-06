@@ -36,6 +36,7 @@ def render_movie_grid(movies, key_prefix="grid"):
                     st.rerun()
 
 def render_detail_view(movie_id):
+    ui.reset_scroll()
     with st.spinner("Loading movie details..."):
         movie = tmdb.get_movie_details(movie_id)
         trailers = tmdb.get_movie_videos(movie_id)
