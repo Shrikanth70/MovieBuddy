@@ -25,6 +25,7 @@ def inject_custom_css():
         --bg-card: #1C212B;
         --accent: #E50914; /* Netflix Red */
         --accent-glow: rgba(229, 9, 20, 0.4);
+        --gold: #FFC107; /* Amber/Gold */
         --text-main: #FFFFFF;
         --text-muted: #8B949E;
         --radius-lg: 20px;
@@ -297,7 +298,14 @@ def inject_custom_css():
         border-color: white !important;
     }
 
-    /* Hero button overlay */
+    /* Hero button overlay — invisible full-area click target over the hero */
+    .hero-btn-overlay {
+        position: relative;
+        margin-top: -508px; /* Pull up to overlap the hero */
+        height: 508px;
+        z-index: 5;
+        pointer-events: none; /* Let children handle events */
+    }
     .hero-btn-overlay > div.stButton > button {
         position: absolute !important;
         top: 0 !important;
@@ -305,18 +313,28 @@ def inject_custom_css():
         width: 100% !important;
         height: 500px !important;
         background: transparent !important;
+        color: transparent !important;
         border: none !important;
         opacity: 0 !important;
         cursor: pointer !important;
         z-index: 10 !important;
+        box-shadow: none !important;
+        transition: none !important;
+        pointer-events: all !important;
+    }
+    .hero-btn-overlay > div.stButton > button:hover {
+        background: transparent !important;
+        color: transparent !important;
+        transform: none !important;
+        box-shadow: none !important;
     }
 
-    /* Hero prev/next buttons */
-    div.stButton > button[key="hero_prev"], div.stButton > button[key="hero_next"] {
-        background: rgba(255,255,255,0.08) !important;
+    /* Hero nav wrapper: keeps prev/next as small circles */
+    .hero-nav-wrapper > div.stButton > button {
+        background: rgba(255,255,255,0.1) !important;
         color: white !important;
-        border: 1px solid rgba(255,255,255,0.1) !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+        border: 1px solid rgba(255,255,255,0.2) !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
         font-size: 18px !important;
         font-weight: 400 !important;
         letter-spacing: 0 !important;
@@ -326,12 +344,9 @@ def inject_custom_css():
         min-height: unset !important;
         border-radius: 50% !important;
         padding: 0 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
         backdrop-filter: blur(8px) !important;
     }
-    div.stButton > button[key="hero_prev"]:hover, div.stButton > button[key="hero_next"]:hover {
+    .hero-nav-wrapper > div.stButton > button:hover {
         background: var(--accent) !important;
         color: white !important;
         border-color: var(--accent) !important;
@@ -466,61 +481,67 @@ def render_slideshow(movies):
         st.rerun()
     
     current_movie = movies[st.session_state.hero_current_slide]
-    backdrop_url = f"https://image.tmdb.org/t/p/original/{current_movie.get('backdrop_path')}" if current_movie.get("backdrop_path") else ""
+    backdrop_url = f"https://image.tmdb.org/t/p/original{current_movie.get('backdrop_path')}" if current_movie.get("backdrop_path") else ""
+    title = current_movie.get('title', 'Unknown Title').replace("'", "&#39;").replace('"', "&quot;")
+    year = current_movie.get('release_date', 'N/A')[:4] if current_movie.get('release_date') else 'N/A'
+    rating = round(current_movie.get('vote_average', 0), 1)
+    overview = current_movie.get('overview', '').replace("'", "&#39;").replace('"', "&quot;").replace("\n", " ")
     
-    # Hero container with background
+    # Hero container with background — wraps visual content
     st.markdown(f"""
-    <div class="hero-container" style="background-image: url('{backdrop_url}'); background-size: cover; background-position: center 20%; height: 500px; border-radius: 20px; position: relative; display: flex; align-items: flex-end; padding: 60px; box-sizing: border-box;">
+    <div class="hero-container" style="background-image: url('{backdrop_url}'); background-size: cover; background-position: center 20%; height: 500px; border-radius: 20px; position: relative; display: flex; align-items: flex-end; padding: 60px; box-sizing: border-box; cursor: pointer; overflow: hidden;">
         <div style="position: absolute; inset: 0; background: linear-gradient(0deg, rgba(14,17,23,1) 0%, rgba(14,17,23,0.3) 70%, transparent 100%); border-radius: 20px;"></div>
         <div style="position: absolute; inset: 0; background: radial-gradient(circle at 20% 50%, rgba(14,17,23,0.4) 0%, transparent 100%); border-radius: 20px;"></div>
-        <div class="hero-content" style="position: relative; z-index: 2; max-width: 700px; color: white;">
+        <div class="hero-content" style="position: relative; z-index: 2; max-width: 700px; color: white; pointer-events: none;">
             <div class="hero-badge" style="display: inline-block; background: rgba(229,9,20,0.2); color: #E50914; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(229,9,20,0.2); letter-spacing: 1.5px;">Trending Selection</div>
-            <div class="hero-title" style="font-size: 56px; font-weight: 900; line-height: 1; margin-bottom: 20px; text-shadow: 0 10px 30px rgba(0,0,0,0.5);">{current_movie.get('title', 'Unknown Title').replace("'", "&#39;").replace('"', "&quot;")}</div>
+            <div class="hero-title" style="font-size: 56px; font-weight: 900; line-height: 1; margin-bottom: 20px; text-shadow: 0 10px 30px rgba(0,0,0,0.5);">{title}</div>
             <div class="hero-meta" style="font-size: 18px; font-weight: 700; margin-bottom: 24px; color: #FFFFFF; display: flex; gap: 15px; align-items: center;">
-                <span class="year" style="border: 1px solid rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 6px;">{current_movie.get('release_date', 'N/A')[:4] if current_movie.get('release_date') else 'N/A'}</span>
+                <span class="year" style="border: 1px solid rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 6px;">{year}</span>
                 <span class="sep" style="color: rgba(255,255,255,0.3);">|</span>
-                <span class="rating" style="color: #FFC107;">⭐ {round(current_movie.get('vote_average', 0), 1)}</span>
+                <span class="rating" style="color: #FFC107;">⭐ {rating}</span>
             </div>
-            <p class="hero-overview" style="color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; margin-bottom: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-width: 600px;">{current_movie.get('overview', '').replace("'", "&#39;").replace('"', "&quot;").replace("\n", " ")}</p>
+            <p class="hero-overview" style="color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; margin-bottom: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-width: 600px;">{overview}</p>
         </div>
     </div>
     """, unsafe_allow_html=True)
     
-    # Invisible button overlay for clicking the hero
+    # Invisible button overlay for clicking the hero (sits right after but positioned over hero via CSS)
     st.markdown('<div class="hero-btn-overlay">', unsafe_allow_html=True)
-    if st.button("\u00A0", key="hero_click", help=""):
+    if st.button("\u00A0", key="hero_click", help="View movie details"):
         st.query_params.movie_id = current_movie.get('id')
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Controls and indicators
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col1:
-        # Indicators
-        indicator_cols = st.columns(len(movies))
-        for i, col in enumerate(indicator_cols):
-            if i == st.session_state.hero_current_slide:
-                col.markdown('<div style="width: 50px; height: 4px; border-radius: 2px; background: #E50914;"></div>', unsafe_allow_html=True)
-            else:
-                if col.button("", key=f"hero_indicator_{i}", help=f"Go to slide {i+1}"):
-                    st.session_state.hero_current_slide = i
-                    st.session_state.hero_last_change = time.time()
-                    st.rerun()
-                col.markdown('<div style="width: 30px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.2); margin-top: -25px;"></div>', unsafe_allow_html=True)
+    # Controls row: indicators on left, nav buttons on right
+    ctrl_col_left, ctrl_col_right = st.columns([3, 1])
     
-    with col3:
-        # Navigation buttons
-        nav_cols = st.columns(2)
-        with nav_cols[0]:
-            if st.button("❮", key="hero_prev", help="Previous movie"):
+    with ctrl_col_left:
+        # Indicator dots
+        ind_html = '<div style="display: flex; gap: 8px; padding: 12px 0; align-items: center;">'
+        for i in range(len(movies)):
+            if i == st.session_state.hero_current_slide:
+                ind_html += '<div style="width: 50px; height: 4px; border-radius: 2px; background: #E50914;"></div>'
+            else:
+                ind_html += '<div style="width: 30px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.25);"></div>'
+        ind_html += '</div>'
+        st.markdown(ind_html, unsafe_allow_html=True)
+    
+    with ctrl_col_right:
+        nav_left, nav_right = st.columns(2)
+        with nav_left:
+            st.markdown('<div class="hero-nav-wrapper">', unsafe_allow_html=True)
+            if st.button("❮", key="hero_prev", help="Previous"):
                 st.session_state.hero_current_slide = (st.session_state.hero_current_slide - 1) % len(movies)
                 st.session_state.hero_last_change = time.time()
                 st.rerun()
-        with nav_cols[1]:
-            if st.button("❯", key="hero_next", help="Next movie"):
+            st.markdown('</div>', unsafe_allow_html=True)
+        with nav_right:
+            st.markdown('<div class="hero-nav-wrapper">', unsafe_allow_html=True)
+            if st.button("❯", key="hero_next", help="Next"):
                 st.session_state.hero_current_slide = (st.session_state.hero_current_slide + 1) % len(movies)
                 st.session_state.hero_last_change = time.time()
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
 def render_movie_card(movie, poster_url):
     """Render a clickable card using a self-targeting link."""
@@ -599,37 +620,6 @@ def render_watch_providers(providers):
     if not providers:
         st.markdown('<div class="ott-container"><div class="ott-title">Streaming Info</div><div style="color: var(--text-muted);">Not available in your region.</div></div>', unsafe_allow_html=True)
         return
-
-    # Categories: flatrate (Stream), buy, rent
-    categories = [
-        ("Stream", providers.get("flatrate", [])),
-        ("Rent", providers.get("rent", [])),
-        ("Buy", providers.get("buy", []))
-    ]
-
-    html_output = '<div class="ott-container">'
-    html_output += '<div class="ott-title">Where to Watch</div>'
-    
-    watch_link = providers.get("link", "#")
-    
-    found_any = False
-    for label, items in categories:
-        if items:
-            found_any = True
-            html_output += f'<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">{label}</div>'
-            html_output += '<div class="provider-grid">'
-            for item in items:
-                logo_url = f"https://image.tmdb.org/t/p/original{item.get('logo_path')}"
-                name = item.get("provider_name")
-                # Wrap in anchor tag for redirection
-                html_output += f'<a href="{watch_link}" target="_blank" title="Watch on {name}"><img src="{logo_url}" class="provider-logo"></a>'
-            html_output += '</div><div style="height: 15px;"></div>'
-    
-    if not found_any:
-        html_output += '<div style="color: var(--text-muted);">Streaming info not available.</div>'
-    
-    html_output += '</div>'
-    st.markdown(html_output, unsafe_allow_html=True)
 
     # Categories: flatrate (Stream), buy, rent
     categories = [

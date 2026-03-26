@@ -8,7 +8,6 @@ import datetime
 import random
 
 # Set page config
-# Set page config
 st.set_page_config(
     page_title="MovieBuddy | Premium Streaming",
     page_icon="🎞️",
@@ -419,10 +418,8 @@ def main():
         ui.render_slideshow(st.session_state.hero_slides)
         st.markdown('<div style="height: 20px;"></div>', unsafe_allow_html=True)
 
-    # Netflix-Style Rows
-
-    # Netflix-Style Rows
-    # Create a deduplication set to limit movie repetition to a maximum of 2 times across all rows
+    # Netflix-Style Content Rows
+    # Create a deduplication set to limit movie repetition
     used_movie_counts = {}
 
     def prioritize_movies(movies_list):
