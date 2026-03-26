@@ -623,11 +623,10 @@ def render_slideshow(movies):
             function init() {{
                 slides.forEach((s, i) => {{
                     // Create slide element
-                    const slide = document.createElement('a');
+                    const slide = document.createElement('div');
                     slide.className = 'slide';
-                    slide.style.backgroundImage = `url(${{s.backdrop}})`;
-                    slide.href = `/?movie_id=${{s.id}}`;
-                    slide.target = '_parent';
+                    slide.style.backgroundImage = `url(${s.backdrop})`;
+                    slide.onclick = () => { window.parent.location.href = `/?movie_id=${s.id}`; };
                     
                     slide.innerHTML = `
                         <div class="slide-overlay"></div>
