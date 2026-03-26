@@ -273,10 +273,10 @@ def inject_custom_css():
         appearance: none !important;
     }
     
-    .stTextInput input {
+    .search-input-wrapper .stTextInput input {
         color: #ffffff !important;
         -webkit-text-fill-color: #ffffff !important;
-        background-color: transparent !important;
+        background-color: rgba(28, 33, 43, 0.8) !important;
         caret-color: var(--accent) !important;
         padding: 12px 20px !important;
         font-size: 16px !important; /* Prevent zoom on iOS */
@@ -285,44 +285,47 @@ def inject_custom_css():
         appearance: none !important;
         border: none !important;
         outline: none !important;
+        border-radius: 12px !important;
     }
     
     /* Cross-browser placeholder styling */
-    .stTextInput input::placeholder {
+    .search-input-wrapper .stTextInput input::placeholder {
         color: rgba(255,255,255,0.5) !important;
         opacity: 1 !important;
     }
-    .stTextInput input::-webkit-input-placeholder {
+    .search-input-wrapper .stTextInput input::-webkit-input-placeholder {
         color: rgba(255,255,255,0.5) !important;
         opacity: 1 !important;
     }
-    .stTextInput input::-moz-placeholder {
+    .search-input-wrapper .stTextInput input::-moz-placeholder {
         color: rgba(255,255,255,0.5) !important;
         opacity: 1 !important;
     }
-    .stTextInput input:-ms-input-placeholder {
+    .search-input-wrapper .stTextInput input:-ms-input-placeholder {
         color: rgba(255,255,255,0.5) !important;
         opacity: 1 !important;
     }
     
     /* Chrome autofill overrides */
-    .stTextInput input:-webkit-autofill,
-    .stTextInput input:-webkit-autofill:hover,
-    .stTextInput input:-webkit-autofill:focus,
-    .stTextInput input:-webkit-autofill:active {
+    .search-input-wrapper .stTextInput input:-webkit-autofill,
+    .search-input-wrapper .stTextInput input:-webkit-autofill:hover,
+    .search-input-wrapper .stTextInput input:-webkit-autofill:focus,
+    .search-input-wrapper .stTextInput input:-webkit-autofill:active {
         -webkit-box-shadow: 0 0 0 1000px rgba(28, 33, 43, 0.8) inset !important;
         -webkit-text-fill-color: #ffffff !important;
         background-color: rgba(28, 33, 43, 0.8) !important;
         color: #ffffff !important;
         border: 1px solid rgba(255,255,255,0.15) !important;
         border-radius: 12px !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
         transition: background-color 0s !important;
     }
     
     /* Additional autofill overrides for stubborn browsers */
-    input:-webkit-autofill,
-    input:-webkit-autofill:hover,
-    input:-webkit-autofill:focus {
+    .search-input-wrapper input:-webkit-autofill,
+    .search-input-wrapper input:-webkit-autofill:hover,
+    .search-input-wrapper input:-webkit-autofill:focus {
         -webkit-box-shadow: 0 0 0px 1000px rgba(28, 33, 43, 0.8) inset !important;
         -webkit-text-fill-color: #ffffff !important;
         background-color: rgba(28, 33, 43, 0.8) !important;
@@ -337,7 +340,7 @@ def inject_custom_css():
 
     /* Mobile responsive search input */
     @media (max-width: 768px) {
-        .stTextInput input {
+        .search-input-wrapper .stTextInput input {
             padding: 10px 16px !important;
             font-size: 16px !important;
         }

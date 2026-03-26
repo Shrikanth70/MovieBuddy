@@ -322,7 +322,9 @@ def main():
             </a>
         ''', unsafe_allow_html=True)
     with head_col2:
+        st.markdown('<div class="search-input-wrapper">', unsafe_allow_html=True)
         search_query = st.text_input("Search", placeholder="Search movies, actors, genres...", key="global_search_input", label_visibility="collapsed")
+        st.markdown('</div>', unsafe_allow_html=True)
 
     # Handle Search Globally
     if search_query:
