@@ -141,16 +141,30 @@ def get_movie_videos(movie_id):
         return trailers
     return []
 
-def get_trending_indian(limit=20):
+def get_movie_credits(movie_id):
+    """Fetch cast and crew for a movie. Returns (cast_list, director_name)."""
+    data = fetch_from_tmdb(f"movie/{movie_id}/credits")
+    if not data:
+        return [], "N/A"
+        
+    cast = data.get("cast", [])[:10] # Top 10 actors
+    crew = data.get("crew", [])
+    
+    # Extract Director
+    directors = [c.get("name") for c in crew if c.get("department") == "Directing" and c.get("job") == "Director"]
+    director = directors[0] if directors else "N/A"
+    
+    return cast, director
+
+def get_trending_indian(limit=40):
     """Fetch trending OTT movies from all major Indian regional languages combined."""
     ninety_days_ago = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime("%Y-%m-%d")
     
-    # We combine te, hi, ta, kn, ml in a single discover call
     params = {
         "with_original_language": "te|hi|ta|kn|ml",
         "sort_by": "popularity.desc",
         "primary_release_date.gte": ninety_days_ago,
-        "vote_count.gte": 50,
+        "vote_count.gte": 20, # Lowered for better density
         "with_watch_monetization_types": "flatrate",
         "watch_region": "IN"
     }

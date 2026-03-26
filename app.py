@@ -50,27 +50,33 @@ def navigate_back():
     st.rerun()
 
 def render_movie_row(title, movies, key_prefix, category_id=None):
-    """Render a 6-column grid of movies with a See More button as the 6th card."""
+    """Render a premium horizontal scrollable row of movies (Netflix-style)."""
     if not movies:
         return
         
     st.markdown(f'<h3 style="margin-top: 30px; margin-bottom: 15px;">{title}</h3>', unsafe_allow_html=True)
     
-    # Always create 6 columns for consistency (5 movies + 1 see more)
-    cols = st.columns(6)
+    # We use a single markdown block for the entire row to ensure smooth horizontal scrolling
+    row_html = '<div class="movie-row-container">'
     
-    # Render up to 5 movies
-    for idx, movie in enumerate(movies[:5]):
-        with cols[idx]:
-            poster_url = tmdb.get_image_url(movie.get("poster_path"))
-            st.markdown(ui.render_movie_card(movie, poster_url), unsafe_allow_html=True)
-            if st.button("View Details", key=f"{key_prefix}_btn_{movie.get('id')}", use_container_width=True):
-                navigate_to("details", movie_id=movie.get("id"))
-                
-    with cols[5]:
-        st.markdown(ui.render_see_more_card(), unsafe_allow_html=True)
-        if st.button("See More", key=f"{key_prefix}_seemore", use_container_width=True):
-            navigate_to("category", category_id=category_id, title=title)
+    # Populate movies
+    for movie in movies[:15]: # Show up to 15 in the row
+        poster_url = tmdb.get_image_url(movie.get("poster_path"))
+        card_html = ui.render_movie_card(movie, poster_url)
+        row_html += f'<div class="movie-card-wrapper">{card_html}</div>'
+        
+    # See More Card
+    see_more_link = f"/?category_id={category_id}&title={title}"
+    row_html += f"""
+    <div class="movie-card-wrapper">
+        <a href="{see_more_link}" target="_parent" style="text-decoration: none;">
+            {ui.render_see_more_card()}
+        </a>
+    </div>
+    """
+    
+    row_html += '</div>'
+    st.markdown(row_html, unsafe_allow_html=True)
 
 def render_detail_view(movie_id):
     with st.spinner("Loading movie details..."):
@@ -132,8 +138,56 @@ def render_detail_view(movie_id):
             st.markdown('<div style="color: var(--text-muted);">Trailer Unavailable</div>', unsafe_allow_html=True)
             
     with col_prov:
+        cast, director = tmdb.get_movie_credits(movie_id)
+        st.markdown('<div class="ott-title">Cast & Crew</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="color: var(--text-muted); margin-bottom: 15px;">Director: <span style="color: white; font-weight: 700;">{director}</span></div>', unsafe_allow_html=True)
+        
+        cast_html = '<div class="cast-scroll">'
+        for actor in cast[:6]:
+            profile_path = actor.get("profile_path")
+            img = f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else "https://via.placeholder.com/100x100?text=No+Photo"
+            name = actor.get("name")
+            role = actor.get("character")
+            cast_html += f"""
+            <div class="cast-item">
+                <img src="{img}" class="cast-img">
+                <span class="cast-name">{name}</span>
+                <span class="cast-role">{role}</span>
+            </div>
+            """
+        cast_html += '</div>'
+        st.markdown(cast_html, unsafe_allow_html=True)
+        
+        # PROVIDER LINKS MAPPING
         providers = tmdb.get_watch_providers(movie_id)
-        ui.render_watch_providers(providers)
+        if providers:
+            st.markdown('<div class="ott-title" style="margin-top: 25px;">Available On</div>', unsafe_allow_html=True)
+            
+            provider_map = {
+                "Netflix": "https://www.netflix.com/",
+                "Amazon Prime Video": "https://www.primevideo.com/",
+                "Disney Plus": "https://www.disneyplus.com/",
+                "Hotstar": "https://www.hotstar.com/",
+                "Apple TV": "https://tv.apple.com/",
+                "Google Play Movies": "https://play.google.com/store/movies",
+                "YouTube": "https://www.youtube.com/",
+                "JioCinema": "https://www.jiocinema.com/",
+                "ZEE5": "https://www.zee5.com/"
+            }
+            
+            stream_list = providers.get("flatrate", [])
+            if stream_list:
+                html_prov = '<div class="provider-grid">'
+                for p in stream_list:
+                    name = p.get("provider_name")
+                    logo = f"https://image.tmdb.org/t/p/original{p.get('logo_path')}"
+                    link = provider_map.get(name, "https://www.google.com/search?q=" + name.replace(" ", "+"))
+                    html_prov += f'<a href="{link}" target="_blank" title="{name}"><img src="{logo}" class="provider-logo"></a>'
+                html_prov += '</div>'
+                st.markdown(html_prov, unsafe_allow_html=True)
+            else:
+                st.markdown('<div style="color: var(--text-muted);">Direct streaming links unavailable.</div>', unsafe_allow_html=True)
+
             
     # End of details layout
     
@@ -196,8 +250,6 @@ def render_category_view(category_id, title):
             with cols[idx]:
                 poster_url = tmdb.get_image_url(movie.get("poster_path"))
                 st.markdown(ui.render_movie_card(movie, poster_url), unsafe_allow_html=True)
-                if st.button("View Details", key=f"cat_{movie.get('id')}_{row}_{idx}", use_container_width=True):
-                    navigate_to("details", movie_id=movie.get("id"))
 
 # --- Main Layout ---
 def main():
@@ -206,13 +258,25 @@ def main():
         st.components.v1.html("""
         <script>
         function scrollToTop() {
-            var elements = window.parent.document.querySelectorAll('.main, .stApp, .block-container');
-            elements.forEach(e => e.scrollTop = 0);
-            window.parent.scrollTo(0, 0);
+            try {
+                // Target both the iframe window and the parent window
+                window.scrollTo(0, 0);
+                if (window.parent) {
+                    window.parent.scrollTo(0, 0);
+                    var mainContent = window.parent.document.querySelector('.main') || 
+                                     window.parent.document.querySelector('.stApp');
+                    if (mainContent) mainContent.scrollTop = 0;
+                }
+            } catch (e) {
+                console.error("Scroll error:", e);
+                window.scrollTo(0, 0);
+            }
         }
+        // Fire multiple times to ensure various browser life-cycles are caught
         scrollToTop();
-        setTimeout(scrollToTop, 50);
-        setTimeout(scrollToTop, 150);
+        window.onload = scrollToTop;
+        setTimeout(scrollToTop, 10);
+        setTimeout(scrollToTop, 100);
         </script>
         """, height=0)
         st.session_state.scroll_to_top = False
@@ -232,6 +296,13 @@ def main():
         m_id = st.query_params.get("movie_id")
         st.query_params.clear()
         navigate_to("details", movie_id=int(m_id))
+        st.rerun()
+
+    if st.query_params.get("category_id"):
+        cat_id = st.query_params.get("category_id")
+        cat_title = st.query_params.get("title", "Category")
+        st.query_params.clear()
+        navigate_to("category", category_id=cat_id, title=cat_title)
         st.rerun()
 
     # Persistent Top Header
@@ -278,8 +349,6 @@ def main():
                     with cols[idx]:
                         poster_url = tmdb.get_image_url(movie.get("poster_path"))
                         st.markdown(ui.render_movie_card(movie, poster_url), unsafe_allow_html=True)
-                        if st.button("View Details", key=f"src_{movie.get('id')}_{row}_{idx}", use_container_width=True):
-                            navigate_to("details", movie_id=movie.get("id"))
         else:
             st.warning("No results found.")
             if st.button("⬅ Back Home"):
