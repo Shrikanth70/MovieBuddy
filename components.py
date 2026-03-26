@@ -143,6 +143,7 @@ def inject_custom_css():
         background: transparent !important;
         border: none !important;
         color: transparent !important;
+        opacity: 0 !important; /* Force invisibility */
         box-shadow: none !important;
         cursor: pointer !important;
         margin: 0 !important;
