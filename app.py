@@ -347,8 +347,23 @@ def main():
 
     # Handle Search Globally
     if search_query:
+        # Store previous params for back navigation
+        if "previous_params" not in st.session_state:
+            st.session_state.previous_params = dict(params)
+        
         # Back button for search page
-        st.markdown('<a href="/?home=true" target="_self" class="back-pill-btn">← Back</a>', unsafe_allow_html=True)
+        st.markdown('<div class="back-btn-col">', unsafe_allow_html=True)
+        if st.button("← Back", key="search_back"):
+            st.session_state.query = ""
+            if "q" in st.query_params:
+                del st.query_params["q"]
+            if "previous_params" in st.session_state:
+                st.query_params.update(st.session_state.previous_params)
+                del st.session_state.previous_params
+            else:
+                st.query_params["home"] = "true"
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown(f'<h2>Search Results for <span class="gold-text">"{search_query}"</span></h2>', unsafe_allow_html=True)
         results = tmdb.search_movies(search_query)
