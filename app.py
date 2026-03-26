@@ -334,7 +334,7 @@ def main():
             st.markdown('<div class="back-btn-col">', unsafe_allow_html=True)
             if st.button("← Back", key="search_back"):
                 st.session_state.query = ""
-                st.query_params.clear()
+                st.session_state.global_search_input = ""
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
         
