@@ -103,13 +103,11 @@ def render_movie_row(title, movies, key_prefix, category_id=None, max_items=5, s
             movie_id = movie.get('id')
             poster_url = tmdb.get_image_url(movie.get("poster_path"))
             card_html = ui.render_movie_card(movie, poster_url)
-            movie_html += f'''
-                <a href="?movie_id={movie_id}" target="_self" style="text-decoration: none; display: block;">
-                    <div class="movie-item">
-                        {card_html}
-                    </div>
-                </a>
-            '''
+            movie_html += '<a href="?movie_id=' + str(movie_id) + '" target="_self" style="text-decoration: none; display: block;">'
+            movie_html += '<div class="movie-item">'
+            movie_html += card_html
+            movie_html += '</div>'
+            movie_html += '</a>'
         movie_html += '</div>'
         st.markdown(movie_html, unsafe_allow_html=True)
 
