@@ -269,6 +269,8 @@ def inject_custom_css():
         border: 1px solid rgba(255,255,255,0.15) !important;
         border-radius: 12px !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
     }
     
     .stTextInput input {
@@ -279,11 +281,41 @@ def inject_custom_css():
         padding: 12px 20px !important;
         font-size: 16px !important; /* Prevent zoom on iOS */
         font-family: var(--font-main) !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
+        border: none !important;
+        outline: none !important;
     }
     
+    /* Cross-browser placeholder styling */
     .stTextInput input::placeholder {
         color: rgba(255,255,255,0.5) !important;
         opacity: 1 !important;
+    }
+    .stTextInput input::-webkit-input-placeholder {
+        color: rgba(255,255,255,0.5) !important;
+        opacity: 1 !important;
+    }
+    .stTextInput input::-moz-placeholder {
+        color: rgba(255,255,255,0.5) !important;
+        opacity: 1 !important;
+    }
+    .stTextInput input:-ms-input-placeholder {
+        color: rgba(255,255,255,0.5) !important;
+        opacity: 1 !important;
+    }
+    
+    /* Chrome autofill overrides */
+    .stTextInput input:-webkit-autofill,
+    .stTextInput input:-webkit-autofill:hover,
+    .stTextInput input:-webkit-autofill:focus,
+    .stTextInput input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 1000px rgba(28, 33, 43, 0.8) inset !important;
+        -webkit-text-fill-color: #ffffff !important;
+        background-color: rgba(28, 33, 43, 0.8) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255,255,255,0.15) !important;
+        border-radius: 12px !important;
     }
     
     div[data-baseweb="input"]:focus-within {
