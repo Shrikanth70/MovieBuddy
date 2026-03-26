@@ -265,54 +265,63 @@ def inject_custom_css():
         inset: 0 !important;
         width: 100% !important;
         height: 100% !important;
-        min-height: 270px !important;
         opacity: 0 !important;
         cursor: pointer !important;
         transform: none !important;
         z-index: 10;
+        transition: none !important;
     }
 
-    /* Back / navigation buttons: ghost style, not red */
+    /* Back / navigation buttons: premium pill style */
     .back-btn-col > div.stButton > button {
-        background: rgba(255,255,255,0.06) !important;
+        background: rgba(255,255,255,0.05) !important;
         color: white !important;
-        border: 1px solid rgba(255,255,255,0.15) !important;
-        box-shadow: none !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
         font-weight: 600 !important;
-        font-size: 14px !important;
-        letter-spacing: 0 !important;
-        text-transform: none !important;
+        font-size: 13px !important;
+        letter-spacing: 0.5px !important;
+        text-transform: uppercase !important;
+        border-radius: 30px !important;
+        padding: 0.5rem 1.2rem !important;
+        backdrop-filter: blur(10px) !important;
+        width: auto !important;
+        min-width: 100px !important;
     }
     .back-btn-col > div.stButton > button:hover {
-        background: rgba(255,255,255,0.12) !important;
-        color: white !important;
-        transform: none !important;
-        box-shadow: none !important;
-        border-color: rgba(255,255,255,0.3) !important;
+        background: white !important;
+        color: black !important;
+        transform: scale(1.05) !important;
+        box-shadow: 0 8px 25px rgba(255,255,255,0.2) !important;
+        border-color: white !important;
     }
 
     /* Hero Next (❯) button: small circle, not full-width red block */
     .hero-next-btn > div.stButton > button {
-        background: rgba(255,255,255,0.1) !important;
+        background: rgba(255,255,255,0.08) !important;
         color: white !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-        box-shadow: none !important;
-        font-size: 20px !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+        font-size: 18px !important;
         font-weight: 400 !important;
         letter-spacing: 0 !important;
         text-transform: none !important;
-        width: 44px !important;
-        height: 44px !important;
+        width: 48px !important;
+        height: 48px !important;
         min-height: unset !important;
         border-radius: 50% !important;
         padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        backdrop-filter: blur(8px) !important;
     }
     .hero-next-btn > div.stButton > button:hover {
-        background: #E50914 !important;
+        background: var(--accent) !important;
         color: white !important;
-        border-color: #E50914 !important;
-        transform: none !important;
-        box-shadow: none !important;
+        border-color: var(--accent) !important;
+        transform: scale(1.1) !important;
+        box-shadow: 0 0 20px var(--accent-glow) !important;
     }
 
     /* OTT Section Styling */
@@ -439,63 +448,60 @@ def render_slideshow(movies):
         rating = round(movie.get("vote_average", 0), 1)
         path = movie.get("backdrop_path")
         image_url = f"https://image.tmdb.org/t/p/original/{path}" if path else ""
+        movie_id = movie.get("id")
             
         active_class = "active" if idx == 0 else ""
         
         slides_html += f"""
-        <div class="carousel-item {active_class}" style="background-image: url('{image_url}');">
+        <div class="carousel-item {active_class}" style="background-image: url('{image_url}');" onclick="parentNavigate({movie_id})">
             <div class="hero-content">
+                <div class="hero-badge">Trending Selection</div>
                 <div class="hero-title">{title}</div>
                 <div class="hero-meta">
-                    <span>{year}</span>
+                    <span class="year">{year}</span>
                     <span class="sep">|</span>
                     <span class="rating">⭐ {rating}</span>
-                    <span class="sep">|</span>
-                    <span class="tag">Trending This Week</span>
                 </div>
                 <p class="hero-overview">{overview}</p>
-                <div class="hero-btns-row">
-                    <!-- CTA removed for Sandbox-safe native button below -->
-                </div>
             </div>
         </div>
         """
-        indicators_html += f'<div class="carousel-indicator {active_class}" onclick="jumpToSlide({idx})"></div>'
+        indicators_html += f'<div class="carousel-indicator {active_class}" onclick="event.stopPropagation(); jumpToSlide({idx})"></div>'
 
     html_code = f"""
     <!DOCTYPE html>
     <html>
     <head>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        body {{ margin:0; padding:0; font-family: 'Poppins', sans-serif; background: #0E1117; color: white; overflow: hidden; }}
-        .carousel-container {{ position: relative; height: 500px; width: 100%; overflow: hidden; border-radius: 20px; }}
+        body {{ margin:0; padding:0; font-family: 'Poppins', sans-serif; background: transparent; color: white; overflow: hidden; }}
+        .carousel-container {{ position: relative; height: 500px; width: 100%; overflow: hidden; border-radius: 20px; cursor: pointer; }}
         .carousel-item {{ position: absolute; inset:0; background-size: cover; background-position: center 20%; opacity: 0; transition: opacity 1s ease; display: flex; align-items: flex-end; padding: 60px; box-sizing: border-box; }}
         .carousel-item.active {{ opacity: 1; z-index: 1; }}
-        .carousel-item::after {{ content:''; position: absolute; inset:0; background: linear-gradient(0deg, rgba(14,17,23,1) 0%, rgba(14,17,23,0.4) 100%); z-index: -1; }}
-        .hero-content {{ position: relative; z-index: 2; max-width: 800px; }}
-        .hero-title {{ font-size: 48px; font-weight: 800; line-height: 1.1; margin-bottom: 16px; }}
-        .hero-meta {{ font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #E50914; display: flex; gap: 12px; align-items: center; }}
-        .hero-meta .sep {{ color: rgba(255,255,255,0.4); }}
-        .hero-meta .tag {{ color: #8B949E; font-weight: 400; }}
-        .hero-overview {{ color: rgba(255,255,255,0.9); font-size: 14px; line-height: 1.6; margin-bottom: 24px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
-        .hero-btn {{ display: inline-block; background: #E50914; color: white; padding: 12px 28px; border-radius: 10px; font-weight: 700; text-decoration: none; text-transform: uppercase; font-size: 14px; transition: 0.3s; cursor: pointer !important; }}
-        .hero-btn:hover {{ background: #FFFFFF; color: #000000; transform: translateY(-3px); box-shadow: 0 5px 20px rgba(255,255,255,0.4); }}
-        .hero-btns-row {{ display: flex; gap: 15px; }}
+        .carousel-item::after {{ content:''; position: absolute; inset:0; background: linear-gradient(0deg, rgba(14,17,23,1) 0%, rgba(14,17,23,0.3) 70%, transparent 100%); z-index: 1; }}
+        .carousel-item::before {{ content:''; position: absolute; inset:0; background: radial-gradient(circle at 20% 50%, rgba(14,17,23,0.4) 0%, transparent 100%); z-index: 1; }}
+        .hero-content {{ position: relative; z-index: 2; max-width: 700px; }}
+        .hero-badge {{ display: inline-block; background: rgba(229,9,20,0.2); color: #E50914; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(229,9,20,0.2); letter-spacing: 1.5px; }}
+        .hero-title {{ font-size: 56px; font-weight: 900; line-height: 1; margin-bottom: 20px; text-shadow: 0 10px 30px rgba(0,0,0,0.5); }}
+        .hero-meta {{ font-size: 18px; font-weight: 700; margin-bottom: 24px; color: #FFFFFF; display: flex; gap: 15px; align-items: center; }}
+        .hero-meta .year {{ border: 1px solid rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 6px; }}
+        .hero-meta .rating {{ color: #FFC107; }}
+        .hero-meta .sep {{ color: rgba(255,255,255,0.3); }}
+        .hero-overview {{ color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; margin-bottom: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-width: 600px; }}
         .carousel-controls {{ position: absolute; bottom: 60px; right: 60px; z-index: 10; display: flex; gap: 15px; }}
-        .carousel-btn {{ background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; }}
-        .carousel-btn:hover {{ background: #E50914; border-color: #E50914; }}
-        .carousel-indicators {{ position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10; }}
-        .carousel-indicator {{ width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.3); cursor: pointer; }}
-        .carousel-indicator.active {{ background: #E50914; transform: scale(1.3); }}
+        .carousel-btn {{ background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: white; width: 48px; height: 48px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; backdrop-filter: blur(10px); transition: 0.3s; }}
+        .carousel-btn:hover {{ background: #E50914; border-color: #E50914; transform: scale(1.1); }}
+        .carousel-indicators {{ position: absolute; bottom: 25px; left: 60px; display: flex; gap: 10px; z-index: 10; }}
+        .carousel-indicator {{ width: 30px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.2); cursor: pointer; transition: 0.3s; }}
+        .carousel-indicator.active {{ background: #E50914; width: 50px; }}
     </style>
     </head>
     <body>
     <div class="carousel-container" id="heroCarousel">
         {slides_html}
         <div class="carousel-controls">
-            <button class="carousel-btn" onclick="prevSlide()">❮</button>
-            <button class="carousel-btn" onclick="nextSlide()">❯</button>
+            <button class="carousel-btn" onclick="event.stopPropagation(); prevSlide()">❮</button>
+            <button class="carousel-btn" onclick="event.stopPropagation(); nextSlide()">❯</button>
         </div>
         <div class="carousel-indicators">{indicators_html}</div>
     </div>
@@ -504,6 +510,8 @@ def render_slideshow(movies):
         const slides = container.querySelectorAll('.carousel-item');
         const indicators = container.querySelectorAll('.carousel-indicator');
         let currentIndex = 0;
+        let slideInterval;
+
         function showSlide(index) {{
             slides.forEach((el, i) => {{
                 el.classList.remove('active');
@@ -512,13 +520,30 @@ def render_slideshow(movies):
             }});
             currentIndex = index;
         }}
+
         window.nextSlide = () => showSlide((currentIndex + 1) % slides.length);
         window.prevSlide = () => showSlide((currentIndex - 1 + slides.length) % slides.length);
-        window.jumpToSlide = (index) => showSlide(index);
-        window.parentNavigate = (id) => {{
-            window.parent.location.href = window.parent.location.origin + window.parent.location.pathname + '?movie_id=' + id;
+        window.jumpToSlide = (index) => {{
+            showSlide(index);
+            resetTimer();
         }};
-        setInterval(nextSlide, 30000);
+
+        window.parentNavigate = (id) => {{
+            const url = new URL(window.parent.location.href);
+            url.searchParams.set('movie_id', id);
+            window.parent.location.href = url.href;
+        }};
+
+        function startTimer() {{
+            slideInterval = setInterval(nextSlide, 30000);
+        }}
+
+        function resetTimer() {{
+            clearInterval(slideInterval);
+            startTimer();
+        }}
+
+        startTimer();
     </script>
     </body>
     </html>
@@ -559,19 +584,19 @@ def render_movie_card(movie, poster_url):
 
 def render_see_more_card():
     """Render a clickable card styled EXACTLY like a movie card for perfect grid alignment."""
-    return f"""<div class="movie-card see-more-card" style="height: 100%; display: flex; flex-direction: column;">
-    <div style="position: relative; width: 100%; padding-top: 150%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.02);">
-        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%;">
+    return f"""<div class="movie-card see-more-card" style="height: 100%; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03);">
+    <div style="position: relative; width: 100%; aspect-ratio: 2/3; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.02);">
+        <div style="text-align: center; width: 100%;">
             <div style="font-size: 32px; margin-bottom: 8px;">➕</div>
             <div style="color: var(--text-main); font-weight: 700; letter-spacing: 1px; font-size: 14px;">SEE MORE</div>
-            <div style="color: var(--gold); font-size: 20px; margin-top: 8px;">➔</div>
+            <div style="color: var(--accent); font-size: 20px; margin-top: 8px;">➔</div>
         </div>
     </div>
-    <div class="card-info" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; visibility: hidden;">
-        <div class="card-title">Placeholder Title</div>
+    <div class="card-info" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+        <div class="card-title" style="color: var(--text-muted);">Explore All</div>
         <div class="card-meta">
-            <span>2099</span>
-            <span class="rating">★ 0.0</span>
+            <span>&nbsp;</span>
+            <span class="rating">&nbsp;</span>
         </div>
     </div>
 </div>"""
@@ -602,6 +627,37 @@ def render_watch_providers(providers):
     if not providers:
         st.markdown('<div class="ott-container"><div class="ott-title">Streaming Info</div><div style="color: var(--text-muted);">Not available in your region.</div></div>', unsafe_allow_html=True)
         return
+
+    # Categories: flatrate (Stream), buy, rent
+    categories = [
+        ("Stream", providers.get("flatrate", [])),
+        ("Rent", providers.get("rent", [])),
+        ("Buy", providers.get("buy", []))
+    ]
+
+    html_output = '<div class="ott-container">'
+    html_output += '<div class="ott-title">Where to Watch</div>'
+    
+    watch_link = providers.get("link", "#")
+    
+    found_any = False
+    for label, items in categories:
+        if items:
+            found_any = True
+            html_output += f'<div style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">{label}</div>'
+            html_output += '<div class="provider-grid">'
+            for item in items:
+                logo_url = f"https://image.tmdb.org/t/p/original{item.get('logo_path')}"
+                name = item.get("provider_name")
+                # Wrap in anchor tag for redirection
+                html_output += f'<a href="{watch_link}" target="_blank" title="Watch on {name}"><img src="{logo_url}" class="provider-logo"></a>'
+            html_output += '</div><div style="height: 15px;"></div>'
+    
+    if not found_any:
+        html_output += '<div style="color: var(--text-muted);">Streaming info not available.</div>'
+    
+    html_output += '</div>'
+    st.markdown(html_output, unsafe_allow_html=True)
 
     # Categories: flatrate (Stream), buy, rent
     categories = [

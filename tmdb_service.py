@@ -142,19 +142,24 @@ def get_movie_videos(movie_id):
     return []
 
 def get_movie_credits(movie_id):
-    """Fetch cast and crew for a movie. Returns (cast_list, director_name)."""
+    """Fetch cast and crew for a movie. Returns (cast_list, crew_dict)."""
     data = fetch_from_tmdb(f"movie/{movie_id}/credits")
     if not data:
-        return [], "N/A"
+        return [], {"director": "N/A", "writer": "N/A"}
         
-    cast = data.get("cast", [])[:10] # Top 10 actors
+    cast = data.get("cast", [])[:12] # Top 12 actors
     crew = data.get("crew", [])
     
-    # Extract Director
+    # Extract Director and Writer
     directors = [c.get("name") for c in crew if c.get("department") == "Directing" and c.get("job") == "Director"]
-    director = directors[0] if directors else "N/A"
+    writers = [c.get("name") for c in crew if c.get("department") == "Writing" and c.get("job") in ["Screenplay", "Writer", "Story"]]
     
-    return cast, director
+    # Deduplicate and format
+    director_str = ", ".join(list(dict.fromkeys(directors))) if directors else "N/A"
+    writer_str = ", ".join(list(dict.fromkeys(writers))) if writers else "N/A"
+    
+    # If same person is both, we handle display logic in the UI component
+    return cast, {"director": director_str, "writer": writer_str}
 
 def get_trending_indian(limit=40):
     """Fetch trending OTT movies from all major Indian regional languages combined."""

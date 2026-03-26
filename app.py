@@ -57,16 +57,20 @@ def render_movie_row(title, movies, key_prefix, category_id=None):
     st.markdown(f'<h3 style="margin-top: 30px; margin-bottom: 15px;">{title}</h3>', unsafe_allow_html=True)
     cols = st.columns(6, gap="small")
     
+    # Show up to 5 movies
     for idx, movie in enumerate(movies[:5]):
         with cols[idx]:
             poster_url = tmdb.get_image_url(movie.get("poster_path"))
+            # The card itself
             st.markdown(f'<div class="native-card-wrapper">{ui.render_movie_card(movie, poster_url)}<div class="card-btn-container">', unsafe_allow_html=True)
+            # The invisible overlay button
             if st.button(" ", key=f"nav_{key_prefix}_{movie['id']}_{idx}"):
                 st.query_params.movie_id = movie['id']
                 st.rerun()
             st.markdown('</div></div>', unsafe_allow_html=True)
                 
-    if category_id:
+    # See More card
+    if category_id and len(movies) >= 6:
         with cols[5]:
             st.markdown(f'<div class="native-card-wrapper">{ui.render_see_more_card()}<div class="card-btn-container">', unsafe_allow_html=True)
             if st.button(" ", key=f"see_{key_prefix}_{category_id}"):
@@ -93,10 +97,10 @@ def render_detail_view(movie_id):
     ui.render_detail_hero(movie, backdrop_url, poster_url)
     
     # Top Back Button
-    col_b, _ = st.columns([1, 9])
+    col_b, _ = st.columns([1.5, 8.5])
     with col_b:
         st.markdown('<div class="back-btn-col">', unsafe_allow_html=True)
-        if st.button("← Back", key=f"det_back_{movie_id}", use_container_width=True):
+        if st.button("← Back", key=f"det_back_{movie_id}"):
             st.query_params.clear()
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
@@ -138,16 +142,31 @@ def render_detail_view(movie_id):
             st.markdown('<div style="color: var(--text-muted);">Trailer Unavailable</div>', unsafe_allow_html=True)
             
     with col_prov:
-        cast, director = tmdb.get_movie_credits(movie_id)
+        cast, crew = tmdb.get_movie_credits(movie_id)
         st.markdown('<div class="ott-title">Cast & Crew</div>', unsafe_allow_html=True)
-        st.markdown(f'<div style="color: var(--text-muted); margin-bottom: 15px;">Director: <span style="color: white; font-weight: 700;">{director}</span></div>', unsafe_allow_html=True)
         
+        # Combined Director & Writer display for cleaner hierarchy
+        director = crew.get("director", "N/A")
+        writer = crew.get("writer", "N/A")
+        
+        crew_html = f'<div style="margin-bottom: 15px; font-size: 14px;">'
+        if director != "N/A":
+            crew_html += f'<div style="margin-bottom: 5px;"><span style="color: var(--text-muted);">Director:</span> <span style="color: white; font-weight: 700;">{director}</span></div>'
+        if writer != "N/A" and writer != director:
+            crew_html += f'<div><span style="color: var(--text-muted);">Writer:</span> <span style="color: white; font-weight: 700;">{writer}</span></div>'
+        elif writer != "N/A" and writer == director:
+            # Handle same person case elegantly
+            crew_html = f'<div style="margin-bottom: 15px; font-size: 14px;"><div style="margin-bottom: 5px;"><span style="color: var(--text-muted);">Director & Writer:</span> <span style="color: white; font-weight: 700;">{director}</span></div>'
+        crew_html += '</div>'
+        st.markdown(crew_html, unsafe_allow_html=True)
+        
+        # Cast display with simplified HTML to avoid leakage
         cast_html = '<div class="cast-scroll">'
-        for actor in cast[:6]:
+        for actor in cast[:8]:
             profile_path = actor.get("profile_path")
-            img = f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else "https://via.placeholder.com/100x100?text=No+Photo"
-            name = actor.get("name")
-            role = actor.get("character")
+            img = f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else "https://via.placeholder.com/100x185?text=No+Photo"
+            name = actor.get("name", "Unknown")
+            role = actor.get("character", "Actor")
             cast_html += f"""
             <div class="cast-item">
                 <img src="{img}" class="cast-img">
@@ -206,10 +225,10 @@ def render_detail_view(movie_id):
         render_movie_row('Recommended <span class="gold-text">Movies</span>', recommendations, "rec", category_id=f"rec_{movie_id}")
 
 def render_category_view(category_id, title):
-    col_back, _ = st.columns([1, 9])
+    col_back, _ = st.columns([1.5, 8.5])
     with col_back:
         st.markdown('<div class="back-btn-col">', unsafe_allow_html=True)
-        if st.button("← Back", key=f"back_{category_id}", use_container_width=True):
+        if st.button("← Back", key=f"back_{category_id}"):
             st.query_params.clear()
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
@@ -304,8 +323,8 @@ def main():
         render_category_view(cat_id, cat_title)
         return
 
-    # Persistent Top Header
-    head_col1, head_col2 = st.columns([5, 1.5])
+    # Persistent Top Header with better balance
+    head_col1, head_col2 = st.columns([4, 2], gap="large")
     with head_col1:
         st.markdown(f'''
             <a href="/?home=true" target="_self" class="logo-link">
@@ -313,7 +332,7 @@ def main():
             </a>
         ''', unsafe_allow_html=True)
     with head_col2:
-        search_query = st.text_input("", placeholder="Search movies...", key="movie_search_input", label_visibility="collapsed")
+        search_query = st.text_input("", placeholder="Search movies, actors, genres...", key="movie_search_input", label_visibility="collapsed")
 
     if search_query:
         # Search Results
@@ -342,24 +361,9 @@ def main():
         st.session_state.hero_slides = tmdb.get_now_playing_movies(limit=10) or tmdb.get_trending_weekly(limit=10)
 
     if st.session_state.hero_slides:
-        hero_movies = st.session_state.hero_slides
-        idx = st.session_state.hero_index % len(hero_movies)
-        featured = hero_movies[idx]
-        
-        ui.render_native_hero(featured, tmdb.get_image_url(featured.get("backdrop_path"), size="original"))
-        
-        # Native Hero Controls — hero_cta uses the global premium red button style
-        h_col1, h_col2, _ = st.columns([0.9, 0.4, 4])
-        with h_col1:
-            if st.button("▶  VIEW DETAILS", key="hero_cta_native"):
-                st.query_params.movie_id = featured.get('id')
-                st.rerun()
-        with h_col2:
-            st.markdown('<div class="hero-next-btn">', unsafe_allow_html=True)
-            if st.button("❯", key="hero_next"):
-                st.session_state.hero_index += 1
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+        # Use premium improved slideshow with native-safe parent navigation
+        ui.render_slideshow(st.session_state.hero_slides)
+        st.markdown('<div style="height: 20px;"></div>', unsafe_allow_html=True)
 
     # Netflix-Style Rows
 
