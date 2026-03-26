@@ -353,7 +353,7 @@ def main():
         
         # Back button for search page
         st.markdown('<div class="back-btn-col">', unsafe_allow_html=True)
-        if st.button("← Back", key="search_back"):
+        if st.button("← Back"):
             st.session_state.query = ""
             if "q" in st.query_params:
                 del st.query_params["q"]
