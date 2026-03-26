@@ -64,7 +64,7 @@ def render_movie_row(title, movies, key_prefix, category_id=None):
             # The card itself
             st.markdown(f'<div class="native-card-wrapper">{ui.render_movie_card(movie, poster_url)}<div class="card-btn-container">', unsafe_allow_html=True)
             # The invisible overlay button
-            if st.button(" ", key=f"nav_{key_prefix}_{movie['id']}_{idx}"):
+            if st.button("\u00A0", key=f"nav_{key_prefix}_{movie['id']}_{idx}", help=""):
                 st.query_params.movie_id = movie['id']
                 st.rerun()
             st.markdown('</div></div>', unsafe_allow_html=True)
@@ -73,13 +73,43 @@ def render_movie_row(title, movies, key_prefix, category_id=None):
     if category_id and len(movies) >= 6:
         with cols[5]:
             st.markdown(f'<div class="native-card-wrapper">{ui.render_see_more_card()}<div class="card-btn-container">', unsafe_allow_html=True)
-            if st.button(" ", key=f"see_{key_prefix}_{category_id}"):
+            if st.button("\u00A0", key=f"see_{key_prefix}_{category_id}", help=""):
                 st.query_params.category_id = category_id
                 st.query_params.title = title
                 st.rerun()
             st.markdown('</div></div>', unsafe_allow_html=True)
 
 def render_detail_view(movie_id):
+    # Persistent Top Header
+    head_col1, head_col2 = st.columns([4, 2], gap="large")
+    with head_col1:
+        st.markdown(f'''
+            <a href="/?home=true" target="_self" class="logo-link">
+                <span class="logo-text"><span class="logo-movie">Movie</span><span class="logo-buddy">Buddy</span></span>
+            </a>
+        ''', unsafe_allow_html=True)
+    with head_col2:
+        search_query = st.text_input("Search", placeholder="Search movies, actors, genres...", key="detail_search_input", label_visibility="collapsed")
+
+    if search_query:
+        # Search Results
+        st.markdown(f'<h2>Search Results for <span class="gold-text">"{search_query}"</span></h2>', unsafe_allow_html=True)
+        results = tmdb.search_movies(search_query)
+        if results:
+            for row in range(0, len(results), 5):
+                cols = st.columns(5)
+                for idx, movie in enumerate(results[row:row+5]):
+                    with cols[idx]:
+                        st.markdown('<div class="native-card-wrapper">', unsafe_allow_html=True)
+                        st.markdown(ui.render_movie_card(movie, tmdb.get_image_url(movie.get("poster_path"))), unsafe_allow_html=True)
+                        if st.button("\u00A0", key=f"detail_search_nav_{movie['id']}_{row}_{idx}", help=""):
+                            st.query_params.movie_id = movie['id']
+                            st.rerun()
+                        st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.info("No movies found.")
+        return
+
     with st.spinner("Loading movie details..."):
         movie = tmdb.get_movie_details(movie_id)
         trailers = tmdb.get_movie_videos(movie_id)
@@ -160,22 +190,16 @@ def render_detail_view(movie_id):
         crew_html += '</div>'
         st.markdown(crew_html, unsafe_allow_html=True)
         
-        # Cast display with simplified HTML to avoid leakage
-        cast_html = '<div class="cast-scroll">'
-        for actor in cast[:8]:
-            profile_path = actor.get("profile_path")
-            img = f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else "https://via.placeholder.com/100x185?text=No+Photo"
-            name = actor.get("name", "Unknown")
-            role = actor.get("character", "Actor")
-            cast_html += f"""
-            <div class="cast-item">
-                <img src="{img}" class="cast-img">
-                <span class="cast-name">{name}</span>
-                <span class="cast-role">{role}</span>
-            </div>
-            """
-        cast_html += '</div>'
-        st.markdown(cast_html, unsafe_allow_html=True)
+        # Cast display using Streamlit columns
+        if cast:
+            cast_cols = st.columns(min(len(cast), 8))
+            for i, actor in enumerate(cast[:8]):
+                with cast_cols[i]:
+                    profile_path = actor.get("profile_path")
+                    img = f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else "https://via.placeholder.com/100x150?text=No+Photo"
+                    st.image(img, width=100)
+                    st.markdown(f"<div style='text-align: center; font-size: 13px; font-weight: 700; color: white; margin-bottom: 5px;'>{actor.get('name', 'Unknown')}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='text-align: center; font-size: 11px; color: #8B949E;'>{actor.get('character', 'Actor')}</div>", unsafe_allow_html=True)
         
         # PROVIDER LINKS MAPPING
         providers = tmdb.get_watch_providers(movie_id)
@@ -225,6 +249,36 @@ def render_detail_view(movie_id):
         render_movie_row('Recommended <span class="gold-text">Movies</span>', recommendations, "rec", category_id=f"rec_{movie_id}")
 
 def render_category_view(category_id, title):
+    # Persistent Top Header
+    head_col1, head_col2 = st.columns([4, 2], gap="large")
+    with head_col1:
+        st.markdown(f'''
+            <a href="/?home=true" target="_self" class="logo-link">
+                <span class="logo-text"><span class="logo-movie">Movie</span><span class="logo-buddy">Buddy</span></span>
+            </a>
+        ''', unsafe_allow_html=True)
+    with head_col2:
+        search_query = st.text_input("Search", placeholder="Search movies, actors, genres...", key="category_search_input", label_visibility="collapsed")
+
+    if search_query:
+        # Search Results
+        st.markdown(f'<h2>Search Results for <span class="gold-text">"{search_query}"</span></h2>', unsafe_allow_html=True)
+        results = tmdb.search_movies(search_query)
+        if results:
+            for row in range(0, len(results), 5):
+                cols = st.columns(5)
+                for idx, movie in enumerate(results[row:row+5]):
+                    with cols[idx]:
+                        st.markdown('<div class="native-card-wrapper">', unsafe_allow_html=True)
+                        st.markdown(ui.render_movie_card(movie, tmdb.get_image_url(movie.get("poster_path"))), unsafe_allow_html=True)
+                        if st.button("\u00A0", key=f"category_search_nav_{movie['id']}_{row}_{idx}", help=""):
+                            st.query_params.movie_id = movie['id']
+                            st.rerun()
+                        st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.info("No movies found.")
+        return
+
     col_back, _ = st.columns([1.5, 8.5])
     with col_back:
         st.markdown('<div class="back-btn-col">', unsafe_allow_html=True)
@@ -271,7 +325,7 @@ def render_category_view(category_id, title):
             with cols[idx]:
                 poster_url = tmdb.get_image_url(movie.get("poster_path"))
                 st.markdown(f'<div class="native-card-wrapper">{ui.render_movie_card(movie, poster_url)}<div class="card-btn-container">', unsafe_allow_html=True)
-                if st.button(" ", key=f"grid_{category_id}_{movie['id']}_{row}_{idx}"):
+                if st.button("\u00A0", key=f"grid_{category_id}_{movie['id']}_{row}_{idx}", help=""):
                     st.query_params.movie_id = movie['id']
                     st.rerun()
                 st.markdown('</div></div>', unsafe_allow_html=True)
@@ -332,7 +386,7 @@ def main():
             </a>
         ''', unsafe_allow_html=True)
     with head_col2:
-        search_query = st.text_input("", placeholder="Search movies, actors, genres...", key="movie_search_input", label_visibility="collapsed")
+        search_query = st.text_input("Search", placeholder="Search movies, actors, genres...", key="movie_search_input", label_visibility="collapsed")
 
     if search_query:
         # Search Results
@@ -345,7 +399,7 @@ def main():
                     with cols[idx]:
                         st.markdown('<div class="native-card-wrapper">', unsafe_allow_html=True)
                         st.markdown(ui.render_movie_card(movie, tmdb.get_image_url(movie.get("poster_path"))), unsafe_allow_html=True)
-                        if st.button(" ", key=f"search_nav_{movie['id']}_{row}_{idx}"):
+                        if st.button("\u00A0", key=f"search_nav_{movie['id']}_{row}_{idx}", help=""):
                             st.query_params.movie_id = movie['id']
                             st.rerun()
                         st.markdown('</div>', unsafe_allow_html=True)

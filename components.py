@@ -1,6 +1,7 @@
 import base64
 import os
 import streamlit as st
+import time
 
 @st.cache_data
 def get_base64_image(image_path):
@@ -296,8 +297,22 @@ def inject_custom_css():
         border-color: white !important;
     }
 
-    /* Hero Next (❯) button: small circle, not full-width red block */
-    .hero-next-btn > div.stButton > button {
+    /* Hero button overlay */
+    .hero-btn-overlay > div.stButton > button {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 500px !important;
+        background: transparent !important;
+        border: none !important;
+        opacity: 0 !important;
+        cursor: pointer !important;
+        z-index: 10 !important;
+    }
+
+    /* Hero prev/next buttons */
+    div.stButton > button[key="hero_prev"], div.stButton > button[key="hero_next"] {
         background: rgba(255,255,255,0.08) !important;
         color: white !important;
         border: 1px solid rgba(255,255,255,0.1) !important;
@@ -316,7 +331,7 @@ def inject_custom_css():
         justify-content: center !important;
         backdrop-filter: blur(8px) !important;
     }
-    .hero-next-btn > div.stButton > button:hover {
+    div.stButton > button[key="hero_prev"]:hover, div.stButton > button[key="hero_next"]:hover {
         background: var(--accent) !important;
         color: white !important;
         border-color: var(--accent) !important;
@@ -434,121 +449,78 @@ def inject_custom_css():
     """, unsafe_allow_html=True)
 
 def render_slideshow(movies):
-    """Render a pure HTML/CSS/JS cinematic autoplay carousel via st.components.v1.html."""
+    """Render a Streamlit-native cinematic autoplay carousel."""
     if not movies:
         return
         
-    slides_html = ""
-    indicators_html = ""
+    # Manage slideshow state
+    if "hero_current_slide" not in st.session_state:
+        st.session_state.hero_current_slide = 0
+    if "hero_last_change" not in st.session_state:
+        st.session_state.hero_last_change = time.time()
     
-    for idx, movie in enumerate(movies):
-        title = movie.get("title", "Unknown Title").replace("'", "&#39;").replace('"', "&quot;")
-        year = movie.get("release_date", "N/A")[:4] if movie.get("release_date") else "N/A"
-        overview = movie.get("overview", "").replace("'", "&#39;").replace('"', "&quot;").replace("\n", " ")
-        rating = round(movie.get("vote_average", 0), 1)
-        path = movie.get("backdrop_path")
-        image_url = f"https://image.tmdb.org/t/p/original/{path}" if path else ""
-        movie_id = movie.get("id")
-            
-        active_class = "active" if idx == 0 else ""
-        
-        slides_html += f"""
-        <div class="carousel-item {active_class}" style="background-image: url('{image_url}');" onclick="parentNavigate({movie_id})">
-            <div class="hero-content">
-                <div class="hero-badge">Trending Selection</div>
-                <div class="hero-title">{title}</div>
-                <div class="hero-meta">
-                    <span class="year">{year}</span>
-                    <span class="sep">|</span>
-                    <span class="rating">⭐ {rating}</span>
-                </div>
-                <p class="hero-overview">{overview}</p>
+    # Auto-advance every 30 seconds
+    if time.time() - st.session_state.hero_last_change >= 30:
+        st.session_state.hero_current_slide = (st.session_state.hero_current_slide + 1) % len(movies)
+        st.session_state.hero_last_change = time.time()
+        st.rerun()
+    
+    current_movie = movies[st.session_state.hero_current_slide]
+    backdrop_url = f"https://image.tmdb.org/t/p/original/{current_movie.get('backdrop_path')}" if current_movie.get("backdrop_path") else ""
+    
+    # Hero container with background
+    st.markdown(f"""
+    <div class="hero-container" style="background-image: url('{backdrop_url}'); background-size: cover; background-position: center 20%; height: 500px; border-radius: 20px; position: relative; display: flex; align-items: flex-end; padding: 60px; box-sizing: border-box;">
+        <div style="position: absolute; inset: 0; background: linear-gradient(0deg, rgba(14,17,23,1) 0%, rgba(14,17,23,0.3) 70%, transparent 100%); border-radius: 20px;"></div>
+        <div style="position: absolute; inset: 0; background: radial-gradient(circle at 20% 50%, rgba(14,17,23,0.4) 0%, transparent 100%); border-radius: 20px;"></div>
+        <div class="hero-content" style="position: relative; z-index: 2; max-width: 700px; color: white;">
+            <div class="hero-badge" style="display: inline-block; background: rgba(229,9,20,0.2); color: #E50914; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(229,9,20,0.2); letter-spacing: 1.5px;">Trending Selection</div>
+            <div class="hero-title" style="font-size: 56px; font-weight: 900; line-height: 1; margin-bottom: 20px; text-shadow: 0 10px 30px rgba(0,0,0,0.5);">{current_movie.get('title', 'Unknown Title').replace("'", "&#39;").replace('"', "&quot;")}</div>
+            <div class="hero-meta" style="font-size: 18px; font-weight: 700; margin-bottom: 24px; color: #FFFFFF; display: flex; gap: 15px; align-items: center;">
+                <span class="year" style="border: 1px solid rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 6px;">{current_movie.get('release_date', 'N/A')[:4] if current_movie.get('release_date') else 'N/A'}</span>
+                <span class="sep" style="color: rgba(255,255,255,0.3);">|</span>
+                <span class="rating" style="color: #FFC107;">⭐ {round(current_movie.get('vote_average', 0), 1)}</span>
             </div>
+            <p class="hero-overview" style="color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; margin-bottom: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-width: 600px;">{current_movie.get('overview', '').replace("'", "&#39;").replace('"', "&quot;").replace("\n", " ")}</p>
         </div>
-        """
-        indicators_html += f'<div class="carousel-indicator {active_class}" onclick="event.stopPropagation(); jumpToSlide({idx})"></div>'
-
-    html_code = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <style>
-        body {{ margin:0; padding:0; font-family: 'Poppins', sans-serif; background: transparent; color: white; overflow: hidden; }}
-        .carousel-container {{ position: relative; height: 500px; width: 100%; overflow: hidden; border-radius: 20px; cursor: pointer; }}
-        .carousel-item {{ position: absolute; inset:0; background-size: cover; background-position: center 20%; opacity: 0; transition: opacity 1s ease; display: flex; align-items: flex-end; padding: 60px; box-sizing: border-box; }}
-        .carousel-item.active {{ opacity: 1; z-index: 1; }}
-        .carousel-item::after {{ content:''; position: absolute; inset:0; background: linear-gradient(0deg, rgba(14,17,23,1) 0%, rgba(14,17,23,0.3) 70%, transparent 100%); z-index: 1; }}
-        .carousel-item::before {{ content:''; position: absolute; inset:0; background: radial-gradient(circle at 20% 50%, rgba(14,17,23,0.4) 0%, transparent 100%); z-index: 1; }}
-        .hero-content {{ position: relative; z-index: 2; max-width: 700px; }}
-        .hero-badge {{ display: inline-block; background: rgba(229,9,20,0.2); color: #E50914; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(229,9,20,0.2); letter-spacing: 1.5px; }}
-        .hero-title {{ font-size: 56px; font-weight: 900; line-height: 1; margin-bottom: 20px; text-shadow: 0 10px 30px rgba(0,0,0,0.5); }}
-        .hero-meta {{ font-size: 18px; font-weight: 700; margin-bottom: 24px; color: #FFFFFF; display: flex; gap: 15px; align-items: center; }}
-        .hero-meta .year {{ border: 1px solid rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 6px; }}
-        .hero-meta .rating {{ color: #FFC107; }}
-        .hero-meta .sep {{ color: rgba(255,255,255,0.3); }}
-        .hero-overview {{ color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; margin-bottom: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-width: 600px; }}
-        .carousel-controls {{ position: absolute; bottom: 60px; right: 60px; z-index: 10; display: flex; gap: 15px; }}
-        .carousel-btn {{ background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: white; width: 48px; height: 48px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; backdrop-filter: blur(10px); transition: 0.3s; }}
-        .carousel-btn:hover {{ background: #E50914; border-color: #E50914; transform: scale(1.1); }}
-        .carousel-indicators {{ position: absolute; bottom: 25px; left: 60px; display: flex; gap: 10px; z-index: 10; }}
-        .carousel-indicator {{ width: 30px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.2); cursor: pointer; transition: 0.3s; }}
-        .carousel-indicator.active {{ background: #E50914; width: 50px; }}
-    </style>
-    </head>
-    <body>
-    <div class="carousel-container" id="heroCarousel">
-        {slides_html}
-        <div class="carousel-controls">
-            <button class="carousel-btn" onclick="event.stopPropagation(); prevSlide()">❮</button>
-            <button class="carousel-btn" onclick="event.stopPropagation(); nextSlide()">❯</button>
-        </div>
-        <div class="carousel-indicators">{indicators_html}</div>
     </div>
-    <script>
-        const container = document.getElementById('heroCarousel');
-        const slides = container.querySelectorAll('.carousel-item');
-        const indicators = container.querySelectorAll('.carousel-indicator');
-        let currentIndex = 0;
-        let slideInterval;
-
-        function showSlide(index) {{
-            slides.forEach((el, i) => {{
-                el.classList.remove('active');
-                indicators[i].classList.remove('active');
-                if (i === index) {{ el.classList.add('active'); indicators[i].classList.add('active'); }}
-            }});
-            currentIndex = index;
-        }}
-
-        window.nextSlide = () => showSlide((currentIndex + 1) % slides.length);
-        window.prevSlide = () => showSlide((currentIndex - 1 + slides.length) % slides.length);
-        window.jumpToSlide = (index) => {{
-            showSlide(index);
-            resetTimer();
-        }};
-
-        window.parentNavigate = (id) => {{
-            const url = new URL(window.parent.location.href);
-            url.searchParams.set('movie_id', id);
-            window.parent.location.href = url.href;
-        }};
-
-        function startTimer() {{
-            slideInterval = setInterval(nextSlide, 30000);
-        }}
-
-        function resetTimer() {{
-            clearInterval(slideInterval);
-            startTimer();
-        }}
-
-        startTimer();
-    </script>
-    </body>
-    </html>
-    """
-    st.components.v1.html(html_code, height=520)
+    """, unsafe_allow_html=True)
+    
+    # Invisible button overlay for clicking the hero
+    st.markdown('<div class="hero-btn-overlay">', unsafe_allow_html=True)
+    if st.button("\u00A0", key="hero_click", help=""):
+        st.query_params.movie_id = current_movie.get('id')
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Controls and indicators
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col1:
+        # Indicators
+        indicator_cols = st.columns(len(movies))
+        for i, col in enumerate(indicator_cols):
+            if i == st.session_state.hero_current_slide:
+                col.markdown('<div style="width: 50px; height: 4px; border-radius: 2px; background: #E50914;"></div>', unsafe_allow_html=True)
+            else:
+                if col.button("", key=f"hero_indicator_{i}", help=f"Go to slide {i+1}"):
+                    st.session_state.hero_current_slide = i
+                    st.session_state.hero_last_change = time.time()
+                    st.rerun()
+                col.markdown('<div style="width: 30px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.2); margin-top: -25px;"></div>', unsafe_allow_html=True)
+    
+    with col3:
+        # Navigation buttons
+        nav_cols = st.columns(2)
+        with nav_cols[0]:
+            if st.button("❮", key="hero_prev", help="Previous movie"):
+                st.session_state.hero_current_slide = (st.session_state.hero_current_slide - 1) % len(movies)
+                st.session_state.hero_last_change = time.time()
+                st.rerun()
+        with nav_cols[1]:
+            if st.button("❯", key="hero_next", help="Next movie"):
+                st.session_state.hero_current_slide = (st.session_state.hero_current_slide + 1) % len(movies)
+                st.session_state.hero_last_change = time.time()
+                st.rerun()
 
 def render_movie_card(movie, poster_url):
     """Render a clickable card using a self-targeting link."""
