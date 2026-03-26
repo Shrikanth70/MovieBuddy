@@ -11,7 +11,6 @@ import components as ui
 import time
 import datetime
 import random
-from pages import movie_details
 
 # Set page config
 st.set_page_config(
@@ -94,8 +93,145 @@ def render_movie_row(title, movies, key_prefix, category_id=None):
             ''', unsafe_allow_html=True)
 
 def render_detail_view(movie_id):
-    """Bridge to the standalone detail page."""
-    movie_details.render_movie_details_page()
+    """Render movie details inline."""
+    with st.spinner("Loading movie details..."):
+        movie = tmdb.get_movie_details(movie_id)
+        trailers = tmdb.get_movie_videos(movie_id)
+        omdb_data = omdb.get_movie_reviews(movie.get("title"))
+        
+    if not movie:
+        st.error("Could not load movie details.")
+        if st.button("⬅ Back"):
+            st.query_params.clear()
+            st.rerun()
+        return
+
+    # Render Backdrop behind everything
+    backdrop_url = tmdb.get_image_url(movie.get("backdrop_path"), size="original")
+    poster_url = tmdb.get_image_url(movie.get("poster_path"))
+    ui.render_detail_hero(movie, backdrop_url, poster_url)
+    
+    # Top Back Button
+    col_b, _ = st.columns([1.5, 8.5])
+    with col_b:
+        st.markdown('<div class="back-btn-col">', unsafe_allow_html=True)
+        if st.button("← Back", key=f"det_back_{movie_id}"):
+            st.query_params.clear()
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+            
+    # 2-Column Layout
+    col1, col2 = st.columns([1, 2.5], gap="large")
+    
+    with col1:
+        st.markdown(f'<div class="details-poster"><img src="{poster_url}"></div>', unsafe_allow_html=True)
+        
+    with col2:
+        st.markdown('<div class="details-info">', unsafe_allow_html=True)
+        
+        title = movie.get("title")
+        year = movie.get("release_date", "N/A")[:4]
+        runtime = f"{movie.get('runtime', 'N/A')} min"
+        genres = ", ".join([g.get("name") for g in movie.get("genres", [])])
+        overview = movie.get("overview", "")
+        
+        st.markdown(f'<h1 style="font-size: 48px; font-weight: 800; margin-bottom: 5px; line-height: 1.1;">{title}</h1>', unsafe_allow_html=True)
+        st.markdown(f'<div style="color: var(--gold); font-size: 16px; font-weight: 600; margin-bottom: 20px;">{year} &nbsp;|&nbsp; {runtime} &nbsp;|&nbsp; {genres}</div>', unsafe_allow_html=True)
+        
+        st.markdown(f'<p style="color: rgba(255,255,255,0.9); font-size: 16px; line-height: 1.6; margin-bottom: 30px;">{overview}</p>', unsafe_allow_html=True)
+        
+        # Display aggregated OMDB Without Reviews
+        ui.render_omdb_reviews(omdb_data)
+        
+        st.markdown('</div>', unsafe_allow_html=True) # End of details-info
+        
+    # Trailer and Where to Watch Side-by-Side (Full Width)
+    st.markdown('<br>', unsafe_allow_html=True)
+    col_vid, col_prov = st.columns([1.5, 1], gap="large")
+    
+    with col_vid:
+        st.markdown('<div class="ott-title" style="margin-bottom: 10px;">🎬 Trailer</div>', unsafe_allow_html=True)
+        if trailers:
+            st.video(f"https://www.youtube.com/watch?v={trailers[0].get('key')}")
+        else:
+            st.markdown('<div style="color: var(--text-muted);">Trailer Unavailable</div>', unsafe_allow_html=True)
+            
+    with col_prov:
+        cast, crew = tmdb.get_movie_credits(movie_id)
+        st.markdown('<div class="ott-title">Cast & Crew</div>', unsafe_allow_html=True)
+        
+        # Combined Director & Writer display for cleaner hierarchy
+        director = crew.get("director", "N/A")
+        writer = crew.get("writer", "N/A")
+        
+        crew_html = f'<div style="margin-bottom: 15px; font-size: 14px;">'
+        if director != "N/A":
+            crew_html += f'<div style="margin-bottom: 5px;"><span style="color: var(--text-muted);">Director:</span> <span style="color: white; font-weight: 700;">{director}</span></div>'
+        if writer != "N/A" and writer != director:
+            crew_html += f'<div><span style="color: var(--text-muted);">Writer:</span> <span style="color: white; font-weight: 700;">{writer}</span></div>'
+        elif writer != "N/A" and writer == director:
+            # Handle same person case elegantly
+            crew_html = f'<div style="margin-bottom: 15px; font-size: 14px;"><div style="margin-bottom: 5px;"><span style="color: var(--text-muted);">Director & Writer:</span> <span style="color: white; font-weight: 700;">{director}</span></div>'
+        crew_html += '</div>'
+        st.markdown(crew_html, unsafe_allow_html=True)
+        
+        # Cast display using Streamlit columns
+        if cast:
+            cast_cols = st.columns(min(len(cast), 8))
+            for i, actor in enumerate(cast[:8]):
+                with cast_cols[i]:
+                    profile_path = actor.get("profile_path")
+                    img = f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else "https://via.placeholder.com/100x150?text=No+Photo"
+                    st.image(img, width=100)
+                    st.markdown(f"<div style='text-align: center; font-size: 13px; font-weight: 700; color: white; margin-bottom: 5px;'>{actor.get('name', 'Unknown')}</div>", unsafe_allow_html=True)
+                    st.markdown(f"<div style='text-align: center; font-size: 11px; color: #8B949E;'>{actor.get('character', 'Actor')}</div>", unsafe_allow_html=True)
+        
+        # PROVIDER LINKS MAPPING
+        providers = tmdb.get_watch_providers(movie_id)
+        if providers:
+            st.markdown('<div class="ott-title" style="margin-top: 25px;">Available On</div>', unsafe_allow_html=True)
+            
+            provider_map = {
+                "Netflix": "https://www.netflix.com/",
+                "Amazon Prime Video": "https://www.primevideo.com/",
+                "Disney Plus": "https://www.disneyplus.com/",
+                "Hotstar": "https://www.hotstar.com/",
+                "Apple TV": "https://tv.apple.com/",
+                "Google Play Movies": "https://play.google.com/store/movies",
+                "YouTube": "https://www.youtube.com/",
+                "JioCinema": "https://www.jiocinema.com/",
+                "ZEE5": "https://www.zee5.com/"
+            }
+            
+            stream_list = providers.get("flatrate", [])
+            if stream_list:
+                html_prov = '<div class="provider-grid">'
+                for p in stream_list:
+                    name = p.get("provider_name")
+                    logo = f"https://image.tmdb.org/t/p/original{p.get('logo_path')}"
+                    link = provider_map.get(name, "https://www.google.com/search?q=" + name.replace(" ", "+"))
+                    html_prov += f'<a href="{link}" target="_blank" title="{name}"><img src="{logo}" class="provider-logo"></a>'
+                html_prov += '</div>'
+                st.markdown(html_prov, unsafe_allow_html=True)
+            else:
+                st.markdown('<div style="color: var(--text-muted);">Direct streaming links unavailable.</div>', unsafe_allow_html=True)
+
+            
+    # End of details layout
+    
+    # Recommendations Fix (Using Standard Movie Row)
+    st.markdown('---')
+    local_rec_ids = rec_engine.recommend_by_id(movie_id)
+    recommendations = []
+    if local_rec_ids:
+        for r_id in local_rec_ids:
+            r_details = tmdb.get_movie_details(r_id)
+            if r_details: recommendations.append(r_details)
+    if not recommendations:
+        recommendations = tmdb.get_movie_recommendations(movie_id, limit=10)
+        
+    if recommendations:
+        render_movie_row('Recommended <span class="gold-text">Movies</span>', recommendations, "rec", category_id=f"rec_{movie_id}")
 
 def render_category_view(category_id, title):
     col_back, _ = st.columns([1.5, 8.5])
