@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components_v1
 import tmdb_service as tmdb
 import omdb_service as omdb
 import components as ui
@@ -78,42 +79,109 @@ def render_movie_details_page():
         
     # Trailer and Where to Watch Side-by-Side (Full Width)
     st.markdown('<br>', unsafe_allow_html=True)
-    col_vid, col_prov = st.columns([1.5, 1], gap="large")
+    # Bottom Section: Trailer, Crew, and Cast
+    st.markdown('<br>', unsafe_allow_html=True)
+    b_col1, b_col2 = st.columns([1.5, 1], gap="large")
     
-    with col_vid:
-        st.markdown('<div class="ott-title" style="margin-bottom: 10px;">🎬 Trailer</div>', unsafe_allow_html=True)
+    cast, crew = tmdb.get_movie_credits(movie_id)
+    
+    with b_col1:
+        st.markdown('<div class="ott-title" style="margin-bottom: 15px;">🎬 Trailer</div>', unsafe_allow_html=True)
         if trailers:
             st.video(f"https://www.youtube.com/watch?v={trailers[0].get('key')}")
         else:
-            st.markdown('<div style="color: var(--text-muted);">Trailer Unavailable</div>', unsafe_allow_html=True)
-            
-    with col_prov:
-        cast, crew = tmdb.get_movie_credits(movie_id)
-        st.markdown('<div class="ott-title">Cast & Crew</div>', unsafe_allow_html=True)
-        
-        # Combined Director & Writer display for cleaner hierarchy
+            st.markdown('<div style="color: var(--text-muted); padding: 40px; background: rgba(255,255,255,0.03); border-radius: 12px; text-align: center;">Trailer Unavailable</div>', unsafe_allow_html=True)
+
+    with b_col2:
+        st.markdown('<div class="ott-title" style="margin-bottom: 15px;">Production</div>', unsafe_allow_html=True)
         director = crew.get("director", "N/A")
         writer = crew.get("writer", "N/A")
         
-        crew_html = f'<div style="margin-bottom: 15px; font-size: 14px;">'
+        crew_html = '<div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">'
         if director != "N/A":
-            crew_html += f'<div style="margin-bottom: 5px;"><span style="color: var(--text-muted);">Director:</span> <span style="color: white; font-weight: 700;">{director}</span></div>'
+            crew_html += f'<div style="margin-bottom: 12px;"><div style="color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Director</div><div style="font-size: 18px; font-weight: 700; color: white;">{director}</div></div>'
         if writer != "N/A" and writer != director:
-            crew_html += f'<div><span style="color: var(--text-muted);">Writer:</span> <span style="color: white; font-weight: 700;">{writer}</span></div>'
-        elif writer != "N/A" and writer == director:
-            crew_html = f'<div style="margin-bottom: 15px; font-size: 14px;"><div style="margin-bottom: 5px;"><span style="color: var(--text-muted);">Director & Writer:</span> <span style="color: white; font-weight: 700;">{director}</span></div>'
+            crew_html += f'<div><div style="color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Writer</div><div style="font-size: 18px; font-weight: 700; color: white;">{writer}</div></div>'
         crew_html += '</div>'
         st.markdown(crew_html, unsafe_allow_html=True)
+
+    # Monolithic Cast Row (Iframe-based for absolute CSS isolation)
+    if cast:
+        st.markdown('<div class="ott-title" style="margin-top: 40px; margin-bottom: 20px;">Cast & Crew</div>', unsafe_allow_html=True)
         
-        # Cast display using Streamlit columns
-        if cast:
-            cast_cols = st.columns(min(len(cast), 8))
-            for i, actor in enumerate(cast[:8]):
-                with cast_cols[i]:
-                    profile_path = actor.get("profile_path")
-                    img = f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else "https://via.placeholder.com/100x150?text=No+Photo"
-                    st.image(img, width=100)
-                    st.markdown(f"<div style='text-align: center; font-size: 13px; font-weight: 700; color: white; margin-bottom: 5px;'>{actor.get('name', 'Unknown')}</div>", unsafe_allow_html=True)
+        # Build the HTML for the cast row inside the iframe
+        cast_items_html = ""
+        for actor in cast[:12]:
+            profile_path = actor.get("profile_path")
+            img = f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else "https://via.placeholder.com/100x150?text=No+Photo"
+            name = actor.get('name', 'Unknown')
+            char = actor.get('character', 'Character')
+            
+            cast_items_html += f'''
+                <div class="cast-card">
+                    <img src="{img}" class="cast-img">
+                    <div class="cast-name" title="{name}">{name}</div>
+                    <div class="cast-char" title="{char}">{char}</div>
+                </div>
+            '''
+            
+        iframe_html = f'''
+        <style>
+            body {{
+                margin: 0;
+                padding: 0;
+                background: transparent;
+                color: white;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                overflow: hidden;
+            }}
+            .cast-row {{
+                display: flex;
+                gap: 20px;
+                overflow-x: auto;
+                padding: 10px 5px 30px 5px;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }}
+            .cast-row::-webkit-scrollbar {{ display: none; }}
+            .cast-card {{
+                flex: 0 0 100px;
+                width: 100px;
+                text-align: center;
+                transition: transform 0.3s ease;
+            }}
+            .cast-img {{
+                width: 100px;
+                height: 150px;
+                border-radius: 12px;
+                object-fit: cover;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+                border: 1px solid rgba(255,255,255,0.1);
+                margin-bottom: 12px;
+            }}
+            .cast-name {{
+                font-size: 11px;
+                font-weight: 700;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                width: 100px;
+                margin-bottom: 2px;
+            }}
+            .cast-char {{
+                font-size: 10px;
+                color: rgba(255,255,255,0.5);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                width: 100px;
+            }}
+        </style>
+        <div class="cast-row">
+            {cast_items_html}
+        </div>
+        '''
+        components_v1.html(iframe_html, height=250, scrolling=False, width=None)
 
     # Recommendations
     st.markdown('---')

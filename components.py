@@ -303,33 +303,61 @@ def inject_custom_css():
         border-radius: 30px !important;
     }
 
-    /* Hero nav wrapper: keeps prev/next as small circles */
-    .hero-nav-wrapper button,
-    .hero-nav-wrapper > div > button,
-    .hero-nav-wrapper div.stButton > button {
-        background: rgba(255,255,255,0.1) !important;
+    /* Native Hero Nav Buttons: Forced specificity, perfectly centered and circular */
+    .hero-nav-btn {
+        position: absolute !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        width: 50px !important;
+        height: 50px !important;
+        background: rgba(0, 0, 0, 0.5) !important;
         color: white !important;
-        border: 1px solid rgba(255,255,255,0.2) !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
-        font-size: 18px !important;
-        font-weight: 400 !important;
-        letter-spacing: 0 !important;
-        text-transform: none !important;
-        width: 48px !important;
-        height: 48px !important;
-        min-height: unset !important;
         border-radius: 50% !important;
-        padding: 0 !important;
-        backdrop-filter: blur(8px) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-decoration: none !important;
+        font-size: 24px !important;
+        z-index: 100 !important;
+        backdrop-filter: blur(15px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6) !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        cursor: pointer !important;
     }
-    .hero-nav-wrapper button:hover,
-    .hero-nav-wrapper > div > button:hover,
-    .hero-nav-wrapper div.stButton > button:hover {
+    .hero-nav-btn:hover {
         background: var(--accent) !important;
+        transform: translateY(-50%) scale(1.1) !important;
+        box-shadow: 0 0 25px var(--accent-glow) !important;
+        border-color: white !important;
+    }
+    .hero-nav-btn.prev { left: 20px !important; }
+    .hero-nav-btn.next { right: 20px !important; }
+
+    /* Cast Names: Absolute Single-Line Ellipsis (Broad Targeting) */
+    .cast-name-clean,
+    .cast-name-clean div,
+    .cast-name-clean span {
+        text-align: center !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
         color: white !important;
-        border-color: var(--accent) !important;
+        margin-top: 5px !important;
+        margin-bottom: 5px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        width: 100px !important;
+        display: block !important;
+        line-height: 1.4 !important;
+        word-break: keep-all !important;
+        overflow-wrap: normal !important;
+    }
+    .hero-nav-wrapper button:hover {
+        background: var(--accent) !important;
         transform: scale(1.1) !important;
-        box-shadow: 0 0 20px var(--accent-glow) !important;
+        border-color: white !important;
+        box-shadow: 0 0 25px var(--accent-glow) !important;
     }
 
     /* OTT Section Styling */
@@ -467,56 +495,55 @@ def render_slideshow(movies):
     
     movie_id = current_movie.get('id')
     
-    # Hero container — wrapped in an anchor for native click-to-details navigation (no button artifacts)
+    # Use the current hero_index from session state
+    current_idx = st.session_state.hero_index
+    current_movie = movies[current_idx]
+    
+    title = current_movie.get("title")
+    year = current_movie.get("release_date", "N/A")[:4]
+    rating = round(current_movie.get("vote_average", 0), 1)
+    overview = current_movie.get("overview", "")
+    movie_id = current_movie.get("id")
+    backdrop_path = current_movie.get("backdrop_path")
+    backdrop_url = f"https://image.tmdb.org/t/p/original{backdrop_path}" if backdrop_path else "placeholder.png"
+
+    # Define Navigation URLs for <a> tags
+    prev_idx = (current_idx - 1) % len(movies)
+    next_idx = (current_idx + 1) % len(movies)
+
+    # Prepare Indicators HTML
+    ind_html = '<div style="display: flex; gap: 8px; justify-content: center; margin-top: 15px; margin-bottom: 30px; position: relative; z-index: 10;">'
+    for i in range(len(movies)):
+        active = i == st.session_state.hero_index
+        color = "#E50914" if active else "rgba(255,255,255,0.25)"
+        width = "40px" if active else "20px"
+        ind_html += f'<div style="width: {width}; height: 4px; border-radius: 2px; background: {color}; transition: all 0.3s ease;"></div>'
+    ind_html += '</div>'
+
+    # Monolithic Hero Injection: One block to rule them all
     st.markdown(f"""
-    <a href="?movie_id={movie_id}" target="_self" style="display: block; text-decoration: none;">
-    <div class="hero-container" style="background-image: url('{backdrop_url}'); background-size: cover; background-position: center 20%; height: 500px; border-radius: 20px; position: relative; display: flex; align-items: flex-end; padding: 60px; box-sizing: border-box; cursor: pointer; overflow: hidden;">
-        <div style="position: absolute; inset: 0; background: linear-gradient(0deg, rgba(14,17,23,1) 0%, rgba(14,17,23,0.3) 70%, transparent 100%); border-radius: 20px;"></div>
-        <div style="position: absolute; inset: 0; background: radial-gradient(circle at 20% 50%, rgba(14,17,23,0.4) 0%, transparent 100%); border-radius: 20px;"></div>
-        <div class="hero-content" style="position: relative; z-index: 2; max-width: 700px; color: white; pointer-events: none;">
-            <div class="hero-badge" style="display: inline-block; background: rgba(229,9,20,0.2); color: #E50914; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(229,9,20,0.2); letter-spacing: 1.5px;">Trending Selection</div>
-            <div class="hero-title" style="font-size: 56px; font-weight: 900; line-height: 1; margin-bottom: 20px; text-shadow: 0 10px 30px rgba(0,0,0,0.5);">{title}</div>
-            <div class="hero-meta" style="font-size: 18px; font-weight: 700; margin-bottom: 24px; color: #FFFFFF; display: flex; gap: 15px; align-items: center;">
-                <span class="year" style="border: 1px solid rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 6px;">{year}</span>
-                <span class="sep" style="color: rgba(255,255,255,0.3);">|</span>
-                <span class="rating" style="color: #FFC107;">⭐ {rating}</span>
+    <div style="position: relative; width: 100%; border-radius: 20px; overflow: hidden; margin-bottom: 20px;">
+        <a href="?movie_id={movie_id}" target="_self" style="display: block; text-decoration: none; color: inherit;">
+            <div class="hero-container" style="background-image: url('{backdrop_url}'); background-size: cover; background-position: center 20%; height: 500px; display: flex; align-items: flex-end; padding: 60px; box-sizing: border-box; position: relative;">
+                <div style="position: absolute; inset: 0; background: linear-gradient(0deg, rgba(14,17,23,1) 0%, rgba(14,17,23,0.3) 70%, transparent 100%);"></div>
+                <div style="position: absolute; inset: 0; background: radial-gradient(circle at 20% 50%, rgba(14,17,23,0.4) 0%, transparent 100%);"></div>
+                <div class="hero-content" style="position: relative; z-index: 2; max-width: 700px; pointer-events: none;">
+                    <div style="display: inline-block; background: rgba(229,9,20,0.2); color: #E50914; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(229,9,20,0.2); letter-spacing: 1.5px;">Trending Selection</div>
+                    <div style="font-size: 52px; font-weight: 900; line-height: 1.1; margin-bottom: 20px; text-shadow: 0 10px 30px rgba(0,0,0,0.8);">{title}</div>
+                    <div style="font-size: 18px; font-weight: 700; margin-bottom: 24px; display: flex; gap: 15px; align-items: center;">
+                        <span style="border: 1px solid rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 6px;">{year}</span>
+                        <span style="color: rgba(255,255,255,0.3);">|</span>
+                        <span style="color: #FFC107;">⭐ {rating}</span>
+                    </div>
+                    <p style="color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; margin-bottom: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-width: 600px;">{overview}</p>
+                </div>
             </div>
-            <p class="hero-overview" style="color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; margin-bottom: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-width: 600px;">{overview}</p>
-        </div>
+        </a>
+        <a href="?hero_index={prev_idx}" target="_self" class="hero-nav-btn prev" style="left: 20px;">❮</a>
+        <a href="?hero_index={next_idx}" target="_self" class="hero-nav-btn next" style="right: 20px;">❯</a>
     </div>
-    </a>
+    {ind_html}
     """, unsafe_allow_html=True)
-    
-    # Controls row: indicators on left, nav buttons on right
-    ctrl_col_left, ctrl_col_right = st.columns([3, 1])
-    
-    with ctrl_col_left:
-        # Indicator dots
-        ind_html = '<div style="display: flex; gap: 8px; padding: 12px 0; align-items: center;">'
-        for i in range(len(movies)):
-            if i == st.session_state.hero_current_slide:
-                ind_html += '<div style="width: 50px; height: 4px; border-radius: 2px; background: #E50914;"></div>'
-            else:
-                ind_html += '<div style="width: 30px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.25);"></div>'
-        ind_html += '</div>'
-        st.markdown(ind_html, unsafe_allow_html=True)
-    
-    with ctrl_col_right:
-        nav_left, nav_right = st.columns(2)
-        with nav_left:
-            st.markdown('<div class="hero-nav-wrapper">', unsafe_allow_html=True)
-            if st.button("❮", key="hero_prev", help="Previous"):
-                st.session_state.hero_current_slide = (st.session_state.hero_current_slide - 1) % len(movies)
-                st.session_state.hero_last_change = time.time()
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
-        with nav_right:
-            st.markdown('<div class="hero-nav-wrapper">', unsafe_allow_html=True)
-            if st.button("❯", key="hero_next", help="Next"):
-                st.session_state.hero_current_slide = (st.session_state.hero_current_slide + 1) % len(movies)
-                st.session_state.hero_last_change = time.time()
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
 
 def render_movie_card(movie, poster_url):
     """Render a clickable card using a self-targeting link."""

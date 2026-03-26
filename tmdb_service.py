@@ -161,22 +161,31 @@ def get_movie_credits(movie_id):
     # If same person is both, we handle display logic in the UI component
     return cast, {"director": director_str, "writer": writer_str}
 
-def get_trending_indian(limit=40):
-    """Fetch trending OTT movies from all major Indian regional languages combined."""
+def get_trending_indian(limit=120):
+    """Fetch a large pool of trending OTT movies from major Indian regional languages by fetching each separately."""
     ninety_days_ago = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime("%Y-%m-%d")
+    languages = ["te", "hi", "ta", "kn", "ml"]
     
-    params = {
-        "with_original_language": "te|hi|ta|kn|ml",
-        "sort_by": "popularity.desc",
-        "primary_release_date.gte": ninety_days_ago,
-        "vote_count.gte": 20, # Lowered for better density
-        "with_watch_monetization_types": "flatrate",
-        "watch_region": "IN"
-    }
-    data = fetch_from_tmdb("discover/movie", params=params)
-    if data and data.get("results"):
-        return data["results"][:limit]
-    return []
+    all_results = []
+    # Fetch 20 movies per language
+    for lang in languages:
+        params = {
+            "with_original_language": lang,
+            "sort_by": "popularity.desc",
+            "primary_release_date.gte": ninety_days_ago,
+            "vote_count.gte": 10,
+            "with_watch_monetization_types": "flatrate",
+            "watch_region": "IN"
+        }
+        data = fetch_from_tmdb("discover/movie", params=params)
+        if data and data.get("results"):
+            all_results.extend(data["results"])
+            
+    # Deduplicate by ID and sort by popularity
+    unique_movies = {m['id']: m for m in all_results}.values()
+    sorted_movies = sorted(unique_movies, key=lambda x: x.get('popularity', 0), reverse=True)
+    
+    return sorted_movies[:limit]
 
 def get_movie_reviews(movie_id, limit=3):
     """Fetch user reviews for a movie from TMDB."""

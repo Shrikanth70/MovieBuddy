@@ -8,28 +8,48 @@ st.title("🎯 Get Movie Recommendations")
 
 # Load movie titles from ML dataset
 import pickle
-movies = pickle.load(open("movies.pkl", "rb"))
+import os
 
-selected_movie = st.selectbox(
-    "Choose a movie",
-    movies['title'].values
-)
+pkl_path = "movies.pkl"
+try:
+    with open(pkl_path, "rb") as f:
+        data = pickle.load(f)
+        if isinstance(data, tuple):
+            movies = data[0]
+        else:
+            movies = data
+except:
+    movies = pd.DataFrame(columns=['title'])
+
+if not movies.empty:
+    selected_movie = st.selectbox(
+        "Choose a movie to find similar ones",
+        movies['title'].values
+    )
+else:
+    st.error("Movie dataset not found.")
+    st.stop()
 
 if st.button("Recommend Similar Movies"):
-
-    recommended_movies = recommend(selected_movie)
-
-    cols = st.columns(3)
-
-    for idx, movie in enumerate(recommended_movies):
-        with cols[idx % 3]:
-
-            search_results = search_movie(movie)
-
-            if len(search_results) > 0:
-                poster_path = search_results[0]["poster_path"]
-                poster = get_poster(poster_path)
-                if poster:
-                    st.image(poster)
-
-            st.write(movie)
+    with st.spinner("Finding recommendations..."):
+        recommended_titles = recommend(selected_movie)
+        
+    if recommended_titles:
+        st.markdown(f"### Because you liked **{selected_movie}**")
+        
+        # Use premium grid for recommendations
+        recs_data = []
+        for title in recommended_titles:
+            import tmdb_service as tmdb
+            results = tmdb.search_movies(title)
+            if results:
+                recs_data.append(results[0])
+        
+        if recs_data:
+            import components as ui
+            ui.render_movie_grid(recs_data, key_prefix="rec_page", columns=4)
+        else:
+            for title in recommended_titles:
+                st.write(f"• {title}")
+    else:
+        st.info("No similar movies found in our local database.")
