@@ -328,6 +328,16 @@ def main():
 
     # Handle Search Globally
     if search_query:
+        # Back button for search page
+        col_back, _ = st.columns([1, 10])
+        with col_back:
+            st.markdown('<div class="back-btn-col">', unsafe_allow_html=True)
+            if st.button("← Back", key="search_back"):
+                st.session_state.query = ""
+                st.query_params.clear()
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+        
         st.markdown(f'<h2>Search Results for <span class="gold-text">"{search_query}"</span></h2>', unsafe_allow_html=True)
         results = tmdb.search_movies(search_query)
         if results:
