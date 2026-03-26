@@ -287,6 +287,15 @@ def render_category_view(category_id, title):
 
 # --- Main Layout ---
 def main():
+    # Initialize session state
+    if "query" not in st.session_state:
+        st.session_state.query = ""
+    
+    # Persist search query on refresh
+    params = st.query_params
+    if "q" in params and not st.session_state.query:
+        st.session_state.query = params["q"]
+    
     # Robust scroll-to-top fix
     if st.session_state.get("scroll_to_top"):
         st.components.v1.html("""
@@ -323,20 +332,23 @@ def main():
         ''', unsafe_allow_html=True)
     with head_col2:
         st.markdown('<div class="search-input-wrapper">', unsafe_allow_html=True)
-        search_query = st.text_input("Search", placeholder="Search movies, actors, genres...", key="global_search_input", label_visibility="collapsed")
+        search_query = st.text_input("Search", placeholder="Search movies, actors, genres...", value=st.session_state.query, key="global_search_input", label_visibility="collapsed")
         st.markdown('</div>', unsafe_allow_html=True)
+
+    # Update query state
+    if search_query != st.session_state.query:
+        st.session_state.query = search_query
+        if search_query:
+            st.query_params["q"] = search_query
+        else:
+            if "q" in st.query_params:
+                del st.query_params["q"]
+        st.rerun()
 
     # Handle Search Globally
     if search_query:
         # Back button for search page
-        col_back, _ = st.columns([1, 10])
-        with col_back:
-            st.markdown('<div class="back-btn-col">', unsafe_allow_html=True)
-            if st.button("← Back", key="search_back"):
-                st.session_state.query = ""
-                st.session_state.global_search_input = ""
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<a href="/?home=true" target="_self" class="back-pill-btn">← Back</a>', unsafe_allow_html=True)
         
         st.markdown(f'<h2>Search Results for <span class="gold-text">"{search_query}"</span></h2>', unsafe_allow_html=True)
         results = tmdb.search_movies(search_query)
