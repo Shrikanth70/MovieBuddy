@@ -625,20 +625,20 @@ def render_slideshow(movies):
                     // Create slide element
                     const slide = document.createElement('div');
                     slide.className = 'slide';
-                    slide.style.backgroundImage = `url(${s.backdrop})`;
-                    slide.onclick = () => { window.parent.location.href = `/?movie_id=${s.id}`; };
+                    slide.style.backgroundImage = `url(${{{s.backdrop}}})`;
+                    slide.onclick = () => { window.parent.location.href = `/?movie_id=${{{s.id}}}`; };
                     
                     slide.innerHTML = `
                         <div class="slide-overlay"></div>
                         <div class="slide-content">
                             <div class="badge">Featured Selection</div>
-                            <div class="title">${{s.title}}</div>
+                            <div class="title">${{{s.title}}}</div>
                             <div class="meta">
-                                <span class="year-box">${{s.year}}</span>
+                                <span class="year-box">${{{s.year}}}</span>
                                 <span>|</span>
-                                <span class="rating">⭐ ${{s.rating}}</span>
+                                <span class="rating">⭐ ${{{s.rating}}}</span>
                             </div>
-                            <p class="overview">${{s.overview}}</p>
+                            <p class="overview">${{{s.overview}}}</p>
                         </div>
                     `;
                     container.appendChild(slide);
@@ -666,7 +666,7 @@ def render_slideshow(movies):
             }}
 
             function update() {{
-                container.style.transform = `translateX(-${{currentIdx * 100}}%)`;
+                container.style.transform = `translateX(-${{{{currentIdx * 100}}}}%)`;
                 Array.from(indicators.children).forEach((dot, i) => {{
                     dot.className = 'dot' + (i === currentIdx ? ' active' : '');
                 }});
