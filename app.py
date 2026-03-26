@@ -329,19 +329,20 @@ def main():
         st.markdown(f'<h2>Search Results for <span class="gold-text">"{search_query}"</span></h2>', unsafe_allow_html=True)
         results = tmdb.search_movies(search_query)
         if results:
-            for row in range(0, len(results), 5):
-                cols = st.columns(5)
-                for idx, movie in enumerate(results[row:row+5]):
-                    with cols[idx]:
-                        movie_id = movie.get('id')
-                        poster_url = tmdb.get_image_url(movie.get("poster_path"))
-                        st.markdown(f'''
-                            <a href="?movie_id={movie_id}" target="_self" style="text-decoration: none; display: block;">
-                                <div class="native-card-wrapper">
-                                    {ui.render_movie_card(movie, poster_url)}
-                                </div>
-                            </a>
-                        ''', unsafe_allow_html=True)
+            # Always use horizontal scroll to prevent wrapping
+            movie_html = '<div class="movie-row-container">'
+            for movie in results:
+                movie_id = movie.get('id')
+                poster_url = tmdb.get_image_url(movie.get("poster_path"))
+                card_html = ui.render_movie_card(movie, poster_url)
+                movie_html += '<a href="?movie_id=' + str(movie_id) + '" target="_self" style="text-decoration: none; display: block;">'
+                movie_html += '<div class="movie-item">'
+                movie_html += card_html
+                movie_html += '</div>'
+                movie_html += '</a>'
+            
+            movie_html += '</div>'
+            st.markdown(movie_html, unsafe_allow_html=True)
         else:
             st.info("No movies found.")
         
