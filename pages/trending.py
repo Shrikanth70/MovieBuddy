@@ -8,5 +8,9 @@ def render_trending_page():
     ui.render_movie_grid(weekly, key_prefix="page_trend", columns=5)
 
 if __name__ == "__main__":
-    ui.inject_custom_css()
+    try:
+        ui.inject_custom_css()
+    except Exception as e:
+        st.error(f"CSS injection failed: {e}")
+        print(f"CSS Error: {e}")
     render_trending_page()

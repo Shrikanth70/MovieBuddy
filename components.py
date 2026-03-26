@@ -13,6 +13,8 @@ def get_base64_image(image_path):
         return base64.b64encode(img_file.read()).decode()
 
 
+def inject_custom_css():
+    """Inject global app styles."""
     # Import Poppins font
     st.markdown("""
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Montserrat:wght@400;700;800&display=swap" rel="stylesheet">
@@ -607,8 +609,8 @@ def render_slideshow(movies):
             <div class="slides-container" id="slides-container">
                 <!-- Slides injected by JS -->
             </div>
-            <div class="nav-btn prev" onclick="move(-1)">❮</div>
-            <div class="nav-btn next" onclick="move(1)">❯</div>
+            <div class="nav-btn prev" onclick="move(-1)">&#10094;</div>
+            <div class="nav-btn next" onclick="move(1)">&#10095;</div>
             <div class="indicators" id="indicators"></div>
         </div>
 
@@ -619,27 +621,34 @@ def render_slideshow(movies):
             let currentIdx = 0;
             let autoTimer;
 
+            function escapeHtml(value) {{
+                return String(value ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }}
+
             function init() {{
                 slides.forEach((s, i) => {{
                     // Create slide element
                     const slide = document.createElement('div');
                     slide.className = 'slide';
-                    slide.style.backgroundImage = `url(${{{{s.backdrop}}}})`;
-                    slide.onclick = () => { window.parent.location.href = `/?movie_id=${{{{s.id}}}}`; };
-                    
-                    slide.innerHTML = `
-                        <div class="slide-overlay"></div>
-                        <div class="slide-content">
-                            <div class="badge">Featured Selection</div>
-                            <div class="title">${{{{s.title}}}}</div>
-                            <div class="meta">
-                                <span class="year-box">${{{{s.year}}}}</span>
-                                <span>|</span>
-                                <span class="rating">⭐ ${{{{s.rating}}}}</span>
-                            </div>
-                            <p class="overview">${{{{s.overview}}}}</p>
-                        </div>
-                    `;
+                    slide.style.backgroundImage = 'url(' + s.backdrop + ')';
+                    slide.onclick = () => {{ window.parent.location.href = '/?movie_id=' + encodeURIComponent(String(s.id)); }};
+                    slide.innerHTML =
+                        '<div class="slide-overlay"></div>' +
+                        '<div class="slide-content">' +
+                            '<div class="badge">Featured Selection</div>' +
+                            '<div class="title">' + escapeHtml(s.title) + '</div>' +
+                            '<div class="meta">' +
+                                '<span class="year-box">' + escapeHtml(s.year) + '</span>' +
+                                '<span>|</span>' +
+                                '<span class="rating">&#11088; ' + escapeHtml(s.rating) + '</span>' +
+                            '</div>' +
+                            '<p class="overview">' + escapeHtml(s.overview) + '</p>' +
+                        '</div>';
                     container.appendChild(slide);
 
                     // Create indicator dot
@@ -665,7 +674,7 @@ def render_slideshow(movies):
             }}
 
             function update() {{
-                container.style.transform = `translateX(-${{{{currentIdx * 100}}}}%)`;
+                container.style.transform = 'translateX(-' + (currentIdx * 100) + '%)';
                 Array.from(indicators.children).forEach((dot, i) => {{
                     dot.className = 'dot' + (i === currentIdx ? ' active' : '');
                 }});
@@ -894,4 +903,5 @@ def render_native_hero(movie, poster_url):
     </html>
     """
     st.components.v1.html(html, height=500, scrolling=False)
+
 

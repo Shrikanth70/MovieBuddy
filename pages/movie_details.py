@@ -191,7 +191,11 @@ def render_movie_details_page():
         ui.render_movie_grid(recs, key_prefix="page_recs")
 
 if __name__ == "__main__":
-    ui.inject_custom_css()
+    try:
+        ui.inject_custom_css()
+    except Exception as e:
+        st.error(f"CSS injection failed: {e}")
+        print(f"CSS Error: {e}")
     # Background Texture
     st.markdown('<div class="bg-texture"></div>', unsafe_allow_html=True)
     render_movie_details_page()

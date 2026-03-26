@@ -25,8 +25,12 @@ st.set_page_config(
 # We use optimized caching (@st.cache_data) in tmdb_service.py to ensure 
 # fast recovery and smooth performance upon wake-up.
 
-# Inject Custom CSS
-ui.inject_custom_css()
+# Inject Custom CSS (with error handling)
+try:
+    ui.inject_custom_css()
+except Exception as e:
+    st.error(f"CSS injection failed: {e}")
+    print(f"CSS Error: {e}")  # Terminal log
 
 # Background Texture
 st.markdown('<div class="bg-texture"></div>', unsafe_allow_html=True)
