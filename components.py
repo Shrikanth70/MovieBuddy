@@ -418,9 +418,9 @@ def render_slideshow(movies):
         .hero-meta .sep {{ color: rgba(255,255,255,0.4); }}
         .hero-meta .tag {{ color: #8B949E; font-weight: 400; }}
         .hero-overview {{ color: rgba(255,255,255,0.9); font-size: 14px; line-height: 1.6; margin-bottom: 24px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
-        .hero-btn:hover { background: #FFFFFF; color: #000000; transform: translateY(-3px); box-shadow: 0 5px 20px rgba(255,255,255,0.4); }
-        .hero-btns-row { display: flex; gap: 15px; }
-        .carousel-controls { position: absolute; bottom: 60px; right: 60px; z-index: 10; display: flex; gap: 15px; }
+        .hero-btn:hover {{ background: #FFFFFF; color: #000000; transform: translateY(-3px); box-shadow: 0 5px 20px rgba(255,255,255,0.4); }}
+        .hero-btns-row {{ display: flex; gap: 15px; }}
+        .carousel-controls {{ position: absolute; bottom: 60px; right: 60px; z-index: 10; display: flex; gap: 15px; }}
         .carousel-btn {{ background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; }}
         .carousel-btn:hover {{ background: #E50914; border-color: #E50914; }}
         .carousel-indicators {{ position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10; }}
@@ -456,7 +456,7 @@ def render_slideshow(movies):
         window.parentNavigate = (id) => {{
             window.parent.location.href = window.parent.location.origin + window.parent.location.pathname + '?movie_id=' + id;
         }};
-        setInterval(nextSlide, 6000);
+        setInterval(nextSlide, 15000);
     </script>
     </body>
     </html>
