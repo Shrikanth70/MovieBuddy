@@ -63,7 +63,7 @@ def render_movie_row(title, movies, key_prefix, category_id=None):
     if not movies:
         return
         
-    st.markdown(f'<h3 style="margin-top: 30px; margin-bottom: 15px;">{title}</h3>', unsafe_allow_html=True)
+    st.markdown(f'<h3 class="section-title">{title}</h3>', unsafe_allow_html=True)
     
     # Always use horizontal scroll to prevent wrapping
     movie_html = '<div class="movie-scroll">'

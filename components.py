@@ -59,6 +59,14 @@ def inject_custom_css():
         margin: auto !important;
     }
 
+    /* Responsive padding for mobile */
+    @media (max-width: 768px) {
+        .block-container {
+            padding-top: 0.5rem;
+            padding-bottom: 1rem;
+        }
+    }
+
     /* Background Texture */
     .bg-texture {
         position: fixed;
@@ -192,6 +200,31 @@ def inject_custom_css():
 
     .rating { color: var(--accent); font-weight: 700; display: flex; align-items: center; gap: 4px; }
 
+    /* Section Title Styling */
+    .section-title {
+        margin-top: 30px;
+        margin-bottom: 15px;
+        font-size: 24px;
+        font-weight: 700;
+        color: white;
+    }
+
+    @media (max-width: 768px) {
+        .section-title {
+            margin-top: 20px;
+            margin-bottom: 12px;
+            font-size: 20px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .section-title {
+            margin-top: 12px;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+    }
+
     /* Premium Text Logo Styling */
     .logo-link {
         text-decoration: none !important;
@@ -208,6 +241,18 @@ def inject_custom_css():
         line-height: 1;
         cursor: pointer;
         display: block;
+    }
+
+    @media (max-width: 768px) {
+        .logo-text {
+            font-size: 32px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .logo-text {
+            font-size: 28px;
+        }
     }
 
     .logo-movie { color: var(--accent); }
@@ -471,6 +516,16 @@ def inject_custom_css():
     .movie-item {
         flex: 0 0 180px; /* Fixed width */
         text-align: center;
+    }
+
+    @media (max-width: 480px) {
+        .movie-scroll {
+            gap: 10px;
+            padding: 8px 0;
+        }
+        .movie-item {
+            flex: 0 0 140px; /* Smaller on mobile */
+        }
     }
     
     /* Movie Details 2-Column */
