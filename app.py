@@ -94,6 +94,13 @@ def render_detail_view(movie_id):
             st.rerun()
         return
 
+    # Store previous params for back navigation
+    if "previous_params" not in st.session_state:
+        prev = dict(st.query_params)
+        if "movie_id" in prev:
+            del prev["movie_id"]
+        st.session_state.previous_params = prev
+
     # Render Backdrop behind everything
     backdrop_url = tmdb.get_image_url(movie.get("backdrop_path"), size="original")
     poster_url = tmdb.get_image_url(movie.get("poster_path"))
@@ -104,7 +111,12 @@ def render_detail_view(movie_id):
     with col_b:
         st.markdown('<div class="back-btn-col">', unsafe_allow_html=True)
         if st.button("← Back"):
-            st.query_params.clear()
+            if "previous_params" in st.session_state:
+                st.query_params.update(st.session_state.previous_params)
+                del st.session_state.previous_params
+            else:
+                st.query_params.clear()
+                st.query_params["home"] = "true"
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
             
