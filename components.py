@@ -550,75 +550,61 @@ def render_slideshow(movies):
         
         indicators_html += f'<div class="carousel-indicator {active_class}" onclick="jumpToSlide({idx})"></div>'
         
-    carousel_html = f"""
-    <div class="carousel-container" id="heroCarousel">
-        {slides_html}
-        
-        <div class="carousel-controls">
-            <button class="carousel-btn" onclick="prevSlide()">❮</button>
-            <button class="carousel-btn" onclick="nextSlide()">❯</button>
-        </div>
-        
-        <div class="carousel-indicators">
-            {indicators_html}
-        </div>
-    </div>
-    
-    <script>
-        (function() {{
-            const container = document.getElementById('heroCarousel');
-            if (!container) return;
-            
-            const slides = container.querySelectorAll('.carousel-item');
-            const indicators = container.querySelectorAll('.carousel-indicator');
-            let currentIndex = 0;
-            let intervalId = null;
-            const slideDuration = 6000; // 6 seconds
-            
-            function showSlide(index) {{
-                slides.forEach((el, i) => {{
-                    el.classList.remove('active');
-                    indicators[i].classList.remove('active');
-                    if (i === index) {{
-                        el.classList.add('active');
-                        indicators[i].classList.add('active');
-                    }}
-                }});
-                currentIndex = index;
-            }}
-            
-            window.nextSlide = function() {{
-                const nextIndex = (currentIndex + 1) % slides.length;
-                showSlide(nextIndex);
-            }};
-            
-            window.prevSlide = function() {{
-                const prevIndex = (currentIndex - 1 + slides.length) % slides.length;
-                showSlide(prevIndex);
-            }};
-            
-            window.jumpToSlide = function(index) {{
-                showSlide(index);
-            }};
-            
-            function startAutoplay() {{
-                if (intervalId) clearInterval(intervalId);
-                intervalId = setInterval(window.nextSlide, slideDuration);
-            }}
-            
-            function stopAutoplay() {{
-                if (intervalId) clearInterval(intervalId);
-            }}
-            
-            container.addEventListener('mouseenter', stopAutoplay);
-            container.addEventListener('mouseleave', startAutoplay);
-            container.addEventListener('touchstart', stopAutoplay, {{passive: true}});
-            container.addEventListener('touchend', startAutoplay, {{passive: true}});
-            
-            startAutoplay();
-        }})();
-    </script>
-    """
+    carousel_html = f"""<div class="carousel-container" id="heroCarousel">
+{slides_html}
+<div class="carousel-controls">
+<button class="carousel-btn" onclick="prevSlide()">❮</button>
+<button class="carousel-btn" onclick="nextSlide()">❯</button>
+</div>
+<div class="carousel-indicators">
+{indicators_html}
+</div>
+</div>
+<script>
+(function() {{
+const container = document.getElementById('heroCarousel');
+if (!container) return;
+const slides = container.querySelectorAll('.carousel-item');
+const indicators = container.querySelectorAll('.carousel-indicator');
+let currentIndex = 0;
+let intervalId = null;
+const slideDuration = 6000;
+function showSlide(index) {{
+slides.forEach((el, i) => {{
+el.classList.remove('active');
+indicators[i].classList.remove('active');
+if (i === index) {{
+el.classList.add('active');
+indicators[i].classList.add('active');
+}}
+}});
+currentIndex = index;
+}}
+window.nextSlide = function() {{
+const nextIndex = (currentIndex + 1) % slides.length;
+showSlide(nextIndex);
+}};
+window.prevSlide = function() {{
+const prevIndex = (currentIndex - 1 + slides.length) % slides.length;
+showSlide(prevIndex);
+}};
+window.jumpToSlide = function(index) {{
+showSlide(index);
+}};
+function startAutoplay() {{
+if (intervalId) clearInterval(intervalId);
+intervalId = setInterval(window.nextSlide, slideDuration);
+}}
+function stopAutoplay() {{
+if (intervalId) clearInterval(intervalId);
+}}
+container.addEventListener('mouseenter', stopAutoplay);
+container.addEventListener('mouseleave', startAutoplay);
+container.addEventListener('touchstart', stopAutoplay, {{passive: true}});
+container.addEventListener('touchend', startAutoplay, {{passive: true}});
+startAutoplay();
+}})();
+</script>"""
     
     st.markdown(carousel_html, unsafe_allow_html=True)
 

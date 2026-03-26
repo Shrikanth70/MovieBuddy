@@ -141,6 +141,24 @@ def get_movie_videos(movie_id):
         return trailers
     return []
 
+def get_trending_indian(limit=20):
+    """Fetch trending OTT movies from all major Indian regional languages combined."""
+    ninety_days_ago = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime("%Y-%m-%d")
+    
+    # We combine te, hi, ta, kn, ml in a single discover call
+    params = {
+        "with_original_language": "te|hi|ta|kn|ml",
+        "sort_by": "popularity.desc",
+        "primary_release_date.gte": ninety_days_ago,
+        "vote_count.gte": 50,
+        "with_watch_monetization_types": "flatrate",
+        "watch_region": "IN"
+    }
+    data = fetch_from_tmdb("discover/movie", params=params)
+    if data and data.get("results"):
+        return data["results"][:limit]
+    return []
+
 def get_movie_reviews(movie_id, limit=3):
     """Fetch user reviews for a movie from TMDB."""
     data = fetch_from_tmdb(f"movie/{movie_id}/reviews")

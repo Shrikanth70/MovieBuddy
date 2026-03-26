@@ -178,6 +178,8 @@ def render_category_view(category_id, title):
             movies = tmdb.get_trending_by_language("kn", limit=40)
         elif category_id == "trending_ml":
             movies = tmdb.get_trending_by_language("ml", limit=40)
+        elif category_id == "trending_indian":
+            movies = tmdb.get_trending_indian(limit=40)
         elif category_id == "other_lang":
             movies = tmdb.get_other_languages_ott(limit=40)
         elif str(category_id).startswith("rec_"):
@@ -334,6 +336,7 @@ def main():
 
     render_movie_row("Just Arrived on OTT", prioritize_movies(tmdb.get_recent_ott_movies(limit=40)), "recent_ott", "recent_ott")
     render_movie_row("All-Time Favorites", prioritize_movies(get_daily_shuffled_favorites()), "fav", "all_time")
+    render_movie_row("Trending Indian Movies", prioritize_movies(tmdb.get_trending_indian(limit=40)), "ind", "trending_indian")
     render_movie_row("Trending Telugu OTT Movies", prioritize_movies(tmdb.get_trending_by_language("te", limit=40)), "te", "trending_te")
     render_movie_row("Trending Hindi OTT Movies", prioritize_movies(tmdb.get_trending_by_language("hi", limit=40)), "hi", "trending_hi")
     render_movie_row("Trending Tamil OTT Movies", prioritize_movies(tmdb.get_trending_by_language("ta", limit=40)), "ta", "trending_ta")
