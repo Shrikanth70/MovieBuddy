@@ -415,19 +415,36 @@ def inject_custom_css():
     .cast-scroll::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
 
     .cast-item {
-        flex: 0 0 120px;
+        flex: 0 0 140px;
         text-align: center;
+        margin-right: 15px;
     }
     .cast-img {
-        width: 100px;
-        height: 100px;
+        width: 120px;
+        height: 120px;
         border-radius: 50%;
         object-fit: cover;
         margin-bottom: 10px;
         border: 2px solid rgba(255,255,255,0.1);
     }
-    .cast-name { font-size: 13px; font-weight: 700; color: white; display: block; }
-    .cast-role { font-size: 11px; color: var(--text-muted); }
+    .cast-name { 
+        font-size: 14px; 
+        font-weight: 700; 
+        color: white; 
+        display: block;
+        margin-bottom: 5px;
+        line-height: 1.3;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+    }
+    .cast-role { 
+        font-size: 12px; 
+        color: var(--text-muted);
+        line-height: 1.2;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
     
     /* Movie Details 2-Column */
     .details-container {

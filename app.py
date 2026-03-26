@@ -176,16 +176,23 @@ def render_detail_view(movie_id):
         crew_html += '</div>'
         st.markdown(crew_html, unsafe_allow_html=True)
         
-        # Cast display using Streamlit columns
+        # Cast display using horizontal scroll container
         if cast:
-            cast_cols = st.columns(min(len(cast), 8))
-            for i, actor in enumerate(cast[:8]):
-                with cast_cols[i]:
-                    profile_path = actor.get("profile_path")
-                    img = f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else "https://via.placeholder.com/100x150?text=No+Photo"
-                    st.image(img, width=100)
-                    st.markdown(f"<div style='text-align: center; font-size: 13px; font-weight: 700; color: white; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;'>{actor.get('name', 'Unknown')}</div>", unsafe_allow_html=True)
-                    st.markdown(f"<div style='text-align: center; font-size: 11px; color: #8B949E; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;'>{actor.get('character', 'Actor')}</div>", unsafe_allow_html=True)
+            cast_html = '<div class="cast-scroll">'
+            for actor in cast[:8]:
+                profile_path = actor.get("profile_path")
+                img = f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else "https://via.placeholder.com/120x120?text=No+Photo"
+                name = actor.get('name', 'Unknown')
+                character = actor.get('character', 'Actor')
+                cast_html += f'''
+                    <div class="cast-item">
+                        <img src="{img}" class="cast-img" alt="{name}">
+                        <div class="cast-name">{name}</div>
+                        <div class="cast-role">{character}</div>
+                    </div>
+                '''
+            cast_html += '</div>'
+            st.markdown(cast_html, unsafe_allow_html=True)
         
         # PROVIDER LINKS MAPPING
         providers = tmdb.get_watch_providers(movie_id)
