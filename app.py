@@ -70,46 +70,30 @@ def render_movie_row(title, movies, key_prefix, category_id=None, max_items=5, s
         
     st.markdown(f'<h3 style="margin-top: 30px; margin-bottom: 15px;">{title}</h3>', unsafe_allow_html=True)
     
-    if max_items <= 6:
-        # Use grid layout for small numbers
-        cols = st.columns(max_items, gap="small")
-        for idx, movie in enumerate(movies[:max_items]):
-            with cols[idx]:
-                movie_id = movie.get('id')
-                poster_url = tmdb.get_image_url(movie.get("poster_path"))
-                st.markdown(f'''
-                    <a href="?movie_id={movie_id}" target="_self" style="text-decoration: none; display: block;">
-                        <div class="native-card-wrapper">
-                            {ui.render_movie_card(movie, poster_url)}
-                        </div>
-                    </a>
-                ''', unsafe_allow_html=True)
-                    
-        # See More card
-        if show_see_more and category_id and len(movies) > max_items:
-            with cols[max_items-1]:
-                clean_title = strip_html(title).replace(' ', '+')
-                st.markdown(f'''
-                    <a href="?category_id={category_id}&title={clean_title}" target="_self" style="text-decoration: none; display: block;">
-                        <div class="native-card-wrapper">
-                            {ui.render_see_more_card()}
-                        </div>
-                    </a>
-                ''', unsafe_allow_html=True)
-    else:
-        # Use horizontal scroll for large numbers
-        movie_html = '<div class="movie-scroll">'
-        for movie in movies[:max_items]:
-            movie_id = movie.get('id')
-            poster_url = tmdb.get_image_url(movie.get("poster_path"))
-            card_html = ui.render_movie_card(movie, poster_url)
-            movie_html += '<a href="?movie_id=' + str(movie_id) + '" target="_self" style="text-decoration: none; display: block;">'
-            movie_html += '<div class="movie-item">'
-            movie_html += card_html
-            movie_html += '</div>'
-            movie_html += '</a>'
+    # Always use horizontal scroll to prevent wrapping
+    movie_html = '<div class="movie-scroll">'
+    for movie in movies[:max_items]:
+        movie_id = movie.get('id')
+        poster_url = tmdb.get_image_url(movie.get("poster_path"))
+        card_html = ui.render_movie_card(movie, poster_url)
+        movie_html += '<a href="?movie_id=' + str(movie_id) + '" target="_self" style="text-decoration: none; display: block;">'
+        movie_html += '<div class="movie-item">'
+        movie_html += card_html
         movie_html += '</div>'
-        st.markdown(movie_html, unsafe_allow_html=True)
+        movie_html += '</a>'
+    
+    # See More card
+    if show_see_more and category_id and len(movies) > max_items:
+        clean_title = strip_html(title).replace(' ', '+')
+        see_more_html = ui.render_see_more_card()
+        movie_html += '<a href="?category_id=' + category_id + '&title=' + clean_title + '" target="_self" style="text-decoration: none; display: block;">'
+        movie_html += '<div class="movie-item">'
+        movie_html += see_more_html
+        movie_html += '</div>'
+        movie_html += '</a>'
+    
+    movie_html += '</div>'
+    st.markdown(movie_html, unsafe_allow_html=True)
 
 def render_detail_view(movie_id):
     """Render movie details inline."""

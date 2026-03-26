@@ -94,8 +94,8 @@ def inject_custom_css():
         justify-content: center;
         background: rgba(255,255,255,0.05);
         border-radius: var(--radius-md);
-        height: 100%;
-        min-height: 270px;
+        height: 320px; /* Match movie-card height */
+        width: 180px; /* Match movie-card width */
         color: var(--accent);
         font-weight: 700;
         text-decoration: none;
@@ -120,6 +120,8 @@ def inject_custom_css():
         position: relative;
         text-decoration: none !important;
         display: block;
+        height: 320px; /* Fixed height for consistency */
+        width: 180px; /* Fixed width */
     }
 
     .movie-card, .hero-btn, .carousel-btn, .carousel-indicator, .see-more-card { cursor: pointer !important; }
@@ -156,22 +158,28 @@ def inject_custom_css():
 
     .card-img {
         width: 100%;
-        aspect-ratio: 2/3;
+        height: 240px; /* Fixed height */
         object-fit: cover;
     }
 
     .card-info {
         padding: 15px;
+        height: 80px; /* Fixed height for card info */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
     .card-title {
         font-size: 15px;
         font-weight: 700;
         margin-bottom: 6px;
-        white-space: nowrap;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
         overflow: hidden;
-        text-overflow: ellipsis;
         color: var(--text-main);
+        line-height: 1.3;
     }
 
     .card-meta {
@@ -454,12 +462,14 @@ def inject_custom_css():
         padding: 10px 0;
         scrollbar-width: thin;
         scrollbar-color: var(--accent) transparent;
+        flex-wrap: nowrap; /* Prevent wrapping */
+        align-items: stretch; /* Ensure equal height */
     }
     .movie-scroll::-webkit-scrollbar { height: 6px; }
     .movie-scroll::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
     
     .movie-item {
-        flex: 0 0 140px;
+        flex: 0 0 180px; /* Fixed width */
         text-align: center;
     }
     
