@@ -122,52 +122,42 @@ def inject_custom_css():
     .native-card-wrapper {
         position: relative;
         width: 100%;
-        margin-bottom: 25px; /* Clean row spacing */
-        transition: transform 0.3s ease;
+        margin-bottom: 5px; /* Tight grid */
     }
     
-    /* Target the Streamlit button container precisely */
-    .native-card-wrapper .stButton {
+    /* This targets the Streamlit button container and forces it to ZERO size in the flow */
+    [data-testid="stVerticalBlock"] > div:has(.native-card-wrapper) + div {
         position: absolute !important;
-        inset: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
+        overflow: visible !important;
         z-index: 100;
-        line-height: 0;
     }
     
-    .native-card-wrapper .stButton button {
-        width: 100% !important;
-        height: 100% !important;
-        min-height: 270px !important; /* Matches card height */
+    /* Make the ACTUAL button fill the card space above it */
+    [data-testid="stVerticalBlock"] > div:has(.native-card-wrapper) + div button {
+        position: absolute !important;
+        top: -285px !important; /* Move it back onto the card */
+        left: 0 !important;
+        width: 170px !important; /* Fixed card width to be safe */
+        height: 275px !important;
         background: transparent !important;
         border: none !important;
         color: transparent !important;
-        opacity: 0 !important; /* Force invisibility */
         box-shadow: none !important;
         cursor: pointer !important;
-        margin: 0 !important;
-        padding: 0 !important;
+        opacity: 0 !important;
+        display: block !important;
     }
     
-    /* Ensure the button doesn't show any Streamlit default states */
-    .native-card-wrapper .stButton button:hover, 
-    .native-card-wrapper .stButton button:active,
-    .native-card-wrapper .stButton button:focus {
-        background: transparent !important;
-        color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        outline: none !important;
-    }
-    
-    /* Premium Hover via Wrapper */
+    /* Hover effect for the card when we are in the zone */
     .native-card-wrapper:hover .movie-card {
         transform: translateY(-8px);
         border-color: #E50914;
-        box-shadow: 0 12px 30px rgba(0,0,0,0.7), 0 0 15px rgba(229, 9, 20, 0.3);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.8);
     }
-    .native-card-wrapper:hover .card-overlay-hint { opacity: 1; }
 
     .card-img {
         width: 100%;
@@ -622,28 +612,27 @@ def render_omdb_reviews(omdb_data):
         st.markdown('<div style="color: var(--text-muted);">Aggregate ratings not available</div>', unsafe_allow_html=True)
 
 def render_native_hero(movie, poster_url):
-    """Render a premium featured movie hero with high-end cinematic visuals."""
-    title = movie.get('title', 'Featured Selection')
+    """Render a premium featured movie hero with clean cinematic visuals."""
+    title = movie.get('title', 'Featured')
     overview = movie.get('overview', '')
     rating = round(movie.get('vote_average', 0), 1)
     year = movie.get('release_date', '2024')[:4]
     
     return f"""
-    <div class="native-hero" style="position: relative; height: 520px; width: 100%; border-radius: 20px; overflow: hidden; margin-bottom: 30px; background: #000; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
-        <div style="position: absolute; inset: 0; background-image: url('{poster_url}'); background-size: cover; background-position: center 20%; z-index: 1; opacity: 0.8;"></div>
-        <!-- Premium Radial Gradient for Depth -->
-        <div style="position: absolute; inset: 0; background: radial-gradient(circle at 20% 50%, rgba(14,17,23,0.95) 0%, rgba(14,17,23,0.4) 60%, rgba(14,17,23,0) 100%); z-index: 2;"></div>
-        <div style="position: absolute; inset: 0; background: linear-gradient(0deg, rgba(14,17,23,1) 0%, transparent 40%); z-index: 2;"></div>
+    <div class="native-hero" style="position: relative; height: 500px; width: 100%; border-radius: 20px; overflow: hidden; margin-bottom: 20px; background: #000;">
+        <div style="position: absolute; inset: 0; background: url('{poster_url}') center 20% / cover no-repeat; opacity: 0.7; z-index: 1;"></div>
+        <div style="position: absolute; inset: 0; background: radial-gradient(circle at 20% 50%, rgba(14,17,23,0.9) 0%, rgba(14,17,23,0.3) 70%, transparent 100%); z-index: 2;"></div>
+        <div style="position: absolute; inset: 0; background: linear-gradient(0deg, #0e1117 0%, transparent 50%); z-index: 2;"></div>
         
-        <div style="position: absolute; bottom: 80px; left: 80px; z-index: 3; max-width: 700px;">
-            <div style="background: rgba(229, 9, 20, 0.2); color: #E50914; padding: 4px 12px; border-radius: 4px; display: inline-block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; border: 1px solid rgba(229, 9, 20, 0.3);">Featured Tonight</div>
-            <h1 style="font-size: 56px; font-weight: 900; line-height: 1.1; margin-bottom: 20px; color: white; text-shadow: 0 4px 20px rgba(0,0,0,1); letter-spacing: -1px;">{title}</h1>
-            <div style="font-size: 16px; font-weight: 600; margin-bottom: 25px; color: rgba(255,255,255,0.7); display: flex; gap: 15px; align-items: center;">
-                <span style="color: white; border: 1px solid rgba(255,255,255,0.2); padding: 1px 8px; border-radius: 4px;">{year}</span>
-                <span style="background: rgba(255,193,7,0.15); color: #FFC107; padding: 2px 10px; border-radius: 5px; font-weight: 800; border: 1px solid rgba(255,193,7,0.2);">⭐ {rating}</span>
-                <span>Exclusive on MovieBuddy</span>
+        <div style="position: absolute; bottom: 60px; left: 60px; z-index: 3; max-width: 650px; text-align: left;">
+            <div style="display: inline-block; background: rgba(229, 9, 20, 0.2); color: #E50914; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 800; text-transform: uppercase; margin-bottom: 15px; border: 1px solid rgba(229,9,20,0.2);">FEATURED SELECTION</div>
+            <h1 style="font-size: 52px; font-weight: 900; color: white; margin-bottom: 15px; line-height: 1; text-shadow: 0 5px 15px rgba(0,0,0,0.5);">{title}</h1>
+            <div style="display: flex; gap: 15px; align-items: center; color: rgba(255,255,255,0.7); font-weight: 600; margin-bottom: 20px;">
+                <span style="border: 1px solid rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px;">{year}</span>
+                <span style="color: #FFC107;">★ {rating}</span>
+                <span>Exclusive</span>
             </div>
-            <p style="color: rgba(255,255,255,0.8); font-size: 16px; line-height: 1.6; margin-bottom: 30px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-weight: 400;">{overview}</p>
+            <p style="font-size: 15px; color: rgba(255,255,255,0.8); line-height: 1.6; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">{overview}</p>
         </div>
     </div>
     """

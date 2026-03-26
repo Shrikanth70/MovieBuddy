@@ -304,7 +304,7 @@ def main():
         return
 
     # Persistent Top Header
-    head_col1, head_col2 = st.columns([5, 1.5], gap="large")
+    head_col1, head_col2 = st.columns([5, 1.5])
     with head_col1:
         st.markdown(f'''
             <a href="/?home=true" target="_self" class="logo-link">
@@ -354,15 +354,21 @@ def main():
                 div[data-testid="stColumn"] button[kind="secondary"] {
                     background: #E50914 !important; color: white !important; border: none !important;
                     font-weight: 800 !important; text-transform: uppercase !important;
-                    height: 52px !important; width: 100% !important; border-radius: 8px !important;
+                    height: 46px !important; width: 100% !important; border-radius: 6px !important;
                     letter-spacing: 1px !important; transition: all 0.3s ease !important;
+                    font-size: 13px !important;
+                    display: flex !important; align-items: center !important; justify-content: center !important;
                 }
                 div[data-testid="stColumn"] button[kind="secondary"]:hover { 
                     background: white !important; color: black !important; 
-                    transform: scale(1.02); box-shadow: 0 0 20px rgba(255,255,255,0.4);
+                    transform: translateY(-2px); box-shadow: 0 5px 15px rgba(229,9,20,0.4);
+                }
+                /* Target the specific Next button */
+                div[data-testid="stColumn"]:nth-child(2) button[kind="secondary"] {
+                    font-size: 18px !important;
                 }
             </style>""", unsafe_allow_html=True)
-            if st.button(f"▶ VIEW DETAILS", key="hero_cta_native"):
+            if st.button(f"VIEW DETAILS", key="hero_cta_native"):
                 st.query_params.movie_id = featured.get('id')
                 st.rerun()
         with h_col2:
