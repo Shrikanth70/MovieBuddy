@@ -116,43 +116,29 @@ def inject_custom_css():
         display: block;
     }
 
-    .movie-card:hover {
+    .movie-card, .hero-btn, .carousel-btn, .carousel-indicator, .see-more-card { cursor: pointer !important; }
+    
+    .native-card-wrapper button {
+        position: absolute !important;
+        top: -300px !important; /* Move it UP into the card's space */
+        height: 300px !important;
+        width: 100% !important;
+        background: transparent !important;
+        color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        z-index: 100 !important;
+        cursor: pointer !important;
+    }
+    
+    /* Hover effect for the card when its overlay button is hovered */
+    .native-card-wrapper:hover .movie-card {
         transform: translateY(-10px);
         border-color: var(--accent);
         box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 20px var(--accent-glow);
     }
-    
-    .card-overlay-hint {
-        position: absolute;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.6);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transition: var(--transition);
-        backdrop-filter: blur(4px);
-        z-index: 5;
-    }
-    
-    .card-overlay-hint span {
-        background: var(--accent);
-        color: white;
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-weight: 800;
-        font-size: 12px;
-        letter-spacing: 1.5px;
-        transform: translateY(20px);
-        transition: var(--transition);
-        box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
-    }
-    
-    .movie-card:hover .card-overlay-hint { opacity: 1; }
-    .movie-card:hover .card-overlay-hint span { transform: translateY(0); }
-    
-    .movie-card, .hero-btn, .carousel-btn, .carousel-indicator, .see-more-card { cursor: pointer !important; }
+    .native-card-wrapper:hover .card-overlay-hint { opacity: 1; }
+    .native-card-wrapper:hover .card-overlay-hint span { transform: translateY(0); }
 
     .card-img {
         width: 100%;
@@ -397,9 +383,7 @@ def render_slideshow(movies):
                 </div>
                 <p class="hero-overview">{overview}</p>
                 <div class="hero-btns-row">
-                    <a href="/?movie_id={movie.get('id')}" target="_top" class="hero-btn">
-                        ▶ View Details
-                    </a>
+                    <!-- CTA removed for Sandbox-safe native button below -->
                 </div>
             </div>
         </div>
@@ -482,14 +466,14 @@ def render_movie_card(movie, poster_url):
         poster_url = f"data:image/png;base64,{b64_img}"
         
     return f"""
-    <a href="/?movie_id={mid}" target="_parent" class="movie-card" style="text-decoration: none;">
+    <div class="movie-card">
         <div style="position: relative;">
             <img src="{poster_url}" class="card-img">
             <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: var(--accent); padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid rgba(229,9,20,0.3); backdrop-filter: blur(4px);">
                 {lang}
             </div>
-            <div class="card-overlay-hint">
-                <span>VIEW DETAILS</span>
+            <div class="card-overlay-hint" style="position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; opacity: 0; transition: var(--transition); backdrop-filter: blur(4px); z-index: 5;">
+                <span style="background: var(--accent); color: white; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 12px; letter-spacing: 1.5px; transform: translateY(20px); transition: var(--transition); box-shadow: 0 4px 15px rgba(229,9,20,0.4);">VIEW DETAILS</span>
             </div>
         </div>
         <div class="card-info">
@@ -499,7 +483,7 @@ def render_movie_card(movie, poster_url):
                 <span class="rating">★ {rating}</span>
             </div>
         </div>
-    </a>"""
+    </div>"""
 
 def render_see_more_card():
     """Render a clickable card styled EXACTLY like a movie card for perfect grid alignment."""

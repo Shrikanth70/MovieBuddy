@@ -50,33 +50,32 @@ def navigate_back():
     st.rerun()
 
 def render_movie_row(title, movies, key_prefix, category_id=None):
-    """Render a premium horizontal scrollable row of movies (Netflix-style)."""
+    """Render a premium horizontal scrollable row with native clickable overlays."""
     if not movies:
         return
         
-    st.markdown(f'<h3 style="margin-top: 30px; margin-bottom: 15px;">{title}</h3>', unsafe_allow_html=True)
+    st.markdown(f'<h3 style="margin-top: 30px; margin-bottom: 25px;">{title}</h3>', unsafe_allow_html=True)
+    cols = st.columns(6, gap="small")
     
-    # We use a single markdown block for the entire row to ensure smooth horizontal scrolling
-    row_html = '<div class="movie-row-container">'
-    
-    # Populate movies
-    for movie in movies[:15]: # Show up to 15 in the row
-        poster_url = tmdb.get_image_url(movie.get("poster_path"))
-        card_html = ui.render_movie_card(movie, poster_url)
-        row_html += f'<div class="movie-card-wrapper">{card_html}</div>'
-        
-    # See More Card
-    see_more_link = f"/?category_id={category_id}&title={title}"
-    row_html += f"""
-    <div class="movie-card-wrapper">
-        <a href="{see_more_link}" target="_parent" style="text-decoration: none;">
-            {ui.render_see_more_card()}
-        </a>
-    </div>
-    """
-    
-    row_html += '</div>'
-    st.markdown(row_html, unsafe_allow_html=True)
+    for idx, movie in enumerate(movies[:5]):
+        with cols[idx]:
+            st.markdown('<div class="native-card-wrapper">', unsafe_allow_html=True)
+            poster_url = tmdb.get_image_url(movie.get("poster_path"))
+            st.markdown(ui.render_movie_card(movie, poster_url), unsafe_allow_html=True)
+            if st.button(" ", key=f"nav_{key_prefix}_{movie['id']}_{idx}"):
+                st.query_params.movie_id = movie['id']
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+                
+    if category_id:
+        with cols[5]:
+            st.markdown('<div class="native-card-wrapper">', unsafe_allow_html=True)
+            st.markdown(ui.render_see_more_card(), unsafe_allow_html=True)
+            if st.button(" ", key=f"see_{key_prefix}_{category_id}"):
+                st.query_params.category_id = category_id
+                st.query_params.title = title
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
 def render_detail_view(movie_id):
     with st.spinner("Loading movie details..."):
@@ -249,8 +248,13 @@ def render_category_view(category_id, title):
         cols = st.columns(4)
         for idx, movie in enumerate(movies[row:row+4]):
             with cols[idx]:
+                st.markdown('<div class="native-card-wrapper">', unsafe_allow_html=True)
                 poster_url = tmdb.get_image_url(movie.get("poster_path"))
                 st.markdown(ui.render_movie_card(movie, poster_url), unsafe_allow_html=True)
+                if st.button(" ", key=f"grid_{category_id}_{movie['id']}_{row}_{idx}"):
+                    st.query_params.movie_id = movie['id']
+                    st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Main Layout ---
 def main():
@@ -326,8 +330,13 @@ def main():
                 cols = st.columns(5)
                 for idx, movie in enumerate(results[row:row+5]):
                     with cols[idx]:
+                        st.markdown('<div class="native-card-wrapper">', unsafe_allow_html=True)
                         poster_url = tmdb.get_image_url(movie.get("poster_path"))
                         st.markdown(ui.render_movie_card(movie, poster_url), unsafe_allow_html=True)
+                        if st.button(" ", key=f"search_nav_{movie['id']}_{row}_{idx}"):
+                            st.query_params.movie_id = movie['id']
+                            st.rerun()
+                        st.markdown('</div>', unsafe_allow_html=True)
         else:
             st.warning("No results found.")
             if st.button("⬅ Back Home"):
@@ -352,8 +361,40 @@ def main():
             
         st.session_state.hero_slides = slides
 
-    if st.session_state.hero_slides:
+    if "hero_slides" in st.session_state and st.session_state.hero_slides:
         ui.render_slideshow(st.session_state.hero_slides)
+        # NATIVE CTA BUTTON BELOW HERO (Avoids sandboxing)
+        featured = st.session_state.hero_slides[0]
+        col_c, _ = st.columns([1, 4])
+        with col_c:
+            st.markdown("""
+            <style>
+                div[data-testid="stColumn"] button[kind="secondary"] {
+                    background: #E50914 !important;
+                    color: white !important;
+                    border: none !important;
+                    font-weight: 700 !important;
+                    text-transform: uppercase !important;
+                }
+                div[data-testid="stColumn"] button[kind="secondary"]:hover {
+                    background: white !important;
+                    color: #000000 !important;
+                }
+            </style>
+            """, unsafe_allow_html=True)
+            if st.button(f"▶ VIEW DETAILS: {featured.get('title')}", key="hero_cta_native"):
+                st.query_params.movie_id = featured.get('id')
+                st.rerun()
+        st.markdown('<br>', unsafe_allow_html=True)
+        # NATIVE CTA BUTTON BELOW HERO (Avoids sandboxing)
+        # We target the most relevant featured movie
+        featured = st.session_state.hero_slides[0]
+        col_c, _ = st.columns([1, 4])
+        with col_c:
+            if st.button(f"▶ View Details: {featured.get('title')}", key="hero_cta_native"):
+                st.query_params.movie_id = featured.get('id')
+                st.rerun()
+        st.markdown('<br>', unsafe_allow_html=True)
 
     # Netflix-Style Rows
     # Create a deduplication set to limit movie repetition to a maximum of 2 times across all rows
