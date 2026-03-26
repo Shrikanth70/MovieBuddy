@@ -12,8 +12,7 @@ def get_base64_image(image_path):
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
 
-def inject_custom_css():
-    """Inject premium cinematic CSS into Streamlit."""
+
     # Import Poppins font
     st.markdown("""
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Montserrat:wght@400;700;800&display=swap" rel="stylesheet">
@@ -625,20 +624,20 @@ def render_slideshow(movies):
                     // Create slide element
                     const slide = document.createElement('div');
                     slide.className = 'slide';
-                    slide.style.backgroundImage = `url(${{{s.backdrop}}})`;
-                    slide.onclick = () => { window.parent.location.href = `/?movie_id=${{{s.id}}}`; };
+                    slide.style.backgroundImage = `url(${{{{s.backdrop}}}})`;
+                    slide.onclick = () => { window.parent.location.href = `/?movie_id=$ {{{{s.id}}}}`; };
                     
                     slide.innerHTML = `
                         <div class="slide-overlay"></div>
                         <div class="slide-content">
                             <div class="badge">Featured Selection</div>
-                            <div class="title">${{{s.title}}}</div>
+                            <div class="title">$ {{{{s.title}}}}</div>
                             <div class="meta">
-                                <span class="year-box">${{{s.year}}}</span>
+                                <span class="year-box">$ {{{{s.year}}}}</span>
                                 <span>|</span>
-                                <span class="rating">⭐ ${{{s.rating}}}</span>
+                                <span class="rating">⭐ $ {{{{s.rating}}}}</span>
                             </div>
-                            <p class="overview">${{{s.overview}}}</p>
+                            <p class="overview">$ {{{{s.overview}}}}</p>
                         </div>
                     `;
                     container.appendChild(slide);
