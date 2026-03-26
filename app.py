@@ -8,6 +8,7 @@ def strip_html(text):
 import tmdb_service as tmdb
 import omdb_service as omdb
 import components as ui
+import recommendation as rec_engine
 import time
 import datetime
 import random
