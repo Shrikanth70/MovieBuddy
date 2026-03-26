@@ -59,24 +59,28 @@ def render_movie_row(title, movies, key_prefix, category_id=None):
     # Show up to 5 movies
     for idx, movie in enumerate(movies[:5]):
         with cols[idx]:
+            movie_id = movie.get('id')
             poster_url = tmdb.get_image_url(movie.get("poster_path"))
-            # The card itself
-            st.markdown(f'<div class="native-card-wrapper">{ui.render_movie_card(movie, poster_url)}<div class="card-btn-container">', unsafe_allow_html=True)
-            # The invisible overlay button
-            if st.button("\u00A0", key=f"nav_{key_prefix}_{movie['id']}_{idx}", help=""):
-                st.query_params.movie_id = movie['id']
-                st.rerun()
-            st.markdown('</div></div>', unsafe_allow_html=True)
+            # Wrap in anchor for artifact-free navigation
+            st.markdown(f'''
+                <a href="?movie_id={movie_id}" target="_self" style="text-decoration: none; display: block;">
+                    <div class="native-card-wrapper">
+                        {ui.render_movie_card(movie, poster_url)}
+                    </div>
+                </a>
+            ''', unsafe_allow_html=True)
                 
     # See More card
     if category_id and len(movies) >= 6:
         with cols[5]:
-            st.markdown(f'<div class="native-card-wrapper">{ui.render_see_more_card()}<div class="card-btn-container">', unsafe_allow_html=True)
-            if st.button("\u00A0", key=f"see_{key_prefix}_{category_id}", help=""):
-                st.query_params.category_id = category_id
-                st.query_params.title = title
-                st.rerun()
-            st.markdown('</div></div>', unsafe_allow_html=True)
+            # Wrap See More in anchor
+            st.markdown(f'''
+                <a href="?category_id={category_id}&title={title.replace(' ', '+')}" target="_self" style="text-decoration: none; display: block;">
+                    <div class="native-card-wrapper">
+                        {ui.render_see_more_card()}
+                    </div>
+                </a>
+            ''', unsafe_allow_html=True)
 
 def render_detail_view(movie_id):
     # Persistent Top Header
@@ -99,12 +103,16 @@ def render_detail_view(movie_id):
                 cols = st.columns(5)
                 for idx, movie in enumerate(results[row:row+5]):
                     with cols[idx]:
-                        st.markdown('<div class="native-card-wrapper">', unsafe_allow_html=True)
-                        st.markdown(ui.render_movie_card(movie, tmdb.get_image_url(movie.get("poster_path"))), unsafe_allow_html=True)
-                        if st.button("\u00A0", key=f"detail_search_nav_{movie['id']}_{row}_{idx}", help=""):
-                            st.query_params.movie_id = movie['id']
-                            st.rerun()
-                        st.markdown('</div>', unsafe_allow_html=True)
+                        movie_id = movie.get('id')
+                        poster_url = tmdb.get_image_url(movie.get("poster_path"))
+                        # Wrap in anchor for artifact-free navigation
+                        st.markdown(f'''
+                            <a href="?movie_id={movie_id}" target="_self" style="text-decoration: none; display: block;">
+                                <div class="native-card-wrapper">
+                                    {ui.render_movie_card(movie, poster_url)}
+                                </div>
+                            </a>
+                        ''', unsafe_allow_html=True)
         else:
             st.info("No movies found.")
         return
@@ -128,11 +136,14 @@ def render_detail_view(movie_id):
     # Top Back Button
     col_b, _ = st.columns([1.5, 8.5])
     with col_b:
-        st.markdown('<div class="back-btn-col">', unsafe_allow_html=True)
-        if st.button("← Back", key=f"det_back_{movie_id}"):
-            st.query_params.clear()
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Native back button for 100% styling reliability
+        st.markdown(f'''
+            <div class="back-btn-container">
+                <a href="/?home=true" target="_self" class="back-pill-btn">
+                    <span style="margin-right: 8px;">←</span> BACK
+                </a>
+            </div>
+        ''', unsafe_allow_html=True)
             
     # 2-Column Layout
     col1, col2 = st.columns([1, 2.5], gap="large")
@@ -150,7 +161,7 @@ def render_detail_view(movie_id):
         overview = movie.get("overview", "")
         
         st.markdown(f'<h1 style="font-size: 48px; font-weight: 800; margin-bottom: 5px; line-height: 1.1;">{title}</h1>', unsafe_allow_html=True)
-        st.markdown(f'<div style="color: var(--gold); font-size: 16px; font-weight: 600; margin-bottom: 20px;">{year} &nbsp;|&nbsp; {runtime} &nbsp;|&nbsp; {genres}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="color: rgba(255,255,255,0.65); font-size: 15px; font-weight: 600; margin-bottom: 20px; letter-spacing: 0.3px;">{year} &nbsp;|&nbsp; {runtime} &nbsp;|&nbsp; {genres}</div>', unsafe_allow_html=True)
         
         st.markdown(f'<p style="color: rgba(255,255,255,0.9); font-size: 16px; line-height: 1.6; margin-bottom: 30px;">{overview}</p>', unsafe_allow_html=True)
         
@@ -280,11 +291,14 @@ def render_category_view(category_id, title):
 
     col_back, _ = st.columns([1.5, 8.5])
     with col_back:
-        st.markdown('<div class="back-btn-col">', unsafe_allow_html=True)
-        if st.button("← Back", key=f"back_{category_id}"):
-            st.query_params.clear()
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Native back button for 100% styling reliability
+        st.markdown(f'''
+            <div class="back-btn-container">
+                <a href="/?home=true" target="_self" class="back-pill-btn">
+                    <span style="margin-right: 8px;">←</span> BACK
+                </a>
+            </div>
+        ''', unsafe_allow_html=True)
         
     st.markdown(f'<h2 style="margin-top: 10px;">{title}</h2>', unsafe_allow_html=True)
     st.markdown("---")
@@ -322,12 +336,16 @@ def render_category_view(category_id, title):
         cols = st.columns(4)
         for idx, movie in enumerate(movies[row:row+4]):
             with cols[idx]:
+                movie_id = movie.get('id')
                 poster_url = tmdb.get_image_url(movie.get("poster_path"))
-                st.markdown(f'<div class="native-card-wrapper">{ui.render_movie_card(movie, poster_url)}<div class="card-btn-container">', unsafe_allow_html=True)
-                if st.button("\u00A0", key=f"grid_{category_id}_{movie['id']}_{row}_{idx}", help=""):
-                    st.query_params.movie_id = movie['id']
-                    st.rerun()
-                st.markdown('</div></div>', unsafe_allow_html=True)
+                # Wrap in anchor for artifact-free navigation
+                st.markdown(f'''
+                    <a href="?movie_id={movie_id}" target="_self" style="text-decoration: none; display: block;">
+                        <div class="native-card-wrapper">
+                            {ui.render_movie_card(movie, poster_url)}
+                        </div>
+                    </a>
+                ''', unsafe_allow_html=True)
 
 # --- Main Layout ---
 def main():
@@ -396,12 +414,16 @@ def main():
                 cols = st.columns(5)
                 for idx, movie in enumerate(results[row:row+5]):
                     with cols[idx]:
-                        st.markdown('<div class="native-card-wrapper">', unsafe_allow_html=True)
-                        st.markdown(ui.render_movie_card(movie, tmdb.get_image_url(movie.get("poster_path"))), unsafe_allow_html=True)
-                        if st.button("\u00A0", key=f"search_nav_{movie['id']}_{row}_{idx}", help=""):
-                            st.query_params.movie_id = movie['id']
-                            st.rerun()
-                        st.markdown('</div>', unsafe_allow_html=True)
+                        movie_id = movie.get('id')
+                        poster_url = tmdb.get_image_url(movie.get("poster_path"))
+                        # Wrap in anchor for artifact-free navigation
+                        st.markdown(f'''
+                            <a href="?movie_id={movie_id}" target="_self" style="text-decoration: none; display: block;">
+                                <div class="native-card-wrapper">
+                                    {ui.render_movie_card(movie, poster_url)}
+                                </div>
+                            </a>
+                        ''', unsafe_allow_html=True)
         else:
             st.info("No movies found.")
         return

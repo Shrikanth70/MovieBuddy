@@ -253,84 +253,60 @@ def inject_custom_css():
         box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3) !important;
     }
 
-    /* CRITICAL: Override global red button style for invisible overlay buttons */
-    .card-btn-container > div.stButton > button,
-    .card-btn-container > div.stButton > button:hover,
-    .card-btn-container > div.stButton > button:focus,
-    .card-btn-container > div.stButton > button:active {
-        background: transparent !important;
-        color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        outline: none !important;
-        position: absolute !important;
-        inset: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        opacity: 0 !important;
-        cursor: pointer !important;
-        transform: none !important;
-        z-index: 10;
-        transition: none !important;
+    /* Artifact-Free Navigation: All cards now use native <a> tags */
+    .native-card-wrapper {
+        position: relative;
+        transition: var(--transition) !important;
+        z-index: 1;
+        cursor: pointer;
+        display: block;
+    }
+    .native-card-wrapper:hover {
+        transform: translateY(-8px) scale(1.02) !important;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.6) !important;
     }
 
-    /* Back / navigation buttons: premium pill style */
-    .back-btn-col > div.stButton > button {
-        background: rgba(255,255,255,0.05) !important;
-        color: white !important;
-        border: 1px solid rgba(255,255,255,0.1) !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-        font-weight: 600 !important;
-        font-size: 13px !important;
-        letter-spacing: 0.5px !important;
-        text-transform: uppercase !important;
-        border-radius: 30px !important;
-        padding: 0.5rem 1.2rem !important;
-        backdrop-filter: blur(10px) !important;
-        width: auto !important;
-        min-width: 100px !important;
+    /* Back pill button: Native absolute control */
+    .back-btn-container {
+        margin: 20px 0;
     }
-    .back-btn-col > div.stButton > button:hover {
+    .back-pill-btn {
+        display: inline-flex;
+        align-items: center;
+        background: rgba(255,255,255,0.06) !important;
+        color: white !important;
+        border: 1px solid rgba(255,255,255,0.18) !important;
+        padding: 10px 24px !important;
+        border-radius: 30px !important;
+        font-size: 13px !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 1px !important;
+        text-decoration: none !important;
+        backdrop-filter: blur(10px) !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+    }
+    .back-pill-btn:hover {
         background: white !important;
-        color: black !important;
+        color: #111 !important;
         transform: scale(1.05) !important;
-        box-shadow: 0 8px 25px rgba(255,255,255,0.2) !important;
+        box-shadow: 0 8px 25px rgba(255,255,255,0.15) !important;
         border-color: white !important;
     }
 
-    /* Hero button overlay — invisible full-area click target over the hero */
-    .hero-btn-overlay {
-        position: relative;
-        margin-top: -508px; /* Pull up to overlap the hero */
-        height: 508px;
-        z-index: 5;
-        pointer-events: none; /* Let children handle events */
-    }
-    .hero-btn-overlay > div.stButton > button {
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        height: 500px !important;
-        background: transparent !important;
-        color: transparent !important;
-        border: none !important;
-        opacity: 0 !important;
-        cursor: pointer !important;
-        z-index: 10 !important;
-        box-shadow: none !important;
-        transition: none !important;
-        pointer-events: all !important;
-    }
-    .hero-btn-overlay > div.stButton > button:hover {
-        background: transparent !important;
-        color: transparent !important;
-        transform: none !important;
-        box-shadow: none !important;
+    /* Back button: pill — legacy override (kept for safety) */
+    .stApp .back-btn-col button,
+    .stApp .back-btn-col div.stButton > button {
+        background: rgba(255,255,255,0.06) !important;
+        color: white !important;
+        border-radius: 30px !important;
     }
 
     /* Hero nav wrapper: keeps prev/next as small circles */
-    .hero-nav-wrapper > div.stButton > button {
+    .hero-nav-wrapper button,
+    .hero-nav-wrapper > div > button,
+    .hero-nav-wrapper div.stButton > button {
         background: rgba(255,255,255,0.1) !important;
         color: white !important;
         border: 1px solid rgba(255,255,255,0.2) !important;
@@ -346,7 +322,9 @@ def inject_custom_css():
         padding: 0 !important;
         backdrop-filter: blur(8px) !important;
     }
-    .hero-nav-wrapper > div.stButton > button:hover {
+    .hero-nav-wrapper button:hover,
+    .hero-nav-wrapper > div > button:hover,
+    .hero-nav-wrapper div.stButton > button:hover {
         background: var(--accent) !important;
         color: white !important;
         border-color: var(--accent) !important;
@@ -487,8 +465,11 @@ def render_slideshow(movies):
     rating = round(current_movie.get('vote_average', 0), 1)
     overview = current_movie.get('overview', '').replace("'", "&#39;").replace('"', "&quot;").replace("\n", " ")
     
-    # Hero container with background — wraps visual content
+    movie_id = current_movie.get('id')
+    
+    # Hero container — wrapped in an anchor for native click-to-details navigation (no button artifacts)
     st.markdown(f"""
+    <a href="?movie_id={movie_id}" target="_self" style="display: block; text-decoration: none;">
     <div class="hero-container" style="background-image: url('{backdrop_url}'); background-size: cover; background-position: center 20%; height: 500px; border-radius: 20px; position: relative; display: flex; align-items: flex-end; padding: 60px; box-sizing: border-box; cursor: pointer; overflow: hidden;">
         <div style="position: absolute; inset: 0; background: linear-gradient(0deg, rgba(14,17,23,1) 0%, rgba(14,17,23,0.3) 70%, transparent 100%); border-radius: 20px;"></div>
         <div style="position: absolute; inset: 0; background: radial-gradient(circle at 20% 50%, rgba(14,17,23,0.4) 0%, transparent 100%); border-radius: 20px;"></div>
@@ -503,14 +484,8 @@ def render_slideshow(movies):
             <p class="hero-overview" style="color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; margin-bottom: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-width: 600px;">{overview}</p>
         </div>
     </div>
+    </a>
     """, unsafe_allow_html=True)
-    
-    # Invisible button overlay for clicking the hero (sits right after but positioned over hero via CSS)
-    st.markdown('<div class="hero-btn-overlay">', unsafe_allow_html=True)
-    if st.button("\u00A0", key="hero_click", help="View movie details"):
-        st.query_params.movie_id = current_movie.get('id')
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
     
     # Controls row: indicators on left, nav buttons on right
     ctrl_col_left, ctrl_col_right = st.columns([3, 1])
@@ -585,6 +560,7 @@ def render_see_more_card():
             <div style="color: var(--accent); font-size: 20px; margin-top: 8px;">➔</div>
         </div>
     </div>
+    </div>
     <div class="card-info" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
         <div class="card-title" style="color: var(--text-muted);">Explore All</div>
         <div class="card-meta">
@@ -594,6 +570,25 @@ def render_see_more_card():
     </div>
 </div>"""
 
+def render_movie_grid(movies, key_prefix="grid", columns=5):
+    """Render a responsive movie grid with native anchor links (artifact-free)."""
+    for i in range(0, len(movies), columns):
+        grid_cols = st.columns(columns)
+        for j, movie in enumerate(movies[i:i+columns]):
+            with grid_cols[j]:
+                movie_id = movie.get('id')
+                poster_path = movie.get("poster_path")
+                poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else "placeholder.png"
+                
+                # Wrap movie card in a clickable anchor link pointing to its details
+                card_html = render_movie_card(movie, poster_url)
+                st.markdown(f'''
+                    <a href="?movie_id={movie_id}" target="_self" style="text-decoration: none; display: block; height: 100%;">
+                        <div class="native-card-wrapper">
+                            {card_html}
+                        </div>
+                    </a>
+                ''', unsafe_allow_html=True)
 def render_detail_hero(movie, backdrop_url, poster_url):
     """Render the high-impact movie detail hero."""
     title = movie.get("title")
@@ -654,14 +649,14 @@ def render_watch_providers(providers):
 
 def render_omdb_reviews(omdb_data):
     """Render the OMDB aggregate ratings block."""
-    st.markdown('<h4 style="color: var(--gold); margin-top: 10px; margin-bottom: 20px; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">⭐ Ratings</h4>', unsafe_allow_html=True)
+    st.markdown('<h4 style="color: rgba(255,255,255,0.7); margin-top: 10px; margin-bottom: 20px; text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">⭐ Ratings</h4>', unsafe_allow_html=True)
 
     if omdb_data:
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
             imdb = omdb_data.get("imdbRating", "N/A")
-            st.markdown(f'<div style="text-align: center; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);"><div style="font-size: 24px; color: var(--gold); font-weight: bold;">⭐ {imdb}</div><div style="font-size: 13px; color: var(--text-muted);">IMDb Rating</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div style="text-align: center; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);"><div style="font-size: 24px; color: #FFFFFF; font-weight: bold;">⭐ {imdb}</div><div style="font-size: 13px; color: var(--text-muted);">IMDb Rating</div></div>', unsafe_allow_html=True)
             
         with col2:
             meta = omdb_data.get("Metascore", "N/A")
