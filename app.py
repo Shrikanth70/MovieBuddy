@@ -304,7 +304,7 @@ def main():
         return
 
     # Persistent Top Header
-    head_col1, head_col2 = st.columns([4, 1])
+    head_col1, head_col2 = st.columns([5, 1.5], gap="large")
     with head_col1:
         st.markdown(f'''
             <a href="/?home=true" target="_self" class="logo-link">
@@ -348,15 +348,19 @@ def main():
         st.markdown(ui.render_native_hero(featured, tmdb.get_image_url(featured.get("backdrop_path"), size="original")), unsafe_allow_html=True)
         
         # Native Hero Controls
-        h_col1, h_col2, _ = st.columns([1.2, 0.4, 4])
+        h_col1, h_col2, _ = st.columns([0.8, 0.4, 4])
         with h_col1:
             st.markdown("""<style>
                 div[data-testid="stColumn"] button[kind="secondary"] {
                     background: #E50914 !important; color: white !important; border: none !important;
                     font-weight: 800 !important; text-transform: uppercase !important;
-                    height: 48px !important; width: 100% !important;
+                    height: 52px !important; width: 100% !important; border-radius: 8px !important;
+                    letter-spacing: 1px !important; transition: all 0.3s ease !important;
                 }
-                div[data-testid="stColumn"] button[kind="secondary"]:hover { background: white !important; color: black !important; }
+                div[data-testid="stColumn"] button[kind="secondary"]:hover { 
+                    background: white !important; color: black !important; 
+                    transform: scale(1.02); box-shadow: 0 0 20px rgba(255,255,255,0.4);
+                }
             </style>""", unsafe_allow_html=True)
             if st.button(f"▶ VIEW DETAILS", key="hero_cta_native"):
                 st.query_params.movie_id = featured.get('id')
@@ -365,7 +369,6 @@ def main():
             if st.button("❯", key="hero_next"):
                 st.session_state.hero_index += 1
                 st.rerun()
-        st.markdown('<br>', unsafe_allow_html=True)
 
     # Netflix-Style Rows
 
