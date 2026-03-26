@@ -140,6 +140,13 @@ def inject_custom_css():
         border-color: #E50914;
         box-shadow: 0 15px 35px rgba(0,0,0,0.8);
     }
+    /* Restore the hover overlay tooltip visibility */
+    .native-card-wrapper:hover .card-overlay-hint {
+        opacity: 1 !important;
+    }
+    .native-card-wrapper:hover .card-overlay-hint span {
+        transform: translateY(0) !important;
+    }
 
     .card-img {
         width: 100%;
@@ -263,6 +270,49 @@ def inject_custom_css():
         cursor: pointer !important;
         transform: none !important;
         z-index: 10;
+    }
+
+    /* Back / navigation buttons: ghost style, not red */
+    .back-btn-col > div.stButton > button {
+        background: rgba(255,255,255,0.06) !important;
+        color: white !important;
+        border: 1px solid rgba(255,255,255,0.15) !important;
+        box-shadow: none !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        letter-spacing: 0 !important;
+        text-transform: none !important;
+    }
+    .back-btn-col > div.stButton > button:hover {
+        background: rgba(255,255,255,0.12) !important;
+        color: white !important;
+        transform: none !important;
+        box-shadow: none !important;
+        border-color: rgba(255,255,255,0.3) !important;
+    }
+
+    /* Hero Next (❯) button: small circle, not full-width red block */
+    .hero-next-btn > div.stButton > button {
+        background: rgba(255,255,255,0.1) !important;
+        color: white !important;
+        border: 1px solid rgba(255,255,255,0.2) !important;
+        box-shadow: none !important;
+        font-size: 20px !important;
+        font-weight: 400 !important;
+        letter-spacing: 0 !important;
+        text-transform: none !important;
+        width: 44px !important;
+        height: 44px !important;
+        min-height: unset !important;
+        border-radius: 50% !important;
+        padding: 0 !important;
+    }
+    .hero-next-btn > div.stButton > button:hover {
+        background: #E50914 !important;
+        color: white !important;
+        border-color: #E50914 !important;
+        transform: none !important;
+        box-shadow: none !important;
     }
 
     /* OTT Section Styling */

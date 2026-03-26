@@ -95,9 +95,11 @@ def render_detail_view(movie_id):
     # Top Back Button
     col_b, _ = st.columns([1, 9])
     with col_b:
-        if st.button("Back", key=f"det_back_{movie_id}", use_container_width=True):
+        st.markdown('<div class="back-btn-col">', unsafe_allow_html=True)
+        if st.button("← Back", key=f"det_back_{movie_id}", use_container_width=True):
             st.query_params.clear()
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
             
     # 2-Column Layout
     col1, col2 = st.columns([1, 2.5], gap="large")
@@ -206,9 +208,11 @@ def render_detail_view(movie_id):
 def render_category_view(category_id, title):
     col_back, _ = st.columns([1, 9])
     with col_back:
-        if st.button("Back", key=f"back_{category_id}", use_container_width=True):
+        st.markdown('<div class="back-btn-col">', unsafe_allow_html=True)
+        if st.button("← Back", key=f"back_{category_id}", use_container_width=True):
             st.query_params.clear()
             st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
         
     st.markdown(f'<h2 style="margin-top: 10px;">{title}</h2>', unsafe_allow_html=True)
     st.markdown("---")
@@ -351,9 +355,11 @@ def main():
                 st.query_params.movie_id = featured.get('id')
                 st.rerun()
         with h_col2:
+            st.markdown('<div class="hero-next-btn">', unsafe_allow_html=True)
             if st.button("❯", key="hero_next"):
                 st.session_state.hero_index += 1
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
     # Netflix-Style Rows
 
