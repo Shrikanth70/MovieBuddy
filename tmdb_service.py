@@ -91,6 +91,20 @@ def get_trending_by_language(language_code, limit=20):
         return data["results"][:limit]
     return []
     
+def get_new_releases_worldwide(limit=20):
+    """Fetch globally released movies without OTT restriction."""
+    sixty_days_ago = (datetime.datetime.now() - datetime.timedelta(days=60)).strftime("%Y-%m-%d")
+    params = {
+        "sort_by": "popularity.desc",
+        "primary_release_date.gte": sixty_days_ago,
+        "vote_count.gte": 100,
+        "include_adult": False
+    }
+    data = fetch_from_tmdb("discover/movie", params=params)
+    if data and data.get("results"):
+        return data["results"][:limit]
+    return []
+
 def get_recent_ott_movies(limit=20):
     """Fetch newly arrived OTT movies generically."""
     sixty_days_ago = (datetime.datetime.now() - datetime.timedelta(days=60)).strftime("%Y-%m-%d")

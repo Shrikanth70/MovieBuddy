@@ -470,80 +470,224 @@ def inject_custom_css():
     """, unsafe_allow_html=True)
 
 def render_slideshow(movies):
-    """Render a Streamlit-native cinematic autoplay carousel."""
+    """Render a seamless, client-side JS cinematic slideshow that avoids Streamlit reloads."""
     if not movies:
         return
         
-    # Manage slideshow state
-    if "hero_current_slide" not in st.session_state:
-        st.session_state.hero_current_slide = 0
-    if "hero_last_change" not in st.session_state:
-        st.session_state.hero_last_change = time.time()
+    import json
+    # Prepare slide data for JS
+    slides_data = []
+    for m in movies:
+        title = m.get('title', 'Unknown').replace("'", "\\'")
+        overview = m.get('overview', '').replace("'", "\\'").replace("\n", " ")
+        year = m.get('release_date', 'N/A')[:4]
+        rating = round(m.get('vote_average', 0), 1)
+        mid = m.get('id')
+        backdrop = f"https://image.tmdb.org/t/p/original{m.get('backdrop_path')}" if m.get('backdrop_path') else "placeholder.png"
+        slides_data.append({
+            "id": mid,
+            "title": title,
+            "overview": overview,
+            "year": year,
+            "rating": rating,
+            "backdrop": backdrop
+        })
     
-    # Auto-advance every 30 seconds
-    if time.time() - st.session_state.hero_last_change >= 30:
-        st.session_state.hero_current_slide = (st.session_state.hero_current_slide + 1) % len(movies)
-        st.session_state.hero_last_change = time.time()
-        st.rerun()
+    slides_json = json.dumps(slides_data)
     
-    current_movie = movies[st.session_state.hero_current_slide]
-    backdrop_url = f"https://image.tmdb.org/t/p/original{current_movie.get('backdrop_path')}" if current_movie.get("backdrop_path") else ""
-    title = current_movie.get('title', 'Unknown Title').replace("'", "&#39;").replace('"', "&quot;")
-    year = current_movie.get('release_date', 'N/A')[:4] if current_movie.get('release_date') else 'N/A'
-    rating = round(current_movie.get('vote_average', 0), 1)
-    overview = current_movie.get('overview', '').replace("'", "&#39;").replace('"', "&quot;").replace("\n", " ")
-    
-    movie_id = current_movie.get('id')
-    
-    # Use the current hero_index from session state
-    current_idx = st.session_state.hero_index
-    current_movie = movies[current_idx]
-    
-    title = current_movie.get("title")
-    year = current_movie.get("release_date", "N/A")[:4]
-    rating = round(current_movie.get("vote_average", 0), 1)
-    overview = current_movie.get("overview", "")
-    movie_id = current_movie.get("id")
-    backdrop_path = current_movie.get("backdrop_path")
-    backdrop_url = f"https://image.tmdb.org/t/p/original{backdrop_path}" if backdrop_path else "placeholder.png"
-
-    # Define Navigation URLs for <a> tags
-    prev_idx = (current_idx - 1) % len(movies)
-    next_idx = (current_idx + 1) % len(movies)
-
-    # Prepare Indicators HTML
-    ind_html = '<div style="display: flex; gap: 8px; justify-content: center; margin-top: 15px; margin-bottom: 30px; position: relative; z-index: 10;">'
-    for i in range(len(movies)):
-        active = i == st.session_state.hero_index
-        color = "#E50914" if active else "rgba(255,255,255,0.25)"
-        width = "40px" if active else "20px"
-        ind_html += f'<div style="width: {width}; height: 4px; border-radius: 2px; background: {color}; transition: all 0.3s ease;"></div>'
-    ind_html += '</div>'
-
-    # Monolithic Hero Injection: One block to rule them all
-    st.markdown(f"""
-    <div style="position: relative; width: 100%; border-radius: 20px; overflow: hidden; margin-bottom: 20px;">
-        <a href="?movie_id={movie_id}" target="_self" style="display: block; text-decoration: none; color: inherit;">
-            <div class="hero-container" style="background-image: url('{backdrop_url}'); background-size: cover; background-position: center 20%; height: 500px; display: flex; align-items: flex-end; padding: 60px; box-sizing: border-box; position: relative;">
-                <div style="position: absolute; inset: 0; background: linear-gradient(0deg, rgba(14,17,23,1) 0%, rgba(14,17,23,0.3) 70%, transparent 100%);"></div>
-                <div style="position: absolute; inset: 0; background: radial-gradient(circle at 20% 50%, rgba(14,17,23,0.4) 0%, transparent 100%);"></div>
-                <div class="hero-content" style="position: relative; z-index: 2; max-width: 700px; pointer-events: none;">
-                    <div style="display: inline-block; background: rgba(229,9,20,0.2); color: #E50914; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(229,9,20,0.2); letter-spacing: 1.5px;">Trending Selection</div>
-                    <div style="font-size: 52px; font-weight: 900; line-height: 1.1; margin-bottom: 20px; text-shadow: 0 10px 30px rgba(0,0,0,0.8);">{title}</div>
-                    <div style="font-size: 18px; font-weight: 700; margin-bottom: 24px; display: flex; gap: 15px; align-items: center;">
-                        <span style="border: 1px solid rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 6px;">{year}</span>
-                        <span style="color: rgba(255,255,255,0.3);">|</span>
-                        <span style="color: #FFC107;">⭐ {rating}</span>
-                    </div>
-                    <p style="color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; margin-bottom: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-width: 600px;">{overview}</p>
-                </div>
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{ font-family: 'Poppins', sans-serif; background: transparent; overflow: hidden; }}
+        
+        .slider-wrapper {{
+            position: relative;
+            width: 100%;
+            height: 500px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #000;
+        }}
+        
+        .slides-container {{
+            display: flex;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }}
+        
+        .slide {{
+            flex: 0 0 100%;
+            height: 100%;
+            position: relative;
+            background-size: cover;
+            background-position: center 20%;
+            display: flex;
+            align-items: flex-end;
+            padding: 60px;
+            cursor: pointer;
+            text-decoration: none;
+        }}
+        
+        .slide-overlay {{
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(0deg, rgba(14,17,23,1) 0%, rgba(14,17,23,0.3) 70%, transparent 100%);
+            z-index: 1;
+        }}
+        
+        .slide-content {{
+            position: relative;
+            z-index: 2;
+            max-width: 700px;
+            color: white;
+        }}
+        
+        .badge {{
+            display: inline-block;
+            background: rgba(229,9,20,0.2);
+            color: #E50914;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            border: 1px solid rgba(229,9,20,0.2);
+            letter-spacing: 1.5px;
+        }}
+        
+        .title {{ font-size: 52px; font-weight: 900; line-height: 1.1; margin-bottom: 10px; }}
+        .meta {{ font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; }}
+        .year-box {{ border: 1px solid rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 6px; }}
+        .rating {{ color: #FFC107; }}
+        .overview {{ color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
+        
+        .nav-btn {{
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            font-size: 20px;
+            transition: all 0.3s;
+        }}
+        .nav-btn:hover {{ background: #E50914; transform: translateY(-50%) scale(1.1); }}
+        .prev {{ left: 20px; }}
+        .next {{ right: 20px; }}
+        
+        .indicators {{
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }}
+        .dot {{ width: 20px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.2); transition: all 0.3s; cursor: pointer; }}
+        .dot.active {{ width: 40px; background: #E50914; }}
+    </style>
+    </head>
+    <body>
+        <div class="slider-wrapper">
+            <div class="slides-container" id="slides-container">
+                <!-- Slides injected by JS -->
             </div>
-        </a>
-        <a href="?hero_index={prev_idx}" target="_self" class="hero-nav-btn prev" style="left: 20px;">❮</a>
-        <a href="?hero_index={next_idx}" target="_self" class="hero-nav-btn next" style="right: 20px;">❯</a>
-    </div>
-    {ind_html}
-    """, unsafe_allow_html=True)
+            <div class="nav-btn prev" onclick="move(-1)">❮</div>
+            <div class="nav-btn next" onclick="move(1)">❯</div>
+            <div class="indicators" id="indicators"></div>
+        </div>
+
+        <script>
+            const slides = {slides_json};
+            const container = document.getElementById('slides-container');
+            const indicators = document.getElementById('indicators');
+            let currentIdx = 0;
+            let autoTimer;
+
+            function init() {{
+                slides.forEach((s, i) => {{
+                    // Create slide element
+                    const slide = document.createElement('a');
+                    slide.className = 'slide';
+                    slide.style.backgroundImage = `url(${{s.backdrop}})`;
+                    slide.href = `/?movie_id=${{s.id}}`;
+                    slide.target = '_parent';
+                    
+                    slide.innerHTML = `
+                        <div class="slide-overlay"></div>
+                        <div class="slide-content">
+                            <div class="badge">Featured Selection</div>
+                            <div class="title">${{s.title}}</div>
+                            <div class="meta">
+                                <span class="year-box">${{s.year}}</span>
+                                <span>|</span>
+                                <span class="rating">⭐ ${{s.rating}}</span>
+                            </div>
+                            <p class="overview">${{s.overview}}</p>
+                        </div>
+                    `;
+                    container.appendChild(slide);
+
+                    // Create indicator dot
+                    const dot = document.createElement('div');
+                    dot.className = 'dot' + (i === 0 ? ' active' : '');
+                    dot.onclick = () => goTo(i);
+                    indicators.appendChild(dot);
+                }});
+                
+                startAuto();
+            }}
+
+            function goTo(idx) {{
+                currentIdx = idx;
+                update();
+                resetAuto();
+            }}
+
+            function move(step) {{
+                currentIdx = (currentIdx + step + slides.length) % slides.length;
+                update();
+                resetAuto();
+            }}
+
+            function update() {{
+                container.style.transform = `translateX(-${{currentIdx * 100}}%)`;
+                Array.from(indicators.children).forEach((dot, i) => {{
+                    dot.className = 'dot' + (i === currentIdx ? ' active' : '');
+                }});
+            }}
+
+            function startAuto() {{
+                autoTimer = setInterval(() => move(1), 8000);
+            }}
+
+            function resetAuto() {{
+                clearInterval(autoTimer);
+                startAuto();
+            }}
+
+            init();
+        </script>
+    </body>
+    </html>
+    """
+    st.components.v1.html(html, height=530)
 
 def render_movie_card(movie, poster_url):
     """Render a clickable card using a self-targeting link."""

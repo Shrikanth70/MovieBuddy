@@ -141,10 +141,10 @@ def render_category_view(category_id, title):
     # Fetch data based on category mapping
     movies = []
     with st.spinner("Loading movies..."):
-        if category_id == "all_time":
+        if category_id == "new_releases":
+            movies = tmdb.get_new_releases_worldwide(limit=40)
+        elif category_id == "all_time":
             movies = tmdb.get_top_rated_movies(limit=40)
-        elif category_id == "recent_ott":
-            movies = tmdb.get_recent_ott_movies(limit=40)
         elif category_id == "trending_te":
             movies = tmdb.get_trending_by_language("te", limit=40)
         elif category_id == "trending_hi":
@@ -263,20 +263,11 @@ def main():
             st.info("No movies found.")
         return
 
-    # ------------ HOME PAGE FEATURED (Native) ------------
+    # ------------ HOME PAGE FEATURED (Seamless JS Slider) ------------
     if "hero_slides" not in st.session_state or not st.session_state.hero_slides:
-        st.session_state.hero_slides = tmdb.get_now_playing_movies(limit=10) or tmdb.get_trending_weekly(limit=10)
-
-    # Handle URL-based hero navigation
-    hero_from_url = params.get("hero_index")
-    if hero_from_url:
-        if isinstance(hero_from_url, list): hero_from_url = hero_from_url[0]
-        st.session_state.hero_index = int(hero_from_url) % len(st.session_state.hero_slides)
-    elif "hero_index" not in st.session_state:
-        st.session_state.hero_index = 0
-
+        st.session_state.hero_slides = tmdb.get_now_playing_movies(limit=10)
+    
     if st.session_state.hero_slides:
-        # Use premium improved slideshow with native-safe parent navigation
         ui.render_slideshow(st.session_state.hero_slides)
         st.markdown('<div style="height: 20px;"></div>', unsafe_allow_html=True)
 
@@ -309,7 +300,7 @@ def main():
         rng.shuffle(shuffled)
         return shuffled
 
-    render_movie_row("Just Arrived on OTT", prioritize_movies(tmdb.get_recent_ott_movies(limit=40)), "recent_ott", "recent_ott")
+    render_movie_row("New Releases Worldwide", prioritize_movies(tmdb.get_new_releases_worldwide(limit=40)), "new_releases", "new_releases")
     render_movie_row("All-Time Favorites", prioritize_movies(get_daily_shuffled_favorites()), "fav", "all_time")
     render_movie_row("Trending Indian Movies", prioritize_movies(tmdb.get_trending_indian(limit=40)), "ind", "trending_indian")
     render_movie_row("Trending Telugu OTT Movies", prioritize_movies(tmdb.get_trending_by_language("te", limit=40)), "te", "trending_te")
