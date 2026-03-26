@@ -1,8 +1,10 @@
 import base64
+from html import escape
 import os
 import streamlit as st
 import time
 import json
+from urllib.parse import quote_plus
 
 @st.cache_data
 def get_base64_image(image_path):
@@ -696,22 +698,107 @@ def render_slideshow(movies):
     """
     st.components.v1.html(html, height=530)
 
-def render_movie_card(movie, poster_url):
+def _movie_value(movie, key, default=None):
+    """Fetch a field from a dict-like or attribute-based movie object."""
+    if movie is None:
+        return default
+
+    if isinstance(movie, dict):
+        return movie.get(key, default)
+
+    getter = getattr(movie, "get", None)
+    if callable(getter):
+        try:
+            return getter(key, default)
+        except TypeError:
+            try:
+                value = getter(key)
+            except Exception:
+                value = default
+            return default if value is None else value
+
+    value = getattr(movie, key, default)
+    return default if value is None else value
+
+
+def _normalize_movie(movie):
+    """Normalize raw recommendation items into a safe dict shape."""
+    if movie is None:
+        return None
+
+    movie_id = _movie_value(movie, "id")
+    raw_title = _movie_value(movie, "title") or _movie_value(movie, "name")
+    poster_path = _movie_value(movie, "poster_path")
+    release_date = _movie_value(movie, "release_date") or _movie_value(movie, "first_air_date")
+    vote_average = _movie_value(movie, "vote_average")
+    original_language = _movie_value(movie, "original_language") or "XX"
+    overview = _movie_value(movie, "overview") or ""
+    title = str(raw_title).strip() if raw_title else "Untitled"
+    has_real_title = bool(title) and title != "Untitled"
+    if movie_id in (None, "") and not has_real_title and not poster_path and not overview and not release_date:
+        return None
+
+    return {
+        "id": movie_id,
+        "title": title or "Untitled",
+        "poster_path": str(poster_path).strip() if poster_path else None,
+        "release_date": str(release_date).strip() if release_date else "",
+        "vote_average": vote_average,
+        "original_language": str(original_language).strip().upper() or "XX",
+        "overview": str(overview).strip(),
+    }
+
+
+def _format_release_year(release_date):
+    if not release_date:
+        return "Unknown"
+    release_text = str(release_date).strip()
+    return release_text[:4] if len(release_text) >= 4 else release_text
+
+
+def _format_rating(vote_average):
+    try:
+        return f"{float(vote_average):.1f}"
+    except (TypeError, ValueError):
+        return "N/A"
+
+
+def _build_poster_url(poster_path):
+    if not poster_path:
+        return "placeholder.png"
+
+    poster_text = str(poster_path).strip()
+    if not poster_text:
+        return "placeholder.png"
+
+    if poster_text.startswith(("http://", "https://", "data:")):
+        return poster_text
+
+    return f"https://image.tmdb.org/t/p/w500/{poster_text.lstrip('/')}"
+
+
+def render_movie_card(movie, poster_url=None):
     """Render a clickable card using a self-targeting link."""
-    title = movie.get("title")
-    year = movie.get("release_date", "N/A")[:4]
-    rating = round(movie.get("vote_average", 0), 1)
-    lang = movie.get("original_language", "xx").upper()
-    mid = movie.get("id")
-    
+    normalized_movie = _normalize_movie(movie)
+    if not normalized_movie:
+        return ""
+
+    title = escape(normalized_movie["title"])
+    year = escape(_format_release_year(normalized_movie["release_date"]))
+    rating = escape(_format_rating(normalized_movie["vote_average"]))
+    lang = escape((normalized_movie["original_language"] or "XX")[:8])
+    poster_url = poster_url or _build_poster_url(normalized_movie["poster_path"])
+
     if poster_url == "placeholder.png":
         b64_img = get_base64_image("placeholder.png")
         poster_url = f"data:image/png;base64,{b64_img}"
-        
+
+    safe_poster_url = escape(poster_url, quote=True)
+
     return f"""
     <div class="movie-card">
         <div style="position: relative;">
-            <img src="{poster_url}" class="card-img">
+            <img src="{safe_poster_url}" class="card-img">
             <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: var(--accent); padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid rgba(229,9,20,0.3); backdrop-filter: blur(4px);">
                 {lang}
             </div>
@@ -750,23 +837,58 @@ def render_see_more_card():
 
 def render_movie_grid(movies, key_prefix="grid", columns=5):
     """Render a responsive movie grid with native anchor links (artifact-free)."""
-    for i in range(0, len(movies), columns):
-        grid_cols = st.columns(columns)
-        for j, movie in enumerate(movies[i:i+columns]):
+    if not movies:
+        return 0
+
+    try:
+        movie_items = list(movies)
+    except TypeError:
+        return 0
+
+    safe_columns = max(int(columns or 1), 1)
+    normalized_movies = []
+    for movie in movie_items:
+        normalized_movie = _normalize_movie(movie)
+        if normalized_movie:
+            normalized_movies.append(normalized_movie)
+
+    if not normalized_movies:
+        return 0
+
+    rendered_count = 0
+    for i in range(0, len(normalized_movies), safe_columns):
+        grid_cols = st.columns(safe_columns)
+        for j, movie in enumerate(normalized_movies[i:i + safe_columns]):
             with grid_cols[j]:
-                movie_id = movie.get('id')
-                poster_path = movie.get("poster_path")
-                poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else "placeholder.png"
-                
-                # Wrap movie card in a clickable anchor link pointing to its details
-                card_html = render_movie_card(movie, poster_url)
-                st.markdown(f'''
-                    <a href="?movie_id={movie_id}" target="_self" style="text-decoration: none; display: block; height: 100%;">
-                        <div class="native-card-wrapper">
-                            {card_html}
-                        </div>
-                    </a>
-                ''', unsafe_allow_html=True)
+                try:
+                    movie_id = movie.get("id")
+                    poster_url = _build_poster_url(movie.get("poster_path"))
+                    card_html = render_movie_card(movie, poster_url)
+                    if not card_html:
+                        continue
+
+                    if movie_id in (None, ""):
+                        st.markdown(f'''
+                            <div class="native-card-wrapper" data-grid-key="{escape(str(key_prefix), quote=True)}-{i + j}">
+                                {card_html}
+                            </div>
+                        ''', unsafe_allow_html=True)
+                    else:
+                        movie_href = quote_plus(str(movie_id))
+                        st.markdown(f'''
+                            <a href="?movie_id={movie_href}" target="_self" style="text-decoration: none; display: block; height: 100%;">
+                                <div class="native-card-wrapper" data-grid-key="{escape(str(key_prefix), quote=True)}-{i + j}">
+                                    {card_html}
+                                </div>
+                            </a>
+                        ''', unsafe_allow_html=True)
+
+                    rendered_count += 1
+                except Exception:
+                    continue
+
+    return rendered_count
+
 def render_detail_hero(movie, backdrop_url, poster_url):
     """Render the high-impact movie detail hero."""
     title = movie.get("title")

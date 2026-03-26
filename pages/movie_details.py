@@ -185,10 +185,12 @@ def render_movie_details_page():
 
     # Recommendations
     st.markdown('---')
-    recs = tmdb.get_movie_recommendations(movie_id, limit=10)
+    recs = tmdb.get_movie_recommendations(movie_id, limit=10) or []
     if recs:
         st.markdown('<div class="ott-title" style="margin-bottom: 20px;">People also watched</div>', unsafe_allow_html=True)
-        ui.render_movie_grid(recs, key_prefix="page_recs")
+        rendered_recs = ui.render_movie_grid(recs, key_prefix="page_recs")
+        if rendered_recs == 0:
+            st.markdown('<div style="color: var(--text-muted);">Recommendations unavailable.</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     try:
