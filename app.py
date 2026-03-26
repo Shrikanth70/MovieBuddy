@@ -58,12 +58,7 @@ def navigate_back():
     st.session_state.scroll_to_top = True
     st.rerun()
 
-def render_movie_row(title, movies, key_prefix, category_id=None, max_items=5, show_see_more=True):
-    """Render a premium horizontal scrollable row with native clickable overlays."""
-    if not movies:
-        return
-        
-def render_movie_row(title, movies, key_prefix, category_id=None, max_items=5, show_see_more=True):
+def render_movie_row(title, movies, key_prefix, category_id=None):
     """Render a premium horizontal scrollable row with native clickable overlays."""
     if not movies:
         return
@@ -72,23 +67,13 @@ def render_movie_row(title, movies, key_prefix, category_id=None, max_items=5, s
     
     # Always use horizontal scroll to prevent wrapping
     movie_html = '<div class="movie-scroll">'
-    for movie in movies[:max_items]:
+    for movie in movies:
         movie_id = movie.get('id')
         poster_url = tmdb.get_image_url(movie.get("poster_path"))
         card_html = ui.render_movie_card(movie, poster_url)
         movie_html += '<a href="?movie_id=' + str(movie_id) + '" target="_self" style="text-decoration: none; display: block;">'
         movie_html += '<div class="movie-item">'
         movie_html += card_html
-        movie_html += '</div>'
-        movie_html += '</a>'
-    
-    # See More card
-    if show_see_more and category_id and len(movies) > max_items:
-        clean_title = strip_html(title).replace(' ', '+')
-        see_more_html = ui.render_see_more_card()
-        movie_html += '<a href="?category_id=' + category_id + '&title=' + clean_title + '" target="_self" style="text-decoration: none; display: block;">'
-        movie_html += '<div class="movie-item">'
-        movie_html += see_more_html
         movie_html += '</div>'
         movie_html += '</a>'
     
@@ -239,7 +224,7 @@ def render_detail_view(movie_id):
         recommendations = tmdb.get_movie_recommendations(movie_id, limit=10)
         
     if recommendations:
-        render_movie_row('Recommended <span class="gold-text">Movies</span>', recommendations, "rec", category_id=f"rec_{movie_id}", max_items=10, show_see_more=False)
+        render_movie_row('Recommended <span class="gold-text">Movies</span>', recommendations, "rec")
 
 def render_category_view(category_id, title):
     col_back, _ = st.columns([1.5, 8.5])
@@ -382,38 +367,26 @@ def main():
         
         if st.session_state.hero_slides:
             ui.render_slideshow(st.session_state.hero_slides)
-            st.markdown('<div style="height: 20px;"></div>', unsafe_allow_html=True)
-
-        # Content Rows logic
-        used_movie_counts = {}
-        def prioritize_movies(movies_list):
-            row_final = []
-            for m in movies_list:
-                mid = m.get('id')
-                if used_movie_counts.get(mid, 0) < 2:
-                    row_final.append(m)
-                    used_movie_counts[mid] = used_movie_counts.get(mid, 0) + 1
-                if len(row_final) == 6: break
-            return row_final
 
         def get_daily_shuffled_favorites():
+            """Return exactly 10 movies that change daily based on current date."""
             from datetime import date
-            top_movies = tmdb.get_top_rated_movies(limit=40)
+            top_movies = tmdb.get_top_rated_movies(limit=50)
             if not top_movies: return []
             today_val = date.today().toordinal()
             rng = random.Random(today_val)
             shuffled = list(top_movies)
             rng.shuffle(shuffled)
-            return shuffled
+            return shuffled[:10]  # Return exactly 10
 
-        # Premium Content Selection
-        render_movie_row("New Releases Worldwide", prioritize_movies(tmdb.get_new_releases_worldwide(limit=40)), "new_releases", "new_releases")
-        render_movie_row("New Indian Releases", prioritize_movies(tmdb.get_trending_indian(limit=40)), "ind", "trending_indian")
-        render_movie_row("All-Time Favorites", prioritize_movies(get_daily_shuffled_favorites()), "fav", "all_time")
+        # Premium Content Selection - Show all movies directly in scrollable rows
+        render_movie_row("New Releases Worldwide", tmdb.get_new_releases_worldwide(limit=30), "new_releases")
+        render_movie_row("New Indian Releases", tmdb.get_trending_indian(limit=30), "ind")
+        render_movie_row("All-Time Favorites", get_daily_shuffled_favorites(), "fav")
         
         # Other Languages (Unified)
-        other_movies = tmdb.get_other_languages_ott(limit=40)
-        render_movie_row("Trending Worldwide (Regional)", prioritize_movies(other_movies), "other", "other_lang")
+        other_movies = tmdb.get_other_languages_ott(limit=30)
+        render_movie_row("Trending Worldwide (Regional)", other_movies, "other")
 
     # --- GLOBAL UI: Footer ---
     st.markdown("""
