@@ -2,6 +2,7 @@ import base64
 import os
 import streamlit as st
 import time
+import json
 
 @st.cache_data
 def get_base64_image(image_path):
@@ -474,7 +475,6 @@ def render_slideshow(movies):
     if not movies:
         return
         
-    import json
     # Prepare slide data for JS
     slides_data = []
     for m in movies:
