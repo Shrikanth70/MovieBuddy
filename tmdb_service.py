@@ -92,10 +92,12 @@ def get_trending_by_language(language_code, limit=20):
     
 def get_new_releases_worldwide(limit=20):
     """Fetch globally released movies without OTT restriction."""
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
     sixty_days_ago = (datetime.datetime.now() - datetime.timedelta(days=60)).strftime("%Y-%m-%d")
     params = {
         "sort_by": "popularity.desc",
         "primary_release_date.gte": sixty_days_ago,
+        "primary_release_date.lte": today,
         "vote_count.gte": 100,
         "include_adult": False
     }
@@ -176,6 +178,7 @@ def get_movie_credits(movie_id):
 
 def get_trending_indian(limit=120):
     """Fetch a large pool of trending OTT movies from major Indian regional languages by fetching each separately."""
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
     ninety_days_ago = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime("%Y-%m-%d")
     languages = ["te", "hi", "ta", "kn", "ml"]
     
@@ -186,6 +189,7 @@ def get_trending_indian(limit=120):
             "with_original_language": lang,
             "sort_by": "popularity.desc",
             "primary_release_date.gte": ninety_days_ago,
+            "primary_release_date.lte": today,
             "vote_count.gte": 5,  # Maximum diversity for 'New' content
             "include_adult": False
         }
