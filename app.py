@@ -346,7 +346,7 @@ def main():
         idx = st.session_state.hero_index % len(hero_movies)
         featured = hero_movies[idx]
         
-        st.markdown(ui.render_native_hero(featured, tmdb.get_image_url(featured.get("backdrop_path"), size="original")), unsafe_allow_html=True)
+        ui.render_native_hero(featured, tmdb.get_image_url(featured.get("backdrop_path"), size="original"))
         
         # Native Hero Controls — hero_cta uses the global premium red button style
         h_col1, h_col2, _ = st.columns([0.9, 0.4, 4])

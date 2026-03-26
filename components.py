@@ -665,28 +665,51 @@ def render_omdb_reviews(omdb_data):
         st.markdown('<div style="color: var(--text-muted);">Aggregate ratings not available</div>', unsafe_allow_html=True)
 
 def render_native_hero(movie, poster_url):
-    """Render a premium featured movie hero with clean cinematic visuals."""
-    title = movie.get('title', 'Featured')
-    overview = movie.get('overview', '')
+    """Render a premium featured movie hero using st.components.v1.html to bypass markdown sanitization."""
+    title = movie.get('title', 'Featured').replace("'", "&#39;").replace('"', '&quot;')
+    overview = movie.get('overview', '').replace("'", "&#39;").replace('"', '&quot;').replace('\n', ' ')
     rating = round(movie.get('vote_average', 0), 1)
     year = movie.get('release_date', '2024')[:4]
     
-    return f"""
-    <div class="native-hero" style="position: relative; height: 500px; width: 100%; border-radius: 20px; overflow: hidden; margin-bottom: 20px; background: #000;">
-        <div style="position: absolute; inset: 0; background: url('{poster_url}') center 20% / cover no-repeat; opacity: 0.7; z-index: 1;"></div>
-        <div style="position: absolute; inset: 0; background: radial-gradient(circle at 20% 50%, rgba(14,17,23,0.9) 0%, rgba(14,17,23,0.3) 70%, transparent 100%); z-index: 2;"></div>
-        <div style="position: absolute; inset: 0; background: linear-gradient(0deg, #0e1117 0%, transparent 50%); z-index: 2;"></div>
-        
-        <div style="position: absolute; bottom: 60px; left: 60px; z-index: 3; max-width: 650px; text-align: left;">
-            <div style="display: inline-block; background: rgba(229, 9, 20, 0.2); color: #E50914; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 800; text-transform: uppercase; margin-bottom: 15px; border: 1px solid rgba(229,9,20,0.2);">FEATURED SELECTION</div>
-            <h1 style="font-size: 52px; font-weight: 900; color: white; margin-bottom: 15px; line-height: 1; text-shadow: 0 5px 15px rgba(0,0,0,0.5);">{title}</h1>
-            <div style="display: flex; gap: 15px; align-items: center; color: rgba(255,255,255,0.7); font-weight: 600; margin-bottom: 20px;">
-                <span style="border: 1px solid rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px;">{year}</span>
-                <span style="color: #FFC107;">★ {rating}</span>
-                <span>Exclusive</span>
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{ font-family: 'Poppins', sans-serif; background: transparent; overflow: hidden; }}
+        .hero {{ position: relative; height: 480px; width: 100%; border-radius: 20px; overflow: hidden; background: #000; }}
+        .hero-bg {{ position: absolute; inset: 0; background-image: url('{poster_url}'); background-size: cover; background-position: center 20%; opacity: 0.7; z-index: 1; }}
+        .hero-grad1 {{ position: absolute; inset: 0; background: radial-gradient(circle at 20% 50%, rgba(14,17,23,0.9) 0%, rgba(14,17,23,0.3) 70%, transparent 100%); z-index: 2; }}
+        .hero-grad2 {{ position: absolute; inset: 0; background: linear-gradient(0deg, #0e1117 0%, transparent 50%); z-index: 2; }}
+        .hero-content {{ position: absolute; bottom: 50px; left: 50px; z-index: 3; max-width: 650px; text-align: left; }}
+        .hero-badge {{ display: inline-block; background: rgba(229,9,20,0.2); color: #E50914; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(229,9,20,0.2); letter-spacing: 1px; }}
+        .hero-title {{ font-size: 48px; font-weight: 900; color: white; margin-bottom: 12px; line-height: 1.05; text-shadow: 0 4px 12px rgba(0,0,0,0.6); }}
+        .hero-meta {{ display: flex; gap: 12px; align-items: center; color: rgba(255,255,255,0.7); font-weight: 600; font-size: 14px; margin-bottom: 16px; }}
+        .hero-meta .year {{ border: 1px solid rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; }}
+        .hero-meta .star {{ color: #FFC107; }}
+        .hero-overview {{ font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
+    </style>
+    </head>
+    <body>
+        <div class="hero">
+            <div class="hero-bg"></div>
+            <div class="hero-grad1"></div>
+            <div class="hero-grad2"></div>
+            <div class="hero-content">
+                <div class="hero-badge">FEATURED SELECTION</div>
+                <div class="hero-title">{title}</div>
+                <div class="hero-meta">
+                    <span class="year">{year}</span>
+                    <span class="star">★ {rating}</span>
+                    <span>Exclusive</span>
+                </div>
+                <p class="hero-overview">{overview}</p>
             </div>
-            <p style="font-size: 15px; color: rgba(255,255,255,0.8); line-height: 1.6; margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">{overview}</p>
         </div>
-    </div>
+    </body>
+    </html>
     """
+    st.components.v1.html(html, height=500, scrolling=False)
 
