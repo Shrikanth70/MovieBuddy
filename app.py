@@ -184,13 +184,11 @@ def render_detail_view(movie_id):
                 img = f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else "https://via.placeholder.com/120x120?text=No+Photo"
                 name = actor.get('name', 'Unknown')
                 character = actor.get('character', 'Actor')
-                cast_html += f'''
-                    <div class="cast-item">
-                        <img src="{img}" class="cast-img" alt="{name}">
-                        <div class="cast-name">{name}</div>
-                        <div class="cast-role">{character}</div>
-                    </div>
-                '''
+                cast_html += '<div class="cast-item">'
+                cast_html += f'<img src="{img}" class="cast-img" alt="{name}">'
+                cast_html += f'<div class="cast-name">{name}</div>'
+                cast_html += f'<div class="cast-role">{character}</div>'
+                cast_html += '</div>'
             cast_html += '</div>'
             st.markdown(cast_html, unsafe_allow_html=True)
         
