@@ -302,12 +302,12 @@ def main():
 
     render_movie_row("New Releases Worldwide", prioritize_movies(tmdb.get_new_releases_worldwide(limit=40)), "new_releases", "new_releases")
     render_movie_row("All-Time Favorites", prioritize_movies(get_daily_shuffled_favorites()), "fav", "all_time")
-    render_movie_row("Trending Indian Movies", prioritize_movies(tmdb.get_trending_indian(limit=40)), "ind", "trending_indian")
-    render_movie_row("Trending Telugu OTT Movies", prioritize_movies(tmdb.get_trending_by_language("te", limit=40)), "te", "trending_te")
-    render_movie_row("Trending Hindi OTT Movies", prioritize_movies(tmdb.get_trending_by_language("hi", limit=40)), "hi", "trending_hi")
-    render_movie_row("Trending Tamil OTT Movies", prioritize_movies(tmdb.get_trending_by_language("ta", limit=40)), "ta", "trending_ta")
-    render_movie_row("Trending Kannada OTT Movies", prioritize_movies(tmdb.get_trending_by_language("kn", limit=40)), "kn", "trending_kn")
-    render_movie_row("Trending Malayalam OTT Movies", prioritize_movies(tmdb.get_trending_by_language("ml", limit=40)), "ml", "trending_ml")
+    render_movie_row("New Indian Releases", prioritize_movies(tmdb.get_trending_indian(limit=40)), "ind", "trending_indian")
+    render_movie_row("New Telugu Releases", prioritize_movies(tmdb.get_trending_by_language("te", limit=40)), "te", "trending_te")
+    render_movie_row("New Hindi Releases", prioritize_movies(tmdb.get_trending_by_language("hi", limit=40)), "hi", "trending_hi")
+    render_movie_row("New Tamil Releases", prioritize_movies(tmdb.get_trending_by_language("ta", limit=40)), "ta", "trending_ta")
+    render_movie_row("New Kannada Releases", prioritize_movies(tmdb.get_trending_by_language("kn", limit=40)), "kn", "trending_kn")
+    render_movie_row("New Malayalam Releases", prioritize_movies(tmdb.get_trending_by_language("ml", limit=40)), "ml", "trending_ml")
     
     # Other Languages
     other_movies = tmdb.get_other_languages_ott(limit=40)

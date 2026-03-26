@@ -82,9 +82,8 @@ def get_trending_by_language(language_code, limit=20):
         "with_original_language": language_code,
         "sort_by": "popularity.desc",
         "primary_release_date.gte": ninety_days_ago,
-        "vote_count.gte": 100,
-        "with_watch_monetization_types": "flatrate",
-        "watch_region": "IN"
+        "vote_count.gte": 10,  # Lowered for more diversity in new releases
+        "include_adult": False
     }
     data = fetch_from_tmdb("discover/movie", params=params)
     if data and data.get("results"):
@@ -187,9 +186,8 @@ def get_trending_indian(limit=120):
             "with_original_language": lang,
             "sort_by": "popularity.desc",
             "primary_release_date.gte": ninety_days_ago,
-            "vote_count.gte": 10,
-            "with_watch_monetization_types": "flatrate",
-            "watch_region": "IN"
+            "vote_count.gte": 5,  # Maximum diversity for 'New' content
+            "include_adult": False
         }
         data = fetch_from_tmdb("discover/movie", params=params)
         if data and data.get("results"):
