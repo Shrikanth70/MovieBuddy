@@ -121,6 +121,33 @@ def inject_custom_css():
         border-color: var(--accent);
         box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 20px var(--accent-glow);
     }
+    
+    .card-overlay-hint {
+        position: absolute;
+        inset: 0;
+        background: rgba(229, 9, 20, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: var(--transition);
+        backdrop-filter: blur(2px);
+    }
+    
+    .card-overlay-hint span {
+        background: white;
+        color: black;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 11px;
+        letter-spacing: 1px;
+        transform: translateY(20px);
+        transition: var(--transition);
+    }
+    
+    .movie-card:hover .card-overlay-hint { opacity: 1; }
+    .movie-card:hover .card-overlay-hint span { transform: translateY(0); }
 
     .card-img {
         width: 100%;
@@ -364,9 +391,11 @@ def render_slideshow(movies):
                     <span class="tag">Trending This Week</span>
                 </div>
                 <p class="hero-overview">{overview}</p>
-                <a href="/?movie_id={movie.get('id')}" target="_parent" class="hero-btn">
-                    ▶ View Details
-                </a>
+                <div class="hero-btns-row">
+                    <div class="hero-btn" onclick="parentNavigate({movie.get('id')})">
+                        ▶ View Details
+                    </div>
+                </div>
             </div>
         </div>
         """
@@ -389,8 +418,9 @@ def render_slideshow(movies):
         .hero-meta .sep {{ color: rgba(255,255,255,0.4); }}
         .hero-meta .tag {{ color: #8B949E; font-weight: 400; }}
         .hero-overview {{ color: rgba(255,255,255,0.9); font-size: 14px; line-height: 1.6; margin-bottom: 24px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
-        .hero-btn {{ display: inline-block; background: #E50914; color: white; padding: 12px 28px; border-radius: 10px; font-weight: 700; text-decoration: none; text-transform: uppercase; font-size: 14px; }}
-        .carousel-controls {{ position: absolute; bottom: 60px; right: 60px; z-index: 10; display: flex; gap: 15px; }}
+        .hero-btn:hover { background: #FFFFFF; color: #000000; transform: translateY(-3px); box-shadow: 0 5px 20px rgba(255,255,255,0.4); }
+        .hero-btns-row { display: flex; gap: 15px; }
+        .carousel-controls { position: absolute; bottom: 60px; right: 60px; z-index: 10; display: flex; gap: 15px; }
         .carousel-btn {{ background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; }}
         .carousel-btn:hover {{ background: #E50914; border-color: #E50914; }}
         .carousel-indicators {{ position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10; }}
@@ -423,6 +453,9 @@ def render_slideshow(movies):
         window.nextSlide = () => showSlide((currentIndex + 1) % slides.length);
         window.prevSlide = () => showSlide((currentIndex - 1 + slides.length) % slides.length);
         window.jumpToSlide = (index) => showSlide(index);
+        window.parentNavigate = (id) => {{
+            window.parent.location.href = window.parent.location.origin + window.parent.location.pathname + '?movie_id=' + id;
+        }};
         setInterval(nextSlide, 6000);
     </script>
     </body>
@@ -442,21 +475,25 @@ def render_movie_card(movie, poster_url):
         b64_img = get_base64_image("placeholder.png")
         poster_url = f"data:image/png;base64,{b64_img}"
         
-    return f"""<a href="/?movie_id={mid}" target="_parent" class="movie-card">
-    <div style="position: relative;">
-        <img src="{poster_url}" class="card-img">
-        <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: var(--accent); padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid rgba(229,9,20,0.3); backdrop-filter: blur(4px);">
-            {lang}
+    return f"""
+    <a href="/?movie_id={mid}" target="_parent" class="movie-card" style="text-decoration: none;">
+        <div style="position: relative;">
+            <img src="{poster_url}" class="card-img">
+            <div style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.7); color: var(--accent); padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid rgba(229,9,20,0.3); backdrop-filter: blur(4px);">
+                {lang}
+            </div>
+            <div class="card-overlay-hint">
+                <span>VIEW DETAILS</span>
+            </div>
         </div>
-    </div>
-    <div class="card-info">
-        <div class="card-title">{title}</div>
-        <div class="card-meta">
-            <span>{year}</span>
-            <span class="rating">★ {rating}</span>
+        <div class="card-info">
+            <div class="card-title">{title}</div>
+            <div class="card-meta">
+                <span>{year}</span>
+                <span class="rating">★ {rating}</span>
+            </div>
         </div>
-    </div>
-</a>"""
+    </a>"""
 
 def render_see_more_card():
     """Render a clickable card styled EXACTLY like a movie card for perfect grid alignment."""

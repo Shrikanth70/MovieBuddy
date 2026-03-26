@@ -284,25 +284,38 @@ def main():
     if "page_stack" not in st.session_state:
         st.session_state.page_stack = [{"page": "home"}]
 
-    if st.query_params.get("home") == "true":
+    # --- 1. Query Param Deep-Link Handling ---
+    # This must run at the absolute top of main() to catch incoming links immediately.
+    params = st.query_params
+    
+    if "movie_id" in params:
+        m_id = params["movie_id"]
+        # Handle list vs string (Streamlit version variance)
+        if isinstance(m_id, list): m_id = m_id[0]
+        
+        # We set session state and then clear params to prevent refresh loops
+        if "last_nav_id" not in st.session_state or st.session_state.last_nav_id != m_id:
+            st.session_state.last_nav_id = m_id
+            navigate_to("details", movie_id=int(m_id))
+            st.query_params.clear()
+            st.rerun()
+
+    if "category_id" in params:
+        cat_id = params["category_id"]
+        if isinstance(cat_id, list): cat_id = cat_id[0]
+        cat_title = params.get("title", "Category")
+        if isinstance(cat_title, list): cat_title = cat_title[0]
+        
+        st.query_params.clear()
+        navigate_to("category", category_id=cat_id, title=cat_title)
+        st.rerun()
+
+    if params.get("home") == "true":
         st.session_state.page_stack = [{"page": "home"}]
         if "last_search" in st.session_state:
             del st.session_state["last_search"]
         st.query_params.clear()
         st.session_state.scroll_to_top = True
-        st.rerun()
-
-    if st.query_params.get("movie_id"):
-        m_id = st.query_params.get("movie_id")
-        st.query_params.clear()
-        navigate_to("details", movie_id=int(m_id))
-        st.rerun()
-
-    if st.query_params.get("category_id"):
-        cat_id = st.query_params.get("category_id")
-        cat_title = st.query_params.get("title", "Category")
-        st.query_params.clear()
-        navigate_to("category", category_id=cat_id, title=cat_title)
         st.rerun()
 
     # Persistent Top Header
