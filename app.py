@@ -103,7 +103,7 @@ def render_detail_view(movie_id):
     col_b, _ = st.columns([1.5, 8.5])
     with col_b:
         st.markdown('<div class="back-btn-col">', unsafe_allow_html=True)
-        if st.button("← Back", key=f"det_back_{movie_id}"):
+        if st.button("← Back"):
             st.query_params.clear()
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
