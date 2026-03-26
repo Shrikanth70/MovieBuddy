@@ -344,6 +344,18 @@ def main():
                         ''', unsafe_allow_html=True)
         else:
             st.info("No movies found.")
+        
+        # --- GLOBAL UI: Footer ---
+        st.markdown("""
+        <div style="margin-top: 80px; text-align: center; color: var(--text-muted); font-size: 13px; border-top: 1px solid rgba(255,255,255,0.08); padding: 30px 0;">
+            🎬 MovieBuddy - Premium Cinematic Experience
+            <br>
+            Powered by TMDB API & OMDb API • Designed by <b>Shrikanth</b>
+            <br>
+            All rights reserved © 2026
+        </div>
+        """, unsafe_allow_html=True)
+        
         return
 
     # --- ROUTING ENGINE ---

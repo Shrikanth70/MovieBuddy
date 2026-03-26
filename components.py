@@ -316,6 +316,17 @@ def inject_custom_css():
         color: #ffffff !important;
         border: 1px solid rgba(255,255,255,0.15) !important;
         border-radius: 12px !important;
+        transition: background-color 0s !important;
+    }
+    
+    /* Additional autofill overrides for stubborn browsers */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0px 1000px rgba(28, 33, 43, 0.8) inset !important;
+        -webkit-text-fill-color: #ffffff !important;
+        background-color: rgba(28, 33, 43, 0.8) !important;
+        color: #ffffff !important;
     }
     
     div[data-baseweb="input"]:focus-within {
@@ -654,7 +665,7 @@ def render_slideshow(movies):
         .slider-wrapper {{
             position: relative;
             width: 100%;
-            height: 500px;
+            height: 400px;
             border-radius: 20px;
             overflow: hidden;
             background: #000;
@@ -859,7 +870,7 @@ def render_slideshow(movies):
     </body>
     </html>
     """
-    st.components.v1.html(html, height=530)
+    st.components.v1.html(html, height=400)
 
 def _movie_value(movie, key, default=None):
     """Fetch a field from a dict-like or attribute-based movie object."""
