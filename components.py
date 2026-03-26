@@ -265,26 +265,39 @@ def inject_custom_css():
 
     /* Robust Search Input Styling (Fixes invisible text on mobile/dark modes) */
     div[data-baseweb="input"] {
-        background-color: rgba(255,255,255,0.05) !important;
-        border: 1px solid rgba(255,255,255,0.1) !important;
+        background-color: rgba(28, 33, 43, 0.8) !important; /* Dark card background */
+        border: 1px solid rgba(255,255,255,0.15) !important;
         border-radius: 12px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
     }
     
     .stTextInput input {
-        color: white !important;
-        -webkit-text-fill-color: white !important;
+        color: #ffffff !important;
+        -webkit-text-fill-color: #ffffff !important;
         background-color: transparent !important;
         caret-color: var(--accent) !important;
         padding: 12px 20px !important;
+        font-size: 16px !important; /* Prevent zoom on iOS */
+        font-family: var(--font-main) !important;
     }
     
     .stTextInput input::placeholder {
-        color: rgba(255,255,255,0.4) !important;
+        color: rgba(255,255,255,0.5) !important;
+        opacity: 1 !important;
     }
     
     div[data-baseweb="input"]:focus-within {
         border-color: var(--accent) !important;
-        box-shadow: 0 0 10px var(--accent-glow) !important;
+        box-shadow: 0 0 15px var(--accent-glow) !important;
+        background-color: rgba(28, 33, 43, 0.9) !important;
+    }
+
+    /* Mobile responsive search input */
+    @media (max-width: 768px) {
+        .stTextInput input {
+            padding: 10px 16px !important;
+            font-size: 16px !important;
+        }
     }
 
     /* FIX: Robust Button Styling for Production */
