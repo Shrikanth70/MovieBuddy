@@ -446,6 +446,23 @@ def inject_custom_css():
         overflow-wrap: break-word;
     }
     
+    /* Movie Row Horizontal Scroll */
+    .movie-scroll {
+        display: flex;
+        overflow-x: auto;
+        gap: 15px;
+        padding: 10px 0;
+        scrollbar-width: thin;
+        scrollbar-color: var(--accent) transparent;
+    }
+    .movie-scroll::-webkit-scrollbar { height: 6px; }
+    .movie-scroll::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
+    
+    .movie-item {
+        flex: 0 0 140px;
+        text-align: center;
+    }
+    
     /* Movie Details 2-Column */
     .details-container {
         display: flex;
@@ -621,6 +638,25 @@ def render_slideshow(movies):
         }}
         .dot {{ width: 20px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.2); transition: all 0.3s; cursor: pointer; }}
         .dot.active {{ width: 40px; background: #E50914; }}
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {{
+            .slider-wrapper {{ height: 400px; }}
+            .slide {{ padding: 40px 30px; }}
+            .title {{ font-size: 36px; }}
+            .meta {{ font-size: 16px; }}
+            .overview {{ font-size: 14px; -webkit-line-clamp: 2; }}
+            .nav-btn {{ width: 40px; height: 40px; font-size: 16px; }}
+        }}
+        
+        @media (max-width: 480px) {{
+            .slider-wrapper {{ height: 350px; }}
+            .slide {{ padding: 30px 20px; }}
+            .title {{ font-size: 28px; }}
+            .meta {{ font-size: 14px; }}
+            .overview {{ font-size: 13px; -webkit-line-clamp: 2; }}
+            .nav-btn {{ width: 35px; height: 35px; font-size: 14px; }}
+        }}
     </style>
     </head>
     <body>

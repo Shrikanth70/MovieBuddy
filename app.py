@@ -58,40 +58,60 @@ def navigate_back():
     st.session_state.scroll_to_top = True
     st.rerun()
 
-def render_movie_row(title, movies, key_prefix, category_id=None):
+def render_movie_row(title, movies, key_prefix, category_id=None, max_items=5, show_see_more=True):
+    """Render a premium horizontal scrollable row with native clickable overlays."""
+    if not movies:
+        return
+        
+def render_movie_row(title, movies, key_prefix, category_id=None, max_items=5, show_see_more=True):
     """Render a premium horizontal scrollable row with native clickable overlays."""
     if not movies:
         return
         
     st.markdown(f'<h3 style="margin-top: 30px; margin-bottom: 15px;">{title}</h3>', unsafe_allow_html=True)
-    cols = st.columns(6, gap="small")
     
-    # Show up to 5 movies
-    for idx, movie in enumerate(movies[:5]):
-        with cols[idx]:
+    if max_items <= 6:
+        # Use grid layout for small numbers
+        cols = st.columns(max_items, gap="small")
+        for idx, movie in enumerate(movies[:max_items]):
+            with cols[idx]:
+                movie_id = movie.get('id')
+                poster_url = tmdb.get_image_url(movie.get("poster_path"))
+                st.markdown(f'''
+                    <a href="?movie_id={movie_id}" target="_self" style="text-decoration: none; display: block;">
+                        <div class="native-card-wrapper">
+                            {ui.render_movie_card(movie, poster_url)}
+                        </div>
+                    </a>
+                ''', unsafe_allow_html=True)
+                    
+        # See More card
+        if show_see_more and category_id and len(movies) > max_items:
+            with cols[max_items-1]:
+                clean_title = strip_html(title).replace(' ', '+')
+                st.markdown(f'''
+                    <a href="?category_id={category_id}&title={clean_title}" target="_self" style="text-decoration: none; display: block;">
+                        <div class="native-card-wrapper">
+                            {ui.render_see_more_card()}
+                        </div>
+                    </a>
+                ''', unsafe_allow_html=True)
+    else:
+        # Use horizontal scroll for large numbers
+        movie_html = '<div class="movie-scroll">'
+        for movie in movies[:max_items]:
             movie_id = movie.get('id')
             poster_url = tmdb.get_image_url(movie.get("poster_path"))
-            # Wrap in anchor for artifact-free navigation
-            st.markdown(f'''
+            card_html = ui.render_movie_card(movie, poster_url)
+            movie_html += f'''
                 <a href="?movie_id={movie_id}" target="_self" style="text-decoration: none; display: block;">
-                    <div class="native-card-wrapper">
-                        {ui.render_movie_card(movie, poster_url)}
+                    <div class="movie-item">
+                        {card_html}
                     </div>
                 </a>
-            ''', unsafe_allow_html=True)
-                
-    # See More card
-    if category_id and len(movies) >= 6:
-        with cols[5]:
-            clean_title = strip_html(title).replace(' ', '+')
-            # Wrap See More in anchor with clean title
-            st.markdown(f'''
-                <a href="?category_id={category_id}&title={clean_title}" target="_self" style="text-decoration: none; display: block;">
-                    <div class="native-card-wrapper">
-                        {ui.render_see_more_card()}
-                    </div>
-                </a>
-            ''', unsafe_allow_html=True)
+            '''
+        movie_html += '</div>'
+        st.markdown(movie_html, unsafe_allow_html=True)
 
 def render_detail_view(movie_id):
     """Render movie details inline."""
@@ -237,7 +257,7 @@ def render_detail_view(movie_id):
         recommendations = tmdb.get_movie_recommendations(movie_id, limit=10)
         
     if recommendations:
-        render_movie_row('Recommended <span class="gold-text">Movies</span>', recommendations, "rec", category_id=f"rec_{movie_id}")
+        render_movie_row('Recommended <span class="gold-text">Movies</span>', recommendations, "rec", category_id=f"rec_{movie_id}", max_items=10, show_see_more=False)
 
 def render_category_view(category_id, title):
     col_back, _ = st.columns([1.5, 8.5])
