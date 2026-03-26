@@ -125,29 +125,34 @@ def inject_custom_css():
     .card-overlay-hint {
         position: absolute;
         inset: 0;
-        background: rgba(229, 9, 20, 0.4);
+        background: rgba(0, 0, 0, 0.6);
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         opacity: 0;
         transition: var(--transition);
-        backdrop-filter: blur(2px);
+        backdrop-filter: blur(4px);
+        z-index: 5;
     }
     
     .card-overlay-hint span {
-        background: white;
-        color: black;
-        padding: 8px 16px;
+        background: var(--accent);
+        color: white;
+        padding: 10px 20px;
         border-radius: 8px;
         font-weight: 800;
-        font-size: 11px;
-        letter-spacing: 1px;
+        font-size: 12px;
+        letter-spacing: 1.5px;
         transform: translateY(20px);
         transition: var(--transition);
+        box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
     }
     
     .movie-card:hover .card-overlay-hint { opacity: 1; }
     .movie-card:hover .card-overlay-hint span { transform: translateY(0); }
+    
+    .movie-card, .hero-btn, .carousel-btn, .carousel-indicator, .see-more-card { cursor: pointer !important; }
 
     .card-img {
         width: 100%;
@@ -392,9 +397,9 @@ def render_slideshow(movies):
                 </div>
                 <p class="hero-overview">{overview}</p>
                 <div class="hero-btns-row">
-                    <div class="hero-btn" onclick="parentNavigate({movie.get('id')})">
+                    <a href="/?movie_id={movie.get('id')}" target="_top" class="hero-btn">
                         ▶ View Details
-                    </div>
+                    </a>
                 </div>
             </div>
         </div>
@@ -418,6 +423,7 @@ def render_slideshow(movies):
         .hero-meta .sep {{ color: rgba(255,255,255,0.4); }}
         .hero-meta .tag {{ color: #8B949E; font-weight: 400; }}
         .hero-overview {{ color: rgba(255,255,255,0.9); font-size: 14px; line-height: 1.6; margin-bottom: 24px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
+        .hero-btn {{ display: inline-block; background: #E50914; color: white; padding: 12px 28px; border-radius: 10px; font-weight: 700; text-decoration: none; text-transform: uppercase; font-size: 14px; transition: 0.3s; cursor: pointer !important; }}
         .hero-btn:hover {{ background: #FFFFFF; color: #000000; transform: translateY(-3px); box-shadow: 0 5px 20px rgba(255,255,255,0.4); }}
         .hero-btns-row {{ display: flex; gap: 15px; }}
         .carousel-controls {{ position: absolute; bottom: 60px; right: 60px; z-index: 10; display: flex; gap: 15px; }}

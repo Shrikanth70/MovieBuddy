@@ -285,36 +285,43 @@ def main():
         st.session_state.page_stack = [{"page": "home"}]
 
     # --- 1. Query Param Deep-Link Handling ---
-    # This must run at the absolute top of main() to catch incoming links immediately.
     params = st.query_params
     
+    # Check for movie_id
     if "movie_id" in params:
         m_id = params["movie_id"]
-        # Handle list vs string (Streamlit version variance)
         if isinstance(m_id, list): m_id = m_id[0]
         
-        # We set session state and then clear params to prevent refresh loops
-        if "last_nav_id" not in st.session_state or st.session_state.last_nav_id != m_id:
-            st.session_state.last_nav_id = m_id
-            navigate_to("details", movie_id=int(m_id))
+        # Check current page to avoid infinite rerun loops
+        active_page = st.session_state.page_stack[-1]
+        is_already_on_this_movie = (active_page.get("page") == "details" and 
+                                   str(active_page.get("kwargs", {}).get("movie_id")) == str(m_id))
+        
+        if not is_already_on_this_movie:
+            # Clear params before navigating to keep URL clean on next interaction
             st.query_params.clear()
+            navigate_to("details", movie_id=int(m_id))
             st.rerun()
 
+    # Check for category_id
     if "category_id" in params:
         cat_id = params["category_id"]
         if isinstance(cat_id, list): cat_id = cat_id[0]
         cat_title = params.get("title", "Category")
         if isinstance(cat_title, list): cat_title = cat_title[0]
         
-        st.query_params.clear()
-        navigate_to("category", category_id=cat_id, title=cat_title)
-        st.rerun()
+        active_page = st.session_state.page_stack[-1]
+        is_already_on_this_cat = (active_page.get("page") == "category" and 
+                                 active_page.get("kwargs", {}).get("category_id") == cat_id)
+        
+        if not is_already_on_this_cat:
+            st.query_params.clear()
+            navigate_to("category", category_id=cat_id, title=cat_title)
+            st.rerun()
 
     if params.get("home") == "true":
-        st.session_state.page_stack = [{"page": "home"}]
-        if "last_search" in st.session_state:
-            del st.session_state["last_search"]
         st.query_params.clear()
+        st.session_state.page_stack = [{"page": "home"}]
         st.session_state.scroll_to_top = True
         st.rerun()
 
