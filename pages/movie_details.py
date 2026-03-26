@@ -108,12 +108,18 @@ def render_movie_details_page():
     # Monolithic Cast Row (Iframe-based for absolute CSS isolation)
     if cast:
         st.markdown('<div class="ott-title" style="margin-top: 40px; margin-bottom: 20px;">Cast & Crew</div>', unsafe_allow_html=True)
-        
+        placeholder_b64 = ui.get_base64_image("placeholder.png")
+        fallback_cast_img = (
+            f"data:image/png;base64,{placeholder_b64}"
+            if placeholder_b64
+            else "https://image.tmdb.org/t/p/w185"
+        )
+
         # Build the HTML for the cast row inside the iframe
         cast_items_html = ""
         for actor in cast[:12]:
             profile_path = actor.get("profile_path")
-            img = f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else "https://via.placeholder.com/100x150?text=No+Photo"
+            img = f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else fallback_cast_img
             name = actor.get('name', 'Unknown')
             char = actor.get('character', 'Character')
             
