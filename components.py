@@ -446,7 +446,7 @@ def render_slideshow(movies):
         window.parentNavigate = (id) => {{
             window.parent.location.href = window.parent.location.origin + window.parent.location.pathname + '?movie_id=' + id;
         }};
-        setInterval(nextSlide, 15000);
+        setInterval(nextSlide, 30000);
     </script>
     </body>
     </html>
@@ -591,4 +591,30 @@ def render_omdb_reviews(omdb_data):
             st.markdown(f'<div style="text-align: center; background: rgba(255,255,255,0.02); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);"><div style="font-size: 24px; color: #FA320A; font-weight: bold;">🍅 {rotten}</div><div style="font-size: 13px; color: var(--text-muted);">Rotten Tomatoes</div></div>', unsafe_allow_html=True)
     else:
         st.markdown('<div style="color: var(--text-muted);">Aggregate ratings not available</div>', unsafe_allow_html=True)
+
+def render_native_hero(movie, poster_url):
+    """Render a premium featured movie hero using native Streamlit-compatible HTML."""
+    title = movie.get('title', 'Featured Movie')
+    overview = movie.get('overview', '')
+    rating = round(movie.get('vote_average', 0), 1)
+    release_date = movie.get('release_date', '2024')
+    year = release_date[:4] if release_date else '2024'
+    
+    return f"""
+    <div class="native-hero" style="position: relative; height: 500px; width: 100%; border-radius: 20px; overflow: hidden; margin-bottom: 20px; background: #0E1117; border: 1px solid rgba(255,255,255,0.1);">
+        <div style="position: absolute; inset: 0; background-image: url('{poster_url}'); background-size: cover; background-position: center 20%; z-index: 1;"></div>
+        <div style="position: absolute; inset: 0; background: linear-gradient(0deg, rgba(14,17,23,1) 0%, rgba(14,17,23,0.3) 100%); z-index: 2;"></div>
+        <div style="position: absolute; bottom: 60px; left: 60px; z-index: 3; max-width: 800px;">
+            <div style="font-size: 52px; font-weight: 800; line-height: 1.1; margin-bottom: 16px; color: white; text-shadow: 0 4px 10px rgba(0,0,0,0.5);">{title}</div>
+            <div style="font-size: 18px; font-weight: 700; margin-bottom: 20px; color: #E50914; display: flex; gap: 12px; align-items: center;">
+                <span>{year}</span>
+                <span style="color: rgba(255,255,255,0.4);">|</span>
+                <span style="color: white; background: rgba(255,193,7,0.2); padding: 2px 8px; border-radius: 4px;">⭐ {rating}</span>
+                <span style="color: rgba(255,255,255,0.4);">|</span>
+                <span style="color: #8B949E; font-weight: 400;">Featured Selection</span>
+            </div>
+            <p style="color: rgba(255,255,255,0.9); font-size: 15px; line-height: 1.6; margin-bottom: 24px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">{overview}</p>
+        </div>
+    </div>
+    """
 

@@ -286,32 +286,15 @@ def main():
         """, height=0)
         st.session_state.scroll_to_top = False
 
-    # Persistent Top Header
-    head_col1, head_col2 = st.columns([4, 1])
-    with head_col1:
-        st.markdown(f'''
-            <a href="/?home=true" target="_self" class="logo-link">
-                <span class="logo-text">
-                    <span class="logo-movie">Movie</span><span class="logo-buddy">Buddy</span>
-                </span>
-            </a>
-        ''', unsafe_allow_html=True)
-        
-    with head_col2:
-        search_query = st.text_input("", placeholder="Search movies...", key="movie_search_input", label_visibility="collapsed")
-
     # --- ROUTING ENGINE ---
-    # We prioritize URL parameters for production reliability across reloads.
     params = st.query_params
     
-    # Check for movie_id (Detailed View)
     if "movie_id" in params:
         m_id = params["movie_id"]
         if isinstance(m_id, list): m_id = m_id[0]
         render_detail_view(int(m_id))
         return
 
-    # Check for category_id (Grid View)
     if "category_id" in params:
         cat_id = params["category_id"]
         if isinstance(cat_id, list): cat_id = cat_id[0]
@@ -320,9 +303,19 @@ def main():
         render_category_view(cat_id, cat_title)
         return
 
-    # If active search, show results
+    # Persistent Top Header
+    head_col1, head_col2 = st.columns([4, 1])
+    with head_col1:
+        st.markdown(f'''
+            <a href="/?home=true" target="_self" class="logo-link">
+                <span class="logo-text"><span class="logo-movie">Movie</span><span class="logo-buddy">Buddy</span></span>
+            </a>
+        ''', unsafe_allow_html=True)
+    with head_col2:
+        search_query = st.text_input("", placeholder="Search movies...", key="movie_search_input", label_visibility="collapsed")
+
     if search_query:
-        st.session_state.last_search = search_query
+        # Search Results
         st.markdown(f'<h2>Search Results for <span class="gold-text">"{search_query}"</span></h2>', unsafe_allow_html=True)
         results = tmdb.search_movies(search_query)
         if results:
@@ -331,70 +324,50 @@ def main():
                 for idx, movie in enumerate(results[row:row+5]):
                     with cols[idx]:
                         st.markdown('<div class="native-card-wrapper">', unsafe_allow_html=True)
-                        poster_url = tmdb.get_image_url(movie.get("poster_path"))
-                        st.markdown(ui.render_movie_card(movie, poster_url), unsafe_allow_html=True)
+                        st.markdown(ui.render_movie_card(movie, tmdb.get_image_url(movie.get("poster_path"))), unsafe_allow_html=True)
                         if st.button(" ", key=f"search_nav_{movie['id']}_{row}_{idx}"):
                             st.query_params.movie_id = movie['id']
                             st.rerun()
                         st.markdown('</div>', unsafe_allow_html=True)
         else:
-            st.warning("No results found.")
-            if st.button("⬅ Back Home"):
-                st.query_params.clear()
-                st.rerun()
+            st.info("No movies found.")
         return
 
-    # ------------ HOME PAGE ------------
-    # Only render Home if no params/search are active
-    if "hero_slides" not in st.session_state or not st.session_state.hero_slides:
-        try:
-            slides = tmdb.get_now_playing_movies(limit=10)
-        except (AttributeError, Exception):
-            slides = []
+    # ------------ HOME PAGE FEATURED (Native) ------------
+    if "hero_index" not in st.session_state:
+        st.session_state.hero_index = 0
         
-        # Fallback to general trending if now_playing fails or is empty
-        if not slides:
-            try:
-                slides = tmdb.get_trending_weekly(limit=10)
-            except (AttributeError, Exception):
-                slides = []
-            
-        st.session_state.hero_slides = slides
+    if "hero_slides" not in st.session_state or not st.session_state.hero_slides:
+        st.session_state.hero_slides = tmdb.get_now_playing_movies(limit=10) or tmdb.get_trending_weekly(limit=10)
 
-    if "hero_slides" in st.session_state and st.session_state.hero_slides:
-        ui.render_slideshow(st.session_state.hero_slides)
-        # NATIVE CTA BUTTON BELOW HERO (Avoids sandboxing)
-        featured = st.session_state.hero_slides[0]
-        col_c, _ = st.columns([1, 4])
-        with col_c:
-            st.markdown("""
-            <style>
+    if st.session_state.hero_slides:
+        hero_movies = st.session_state.hero_slides
+        idx = st.session_state.hero_index % len(hero_movies)
+        featured = hero_movies[idx]
+        
+        st.markdown(ui.render_native_hero(featured, tmdb.get_image_url(featured.get("backdrop_path"), size="original")), unsafe_allow_html=True)
+        
+        # Native Hero Controls
+        h_col1, h_col2, _ = st.columns([1.2, 0.4, 4])
+        with h_col1:
+            st.markdown("""<style>
                 div[data-testid="stColumn"] button[kind="secondary"] {
-                    background: #E50914 !important;
-                    color: white !important;
-                    border: none !important;
-                    font-weight: 700 !important;
-                    text-transform: uppercase !important;
+                    background: #E50914 !important; color: white !important; border: none !important;
+                    font-weight: 800 !important; text-transform: uppercase !important;
+                    height: 48px !important; width: 100% !important;
                 }
-                div[data-testid="stColumn"] button[kind="secondary"]:hover {
-                    background: white !important;
-                    color: #000000 !important;
-                }
-            </style>
-            """, unsafe_allow_html=True)
-            if st.button(f"▶ VIEW DETAILS: {featured.get('title')}", key="hero_cta_native"):
+                div[data-testid="stColumn"] button[kind="secondary"]:hover { background: white !important; color: black !important; }
+            </style>""", unsafe_allow_html=True)
+            if st.button(f"▶ VIEW DETAILS", key="hero_cta_native"):
                 st.query_params.movie_id = featured.get('id')
                 st.rerun()
-        st.markdown('<br>', unsafe_allow_html=True)
-        # NATIVE CTA BUTTON BELOW HERO (Avoids sandboxing)
-        # We target the most relevant featured movie
-        featured = st.session_state.hero_slides[0]
-        col_c, _ = st.columns([1, 4])
-        with col_c:
-            if st.button(f"▶ View Details: {featured.get('title')}", key="hero_cta_native"):
-                st.query_params.movie_id = featured.get('id')
+        with h_col2:
+            if st.button("❯", key="hero_next"):
+                st.session_state.hero_index += 1
                 st.rerun()
         st.markdown('<br>', unsafe_allow_html=True)
+
+    # Netflix-Style Rows
 
     # Netflix-Style Rows
     # Create a deduplication set to limit movie repetition to a maximum of 2 times across all rows
