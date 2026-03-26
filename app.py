@@ -99,7 +99,8 @@ def render_detail_view(movie_id):
     col_b, _ = st.columns([1, 9])
     with col_b:
         if st.button("Back", key=f"det_back_{movie_id}", use_container_width=True):
-            navigate_back()
+            st.query_params.clear()
+            st.rerun()
             
     # 2-Column Layout
     col1, col2 = st.columns([1, 2.5], gap="large")
@@ -206,11 +207,11 @@ def render_detail_view(movie_id):
         render_movie_row('Recommended <span class="gold-text">Movies</span>', recommendations, "rec", category_id=f"rec_{movie_id}")
 
 def render_category_view(category_id, title):
-    """Grid layout for See More pages."""
     col_back, _ = st.columns([1, 9])
     with col_back:
         if st.button("Back", key=f"back_{category_id}", use_container_width=True):
-            navigate_back()
+            st.query_params.clear()
+            st.rerun()
         
     st.markdown(f'<h2 style="margin-top: 10px;">{title}</h2>', unsafe_allow_html=True)
     st.markdown("---")
@@ -281,50 +282,6 @@ def main():
         """, height=0)
         st.session_state.scroll_to_top = False
 
-    if "page_stack" not in st.session_state:
-        st.session_state.page_stack = [{"page": "home"}]
-
-    # --- 1. Query Param Deep-Link Handling ---
-    params = st.query_params
-    
-    # Check for movie_id
-    if "movie_id" in params:
-        m_id = params["movie_id"]
-        if isinstance(m_id, list): m_id = m_id[0]
-        
-        # Check current page to avoid infinite rerun loops
-        active_page = st.session_state.page_stack[-1]
-        is_already_on_this_movie = (active_page.get("page") == "details" and 
-                                   str(active_page.get("kwargs", {}).get("movie_id")) == str(m_id))
-        
-        if not is_already_on_this_movie:
-            # Clear params before navigating to keep URL clean on next interaction
-            st.query_params.clear()
-            navigate_to("details", movie_id=int(m_id))
-            st.rerun()
-
-    # Check for category_id
-    if "category_id" in params:
-        cat_id = params["category_id"]
-        if isinstance(cat_id, list): cat_id = cat_id[0]
-        cat_title = params.get("title", "Category")
-        if isinstance(cat_title, list): cat_title = cat_title[0]
-        
-        active_page = st.session_state.page_stack[-1]
-        is_already_on_this_cat = (active_page.get("page") == "category" and 
-                                 active_page.get("kwargs", {}).get("category_id") == cat_id)
-        
-        if not is_already_on_this_cat:
-            st.query_params.clear()
-            navigate_to("category", category_id=cat_id, title=cat_title)
-            st.rerun()
-
-    if params.get("home") == "true":
-        st.query_params.clear()
-        st.session_state.page_stack = [{"page": "home"}]
-        st.session_state.scroll_to_top = True
-        st.rerun()
-
     # Persistent Top Header
     head_col1, head_col2 = st.columns([4, 1])
     with head_col1:
@@ -339,29 +296,31 @@ def main():
     with head_col2:
         search_query = st.text_input("", placeholder="Search movies...", key="movie_search_input", label_visibility="collapsed")
 
-    # If active search, hijack navigation to show results
+    # --- ROUTING ENGINE ---
+    # We prioritize URL parameters for production reliability across reloads.
+    params = st.query_params
+    
+    # Check for movie_id (Detailed View)
+    if "movie_id" in params:
+        m_id = params["movie_id"]
+        if isinstance(m_id, list): m_id = m_id[0]
+        render_detail_view(int(m_id))
+        return
+
+    # Check for category_id (Grid View)
+    if "category_id" in params:
+        cat_id = params["category_id"]
+        if isinstance(cat_id, list): cat_id = cat_id[0]
+        cat_title = params.get("title", "Category")
+        if isinstance(cat_title, list): cat_title = cat_title[0]
+        render_category_view(cat_id, cat_title)
+        return
+
+    # If active search, show results
     if search_query:
-        if st.session_state.get("last_search") != search_query:
-            st.session_state.last_search = search_query
-            st.session_state.page_stack = [{"page": "search_results", "kwargs": {"query": search_query}}]
-            st.rerun()
-
-    # Get current page from stack
-    current_page = st.session_state.page_stack[-1]
-    page_name = current_page.get("page")
-    kwargs = current_page.get("kwargs", {})
-
-    # Route Request
-    if page_name == "details":
-        render_detail_view(kwargs.get("movie_id"))
-        return
-    elif page_name == "category":
-        render_category_view(kwargs.get("category_id"), kwargs.get("title"))
-        return
-    elif page_name == "search_results":
-        query = kwargs.get("query")
-        st.markdown(f'<h2>Search Results for <span class="gold-text">"{query}"</span></h2>', unsafe_allow_html=True)
-        results = tmdb.search_movies(query)
+        st.session_state.last_search = search_query
+        st.markdown(f'<h2>Search Results for <span class="gold-text">"{search_query}"</span></h2>', unsafe_allow_html=True)
+        results = tmdb.search_movies(search_query)
         if results:
             for row in range(0, len(results), 5):
                 cols = st.columns(5)
@@ -372,10 +331,12 @@ def main():
         else:
             st.warning("No results found.")
             if st.button("⬅ Back Home"):
-                navigate_to("home")
+                st.query_params.clear()
+                st.rerun()
         return
 
     # ------------ HOME PAGE ------------
+    # Only render Home if no params/search are active
     if "hero_slides" not in st.session_state or not st.session_state.hero_slides:
         try:
             slides = tmdb.get_now_playing_movies(limit=10)
