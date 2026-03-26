@@ -11,7 +11,7 @@ try:
 except Exception:
     OMDB_API_KEY = os.getenv("OMDB_API_KEY")
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=43200)
 def get_movie_reviews(title):
     """Fetch movie ratings and reviews from OMDb."""
     if not OMDB_API_KEY:

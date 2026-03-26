@@ -15,6 +15,11 @@ st.set_page_config(
     layout="wide"
 )
 
+# NOTE ON STREAMLIT CLOUD HIBERNATION:
+# On Streamlit Community Cloud, apps hibernate after inactivity.
+# We use optimized caching (@st.cache_data) in tmdb_service.py to ensure 
+# fast recovery and smooth performance upon wake-up.
+
 # Inject Custom CSS
 ui.inject_custom_css()
 
@@ -167,8 +172,12 @@ def render_category_view(category_id, title):
             movies = tmdb.get_trending_by_language("te", limit=40)
         elif category_id == "trending_hi":
             movies = tmdb.get_trending_by_language("hi", limit=40)
-        elif category_id == "trending_en":
-            movies = tmdb.get_trending_by_language("en", limit=40)
+        elif category_id == "trending_ta":
+            movies = tmdb.get_trending_by_language("ta", limit=40)
+        elif category_id == "trending_kn":
+            movies = tmdb.get_trending_by_language("kn", limit=40)
+        elif category_id == "trending_ml":
+            movies = tmdb.get_trending_by_language("ml", limit=40)
         elif category_id == "other_lang":
             movies = tmdb.get_other_languages_ott(limit=40)
         elif str(category_id).startswith("rec_"):
@@ -190,27 +199,21 @@ def render_category_view(category_id, title):
 
 # --- Main Layout ---
 def main():
-    # Always-on scroll-to-top fix: fires on every page load and navigation
-    st.components.v1.html("""
-    <script>
-    function scrollToTop() {
-        // Target the Streamlit main container
-        var main = window.parent.document.querySelector('section.main');
-        if (main) main.scrollTop = 0;
-        // Also scroll the parent window itself
-        window.parent.scrollTo(0, 0);
-        // Target the block-container as well
-        var block = window.parent.document.querySelector('.block-container');
-        if (block) block.scrollTop = 0;
-    }
-    // Fire immediately
-    scrollToTop();
-    // Fire again after short delays to catch late renders
-    setTimeout(scrollToTop, 50);
-    setTimeout(scrollToTop, 150);
-    setTimeout(scrollToTop, 300);
-    </script>
-    """, height=0)
+    # Robust scroll-to-top fix: only fires when specifically requested via session state
+    if st.session_state.get("scroll_to_top"):
+        st.components.v1.html("""
+        <script>
+        function scrollToTop() {
+            var elements = window.parent.document.querySelectorAll('.main, .stApp, .block-container');
+            elements.forEach(e => e.scrollTop = 0);
+            window.parent.scrollTo(0, 0);
+        }
+        scrollToTop();
+        setTimeout(scrollToTop, 50);
+        setTimeout(scrollToTop, 150);
+        </script>
+        """, height=0)
+        st.session_state.scroll_to_top = False
 
     if "page_stack" not in st.session_state:
         st.session_state.page_stack = [{"page": "home"}]
@@ -220,6 +223,13 @@ def main():
         if "last_search" in st.session_state:
             del st.session_state["last_search"]
         st.query_params.clear()
+        st.session_state.scroll_to_top = True
+        st.rerun()
+
+    if st.query_params.get("movie_id"):
+        m_id = st.query_params.get("movie_id")
+        st.query_params.clear()
+        navigate_to("details", movie_id=int(m_id))
         st.rerun()
 
     # Persistent Top Header
@@ -290,26 +300,8 @@ def main():
             
         st.session_state.hero_slides = slides
 
-    if "slide_index" not in st.session_state:
-        st.session_state.slide_index = 0
-
     if st.session_state.hero_slides:
-        current_slide = st.session_state.hero_slides[st.session_state.slide_index]
-        backdrop_url = tmdb.get_image_url(current_slide.get("backdrop_path"), size="original")
-        ui.render_slideshow(current_slide, backdrop_url)
-        
-        ctrl_col1, ctrl_col2, ctrl_col3 = st.columns([1, 1, 8])
-        with ctrl_col1:
-            if st.button("❮ ", use_container_width=True):
-                st.session_state.slide_index = (st.session_state.slide_index - 1) % len(st.session_state.hero_slides)
-                st.rerun()
-        with ctrl_col2:
-            if st.button(" ❯", use_container_width=True):
-                st.session_state.slide_index = (st.session_state.slide_index + 1) % len(st.session_state.hero_slides)
-                st.rerun()
-        with ctrl_col3:
-            if st.button(" ▶View Details", key=f"hero_watch_{current_slide.get('id')}"):
-                navigate_to("details", movie_id=current_slide.get("id"))
+        ui.render_slideshow(st.session_state.hero_slides)
 
     # Netflix-Style Rows
     # Create a deduplication set to limit movie repetition to a maximum of 2 times across all rows
@@ -327,10 +319,26 @@ def main():
                 break
         return row_final
 
+    def get_daily_shuffled_favorites():
+        """Get top rated movies shuffled deterministically by current day to prevent daily duplicate rotation."""
+        import random
+        from datetime import date
+        top_movies = tmdb.get_top_rated_movies(limit=40)
+        if not top_movies:
+            return []
+        today = date.today().toordinal()
+        rng = random.Random(today)
+        shuffled = list(top_movies)
+        rng.shuffle(shuffled)
+        return shuffled
+
     render_movie_row("Just Arrived on OTT", prioritize_movies(tmdb.get_recent_ott_movies(limit=40)), "recent_ott", "recent_ott")
+    render_movie_row("All-Time Favorites", prioritize_movies(get_daily_shuffled_favorites()), "fav", "all_time")
     render_movie_row("Trending Telugu OTT Movies", prioritize_movies(tmdb.get_trending_by_language("te", limit=40)), "te", "trending_te")
     render_movie_row("Trending Hindi OTT Movies", prioritize_movies(tmdb.get_trending_by_language("hi", limit=40)), "hi", "trending_hi")
-    render_movie_row("Trending English OTT Movies", prioritize_movies(tmdb.get_trending_by_language("en", limit=40)), "en", "trending_en")
+    render_movie_row("Trending Tamil OTT Movies", prioritize_movies(tmdb.get_trending_by_language("ta", limit=40)), "ta", "trending_ta")
+    render_movie_row("Trending Kannada OTT Movies", prioritize_movies(tmdb.get_trending_by_language("kn", limit=40)), "kn", "trending_kn")
+    render_movie_row("Trending Malayalam OTT Movies", prioritize_movies(tmdb.get_trending_by_language("ml", limit=40)), "ml", "trending_ml")
     
     # Other Languages
     other_movies = tmdb.get_other_languages_ott(limit=40)

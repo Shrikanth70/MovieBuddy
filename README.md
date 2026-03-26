@@ -148,7 +148,7 @@ streamlit run app.py
 MovieBuddy uses:
 
 ```python
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=43200) # 12-hour cache
 ```
 
 To cache:
@@ -156,8 +156,21 @@ To cache:
 * Trending movies
 * Movie details
 * Recommendations
+* Watch Providers
 
 This reduces API calls and improves speed.
+
+---
+
+## 😴 App Hibernation & Performance
+
+**Note on Streamlit Community Cloud:**
+On the free Streamlit Community Cloud platform, apps may go into "sleep mode" or hibernate if they remain inactive for a period of time (typically 24-48 hours). This is a platform-level behavior to manage resources and cannot be disabled directly through the application code.
+
+**How MovieBuddy handles this:**
+* **Optimized Cold Starts:** The app structure is modular, and heavy data fetching is wrapped in `@st.cache_data` with long TTLs to ensure that once the app wakes up, it remains highly responsive.
+* **Efficient API Calls:** Minimal overhead during startup ensures the "wake-up" process is as fast as possible.
+* **Pro-Tip:** If you require 24/7 "always-on" availability for a production environment, consider using an external uptime-monitoring service (like Cron-job.org or UptimeRobot) to ping the app URL periodically, or migrate to a dedicated VPS/Docker deployment.
 
 ---
 

@@ -103,27 +103,45 @@ def inject_custom_css():
         transform: translateY(-5px);
     }
 
-    /* Hero Section */
-    .hero {
+    /* Hero Carousel styling */
+    .carousel-container {
         position: relative;
         height: 500px;
         border-radius: var(--radius-lg);
-        background-size: cover;
-        background-position: center 20%;
         margin-bottom: 40px;
         overflow: hidden;
-        display: flex;
-        align-items: flex-end;
-        padding: 60px;
         border: 1px solid rgba(255,255,255,0.08);
         box-shadow: 0 20px 40px rgba(0,0,0,0.4);
     }
 
-    .hero::after {
+    .carousel-item {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-size: cover;
+        background-position: center 20%;
+        opacity: 0;
+        transition: opacity 1s ease-in-out;
+        display: flex;
+        align-items: flex-end;
+        padding: 60px;
+        pointer-events: none;
+    }
+
+    .carousel-item.active {
+        opacity: 1;
+        pointer-events: auto;
+        z-index: 10;
+    }
+
+    .carousel-item::after {
         content: '';
         position: absolute;
         inset: 0;
         background: linear-gradient(0deg, rgba(14,17,23,1) 0%, rgba(14,17,23,0.6) 50%, rgba(14,17,23,0) 100%);
+        z-index: -1;
     }
 
     .hero-content {
@@ -138,6 +156,84 @@ def inject_custom_css():
         line-height: 1.1;
         margin-bottom: 16px;
         text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+
+    .hero-btn {
+        display: inline-block;
+        background: var(--gold);
+        color: #000;
+        padding: 12px 28px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-decoration: none;
+        box-shadow: 0 4px 15px rgba(230, 179, 90, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .hero-btn:hover {
+        background: #fff;
+        color: #000;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
+    }
+    
+    .carousel-controls {
+        position: absolute;
+        bottom: 60px;
+        right: 60px;
+        z-index: 20;
+        display: flex;
+        gap: 15px;
+    }
+    
+    .carousel-btn {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: white;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        backdrop-filter: blur(5px);
+        transition: all 0.2s;
+    }
+    
+    .carousel-btn:hover {
+        background: var(--gold);
+        color: black;
+        border-color: var(--gold);
+        transform: scale(1.1);
+    }
+
+    .carousel-indicators {
+        position: absolute;
+        bottom: 25px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 8px;
+        z-index: 20;
+    }
+
+    .carousel-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.3);
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .carousel-indicator.active {
+        background: var(--gold);
+        transform: scale(1.3);
+        box-shadow: 0 0 10px var(--gold-glow);
     }
 
     /* Movie Cards */
@@ -214,16 +310,26 @@ def inject_custom_css():
         filter: drop-shadow(0 0 15px rgba(230, 179, 90, 0.3));
     }
 
-    /* Search Input Styling */
-    .stTextInput input {
+    /* Robust Search Input Styling (Fixes invisible text on mobile/dark modes) */
+    div[data-baseweb="input"] {
         background-color: rgba(255,255,255,0.05) !important;
         border: 1px solid rgba(255,255,255,0.1) !important;
         border-radius: 12px !important;
+    }
+    
+    .stTextInput input {
         color: white !important;
+        -webkit-text-fill-color: white !important;
+        background-color: transparent !important;
+        caret-color: var(--gold) !important;
         padding: 12px 20px !important;
     }
     
-    .stTextInput input:focus {
+    .stTextInput input::placeholder {
+        color: rgba(255,255,255,0.4) !important;
+    }
+    
+    div[data-baseweb="input"]:focus-within {
         border-color: var(--gold) !important;
         box-shadow: 0 0 10px var(--gold-glow) !important;
     }
@@ -330,8 +436,10 @@ def inject_custom_css():
 
     /* MOBILE RESPONSIVENESS */
     @media (max-width: 768px) {
-        .hero {
+        .carousel-container {
             height: 400px !important;
+        }
+        .carousel-item {
             padding: 30px !important;
         }
         .hero-title {
@@ -340,19 +448,32 @@ def inject_custom_css():
         .logo-text {
             font-size: 30px !important;
         }
+        .carousel-controls {
+            bottom: 30px;
+            right: 30px;
+        }
     }
 
     @media (max-width: 480px) {
-        .hero {
-            height: 350px !important;
+        .carousel-container {
+            height: 380px !important;
+        }
+        .carousel-item {
             padding: 20px !important;
+            padding-bottom: 60px !important;
         }
         .hero-title {
             font-size: 24px !important;
         }
         .hero-content p {
             font-size: 13px !important;
-            -webkit-line-clamp: 4 !important;
+            -webkit-line-clamp: 3 !important;
+        }
+        .carousel-controls {
+            display: none !important; /* Hide controls on mobile due to space, rely on indicator taps */
+        }
+        .carousel-indicators {
+            bottom: 15px;
         }
         /* Mobile Grid Adjustment for Horizontal Scrolling */
         [data-testid="stHorizontalBlock"]:has(> [data-testid="column"]:nth-child(6)) {
@@ -378,35 +499,128 @@ def inject_custom_css():
     </style>
     """, unsafe_allow_html=True)
 
-def render_slideshow(movie, image_url):
-    """Render a single slide for the trending movies slideshow."""
-    if not movie:
+def render_slideshow(movies):
+    """Render a pure HTML/CSS/JS cinematic autoplay carousel for hero slides."""
+    if not movies:
         return
+        
+    slides_html = ""
+    indicators_html = ""
     
-    title = movie.get("title")
-    year = movie.get("release_date", "N/A")[:4]
-    overview = movie.get("overview", "")
-    rating = movie.get("vote_average", "N/A")
-    
-    if image_url == "placeholder.png":
-        b64_img = get_base64_image("placeholder.png")
-        image_url = f"data:image/png;base64,{b64_img}"
-    
-    st.markdown(f"""<div class="hero" style="background-image: url('{image_url}');">
-    <div class="hero-content">
-        <div class="hero-title">{title}</div>
-        <div style="color: var(--gold); font-size: 18px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
-            <span>{year}</span>
-            <span style="color: rgba(255,255,255,0.4);">|</span>
-            <span class="rating">⭐ {rating}</span>
-            <span style="color: rgba(255,255,255,0.4);">|</span>
-            <span style="color: var(--text-muted); font-weight: 400;">Trending This Week</span>
+    for idx, movie in enumerate(movies):
+        title = movie.get("title", "Unknown Title")
+        year = movie.get("release_date", "N/A")[:4] if movie.get("release_date") else "N/A"
+        overview = movie.get("overview", "")
+        # Escape single quotes and newlines for HTML safety
+        overview = overview.replace("'", "&#39;").replace('"', "&quot;").replace("\n", " ")
+        title = title.replace("'", "&#39;").replace('"', "&quot;")
+        
+        rating = round(movie.get("vote_average", 0), 1)
+        
+        # Get backdrop url
+        path = movie.get("backdrop_path")
+        if not path:
+            image_url = f"data:image/png;base64,{get_base64_image('placeholder.png')}"
+        else:
+            image_url = f"https://image.tmdb.org/t/p/original/{path}"
+            
+        active_class = "active" if idx == 0 else ""
+        
+        slides_html += f"""
+        <div class="carousel-item {active_class}" style="background-image: url('{image_url}');">
+            <div class="hero-content">
+                <div class="hero-title">{title}</div>
+                <div style="color: var(--gold); font-size: 18px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <span>{year}</span>
+                    <span style="color: rgba(255,255,255,0.4);">|</span>
+                    <span class="rating">⭐ {rating}</span>
+                    <span style="color: rgba(255,255,255,0.4);">|</span>
+                    <span style="color: var(--text-muted); font-weight: 400;">Trending This Week</span>
+                </div>
+                <p style="color: rgba(255,255,255,0.9); font-size: 14px; line-height: 1.6; margin-bottom: 24px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-width: 650px;">
+                    {overview}
+                </p>
+                <!-- Native <a> link triggers Streamlit script query params -->
+                <a href="/?movie_id={movie.get('id')}" target="_parent" class="hero-btn">
+                    ▶ View Details
+                </a>
+            </div>
         </div>
-        <p style="color: rgba(255,255,255,0.9); font-size: 14px; line-height: 1.6; margin-bottom: 24px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; max-width: 650px;">
-            {overview}
-        </p>
+        """
+        
+        indicators_html += f'<div class="carousel-indicator {active_class}" onclick="jumpToSlide({idx})"></div>'
+        
+    carousel_html = f"""
+    <div class="carousel-container" id="heroCarousel">
+        {slides_html}
+        
+        <div class="carousel-controls">
+            <button class="carousel-btn" onclick="prevSlide()">❮</button>
+            <button class="carousel-btn" onclick="nextSlide()">❯</button>
+        </div>
+        
+        <div class="carousel-indicators">
+            {indicators_html}
+        </div>
     </div>
-</div>""", unsafe_allow_html=True)
+    
+    <script>
+        (function() {{
+            const container = document.getElementById('heroCarousel');
+            if (!container) return;
+            
+            const slides = container.querySelectorAll('.carousel-item');
+            const indicators = container.querySelectorAll('.carousel-indicator');
+            let currentIndex = 0;
+            let intervalId = null;
+            const slideDuration = 6000; // 6 seconds
+            
+            function showSlide(index) {{
+                slides.forEach((el, i) => {{
+                    el.classList.remove('active');
+                    indicators[i].classList.remove('active');
+                    if (i === index) {{
+                        el.classList.add('active');
+                        indicators[i].classList.add('active');
+                    }}
+                }});
+                currentIndex = index;
+            }}
+            
+            window.nextSlide = function() {{
+                const nextIndex = (currentIndex + 1) % slides.length;
+                showSlide(nextIndex);
+            }};
+            
+            window.prevSlide = function() {{
+                const prevIndex = (currentIndex - 1 + slides.length) % slides.length;
+                showSlide(prevIndex);
+            }};
+            
+            window.jumpToSlide = function(index) {{
+                showSlide(index);
+            }};
+            
+            function startAutoplay() {{
+                if (intervalId) clearInterval(intervalId);
+                intervalId = setInterval(window.nextSlide, slideDuration);
+            }}
+            
+            function stopAutoplay() {{
+                if (intervalId) clearInterval(intervalId);
+            }}
+            
+            container.addEventListener('mouseenter', stopAutoplay);
+            container.addEventListener('mouseleave', startAutoplay);
+            container.addEventListener('touchstart', stopAutoplay, {{passive: true}});
+            container.addEventListener('touchend', startAutoplay, {{passive: true}});
+            
+            startAutoplay();
+        }})();
+    </script>
+    """
+    
+    st.markdown(carousel_html, unsafe_allow_html=True)
 
 def render_movie_card(movie, poster_url):
     """Helper for internal markdown movie card markup."""
@@ -491,6 +705,8 @@ def render_watch_providers(providers):
     html_output = '<div class="ott-container">'
     html_output += '<div class="ott-title">Where to Watch</div>'
     
+    watch_link = providers.get("link", "#")
+    
     found_any = False
     for label, items in categories:
         if items:
@@ -500,7 +716,8 @@ def render_watch_providers(providers):
             for item in items:
                 logo_url = f"https://image.tmdb.org/t/p/original{item.get('logo_path')}"
                 name = item.get("provider_name")
-                html_output += f'<img src="{logo_url}" title="{name}" class="provider-logo">'
+                # Wrap in anchor tag for redirection
+                html_output += f'<a href="{watch_link}" target="_blank" title="Watch on {name}"><img src="{logo_url}" class="provider-logo"></a>'
             html_output += '</div><div style="height: 15px;"></div>'
     
     if not found_any:

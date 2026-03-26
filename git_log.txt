@@ -1,0 +1,27 @@
+f44a46c Revert: Undo all changes made on March 6th, 2026, and restore state to March 3rd (eea2a6b)
+046ce4a Final: Permanent structural UI/UX fix with symmetric 5-column grid and single-click nav
+67177d3 Fix: Complete sidebar removal cleanup in layout_utils.py
+2a86cf7 Fix: Remove defunct sidebar import in app.py
+1516e84 Final: Senior Architect Layout with top navbar and symmetric grid
+8e9b4e0 Design: Perfect 4-column grid alignment and balanced login layout
+8d5bb80 Production: Complete architectural refactor and high-end UI polish
+fefb379 Major: Finalize architectural refactor with persistent layout and modular structure
+8e730f4 Fix: StreamlitDuplicateElementId errors and refactor auth/routing architecture
+13c74eb Refactor: Modular architecture and robust single-page navigation system
+3ab2498 Refactor: Modern Netflix-style dashboard with fixed sidebar and native grids
+102cb4d Fix: Supabase email verification redirect and improved Auth UX
+1ae8a65 Enhance: OMDb integration for ratings and fix scroll reset bug
+74bf07c Fix scroll position on navigation and robust API key retrieval
+eea2a6b fix: stabilize randomized grid keys to fix View Details navigation
+eb28494 style: fix horizontal OTT layout and feat: randomize featured movies on reload
+abe0714 fix: add missing render_watch_providers function to components.py
+903c48b Merge pull request #1 from Shrikanth70/fix/ui-featured-ott-responsive
+354d1b7 Added Dev Container Folder
+e0f1e49 docs: update README with new production features
+6ac5d00 fix/feat/style: production UI fixes, featured movie rotation, OTT info, and mobile responsiveness
+5699264 Add web app link to README
+03da21c Configure Streamlit secrets for TMDB API key
+1320656 Update movie recommendation app with layout improvements and secure API key management
+1834f46 Enhance README with detailed project information
+dad9834 Initial commit: MovieBuddy Streamlit app with secured API keys
+6e71e63 Initial commit
