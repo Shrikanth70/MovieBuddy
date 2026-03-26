@@ -5,6 +5,15 @@ from components import carousel
 
 def render_home_page():
     """Main dashboard (Slideshow + Grids)."""
+    col_back, _ = st.columns([1.5, 8.5])
+    with col_back:
+        st.markdown(f'''
+            <div class="back-btn-container">
+                <a href="/?home=true" target="_self" class="back-pill-btn">
+                    <span style="margin-right: 8px;">←</span> BACK
+                </a>
+            </div>
+        ''', unsafe_allow_html=True)
     carousel.render_trending_slideshow()
     
     st.markdown("### Trending Today")

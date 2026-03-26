@@ -109,16 +109,13 @@ def render_detail_view(movie_id):
     # Top Back Button
     col_b, _ = st.columns([1.5, 8.5])
     with col_b:
-        st.markdown('<div class="back-btn-col">', unsafe_allow_html=True)
-        if st.button("← Back"):
-            if "previous_params" in st.session_state:
-                st.query_params.update(st.session_state.previous_params)
-                del st.session_state.previous_params
-            else:
-                st.query_params.clear()
-                st.query_params["home"] = "true"
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown(f'''
+            <div class="back-btn-container">
+                <a href="/?home=true" target="_self" class="back-pill-btn">
+                    <span style="margin-right: 8px;">←</span> BACK
+                </a>
+            </div>
+        ''', unsafe_allow_html=True)
             
     # 2-Column Layout
     col1, col2 = st.columns([1, 2.5], gap="large")

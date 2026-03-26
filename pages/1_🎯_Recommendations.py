@@ -6,6 +6,16 @@ st.set_page_config(page_title="Recommendations", layout="wide")
 
 st.title("🎯 Get Movie Recommendations")
 
+col_back, _ = st.columns([1.5, 8.5])
+with col_back:
+    st.markdown(f'''
+        <div class="back-btn-container">
+            <a href="/?home=true" target="_self" class="back-pill-btn">
+                <span style="margin-right: 8px;">←</span> BACK
+            </a>
+        </div>
+    ''', unsafe_allow_html=True)
+
 # Load movie titles from ML dataset
 import pickle
 import os
