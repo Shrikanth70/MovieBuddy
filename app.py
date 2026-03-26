@@ -54,28 +54,26 @@ def render_movie_row(title, movies, key_prefix, category_id=None):
     if not movies:
         return
         
-    st.markdown(f'<h3 style="margin-top: 30px; margin-bottom: 25px;">{title}</h3>', unsafe_allow_html=True)
+    st.markdown(f'<h3 style="margin-top: 30px; margin-bottom: 15px;">{title}</h3>', unsafe_allow_html=True)
     cols = st.columns(6, gap="small")
     
     for idx, movie in enumerate(movies[:5]):
         with cols[idx]:
-            st.markdown('<div class="native-card-wrapper">', unsafe_allow_html=True)
             poster_url = tmdb.get_image_url(movie.get("poster_path"))
-            st.markdown(ui.render_movie_card(movie, poster_url), unsafe_allow_html=True)
+            st.markdown(f'<div class="native-card-wrapper">{ui.render_movie_card(movie, poster_url)}<div class="card-btn-container">', unsafe_allow_html=True)
             if st.button(" ", key=f"nav_{key_prefix}_{movie['id']}_{idx}"):
                 st.query_params.movie_id = movie['id']
                 st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown('</div></div>', unsafe_allow_html=True)
                 
     if category_id:
         with cols[5]:
-            st.markdown('<div class="native-card-wrapper">', unsafe_allow_html=True)
-            st.markdown(ui.render_see_more_card(), unsafe_allow_html=True)
+            st.markdown(f'<div class="native-card-wrapper">{ui.render_see_more_card()}<div class="card-btn-container">', unsafe_allow_html=True)
             if st.button(" ", key=f"see_{key_prefix}_{category_id}"):
                 st.query_params.category_id = category_id
                 st.query_params.title = title
                 st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown('</div></div>', unsafe_allow_html=True)
 
 def render_detail_view(movie_id):
     with st.spinner("Loading movie details..."):
@@ -248,13 +246,12 @@ def render_category_view(category_id, title):
         cols = st.columns(4)
         for idx, movie in enumerate(movies[row:row+4]):
             with cols[idx]:
-                st.markdown('<div class="native-card-wrapper">', unsafe_allow_html=True)
                 poster_url = tmdb.get_image_url(movie.get("poster_path"))
-                st.markdown(ui.render_movie_card(movie, poster_url), unsafe_allow_html=True)
+                st.markdown(f'<div class="native-card-wrapper">{ui.render_movie_card(movie, poster_url)}<div class="card-btn-container">', unsafe_allow_html=True)
                 if st.button(" ", key=f"grid_{category_id}_{movie['id']}_{row}_{idx}"):
                     st.query_params.movie_id = movie['id']
                     st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown('</div></div>', unsafe_allow_html=True)
 
 # --- Main Layout ---
 def main():
@@ -347,28 +344,10 @@ def main():
         
         st.markdown(ui.render_native_hero(featured, tmdb.get_image_url(featured.get("backdrop_path"), size="original")), unsafe_allow_html=True)
         
-        # Native Hero Controls
-        h_col1, h_col2, _ = st.columns([0.8, 0.4, 4])
+        # Native Hero Controls — hero_cta uses the global premium red button style
+        h_col1, h_col2, _ = st.columns([0.9, 0.4, 4])
         with h_col1:
-            st.markdown("""<style>
-                div[data-testid="stColumn"] button[kind="secondary"] {
-                    background: #E50914 !important; color: white !important; border: none !important;
-                    font-weight: 800 !important; text-transform: uppercase !important;
-                    height: 46px !important; width: 100% !important; border-radius: 6px !important;
-                    letter-spacing: 1px !important; transition: all 0.3s ease !important;
-                    font-size: 13px !important;
-                    display: flex !important; align-items: center !important; justify-content: center !important;
-                }
-                div[data-testid="stColumn"] button[kind="secondary"]:hover { 
-                    background: white !important; color: black !important; 
-                    transform: translateY(-2px); box-shadow: 0 5px 15px rgba(229,9,20,0.4);
-                }
-                /* Target the specific Next button */
-                div[data-testid="stColumn"]:nth-child(2) button[kind="secondary"] {
-                    font-size: 18px !important;
-                }
-            </style>""", unsafe_allow_html=True)
-            if st.button(f"VIEW DETAILS", key="hero_cta_native"):
+            if st.button("▶  VIEW DETAILS", key="hero_cta_native"):
                 st.query_params.movie_id = featured.get('id')
                 st.rerun()
         with h_col2:

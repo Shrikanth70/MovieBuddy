@@ -122,37 +122,19 @@ def inject_custom_css():
     .native-card-wrapper {
         position: relative;
         width: 100%;
-        margin-bottom: 5px; /* Tight grid */
+        margin-bottom: 5px;
     }
     
-    /* This targets the Streamlit button container and forces it to ZERO size in the flow */
-    [data-testid="stVerticalBlock"] > div:has(.native-card-wrapper) + div {
+    /* card-btn-container: a positioned container that puts the invisible button on top of the card */
+    .card-btn-container {
         position: absolute !important;
-        height: 0 !important;
-        width: 0 !important;
+        inset: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
-        overflow: visible !important;
-        z-index: 100;
+        z-index: 10;
     }
     
-    /* Make the ACTUAL button fill the card space above it */
-    [data-testid="stVerticalBlock"] > div:has(.native-card-wrapper) + div button {
-        position: absolute !important;
-        top: -285px !important; /* Move it back onto the card */
-        left: 0 !important;
-        width: 170px !important; /* Fixed card width to be safe */
-        height: 275px !important;
-        background: transparent !important;
-        border: none !important;
-        color: transparent !important;
-        box-shadow: none !important;
-        cursor: pointer !important;
-        opacity: 0 !important;
-        display: block !important;
-    }
-    
-    /* Hover effect for the card when we are in the zone */
+    /* Hover effect driven by CSS wrapper class */
     .native-card-wrapper:hover .movie-card {
         transform: translateY(-8px);
         border-color: #E50914;
@@ -260,6 +242,27 @@ def inject_custom_css():
         color: #000000 !important;
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3) !important;
+    }
+
+    /* CRITICAL: Override global red button style for invisible overlay buttons */
+    .card-btn-container > div.stButton > button,
+    .card-btn-container > div.stButton > button:hover,
+    .card-btn-container > div.stButton > button:focus,
+    .card-btn-container > div.stButton > button:active {
+        background: transparent !important;
+        color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+        position: absolute !important;
+        inset: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 270px !important;
+        opacity: 0 !important;
+        cursor: pointer !important;
+        transform: none !important;
+        z-index: 10;
     }
 
     /* OTT Section Styling */
