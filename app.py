@@ -15,7 +15,7 @@ import random
 
 # Set page config
 st.set_page_config(
-    page_title="MovieBuddy | Premium Streaming",
+    page_title="MovieBuddy | Premium OTT",
     page_icon="🎞️",
     layout="wide"
 )
