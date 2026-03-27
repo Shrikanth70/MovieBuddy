@@ -673,16 +673,11 @@ def render_slideshow(movies):
         .year-box {{ border: 1px solid rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 6px; }}
         .rating {{ color: #FFC107; }}
         .overview {{ color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
-        .nav-btn {{ position: absolute; top: 50%; transform: translateY(-50%); width: 50px; height: 50px; background: rgba(0,0,0,0.5); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); font-size: 20px; transition: all 0.3s; }}
-        .nav-btn:hover {{ background: #E50914; transform: translateY(-50%) scale(1.1); }}
-        .prev {{ left: 1.5rem; }}
-        .next {{ right: 1.5rem; }}
         .indicators {{ position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.5rem; z-index: 100; }}
         .dot {{ width: 1.25rem; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.2); transition: all 0.3s; cursor: pointer; }}
         .dot.active {{ width: 2.5rem; background: #E50914; }}
         @media (max-width: 1024px) {{
             .title {{ font-size: 42px; }}
-            .nav-btn {{ width: 45px; height: 45px; font-size: 18px; }}
         }}
         @media (max-width: 768px) {{ 
             .slider-wrapper {{ height: 350px; }} 
@@ -690,8 +685,6 @@ def render_slideshow(movies):
             .title {{ font-size: 32px; }} 
             .meta {{ font-size: 0.9rem; margin-bottom: 0.8rem; }} 
             .overview {{ font-size: 0.85rem; -webkit-line-clamp: 2; }} 
-            .nav-btn {{ width: 40px; height: 40px; font-size: 16px; left: 1rem; }}
-            .nav-btn.next {{ right: 1rem; left: auto; }}
             .indicators {{ bottom: 1.25rem; gap: 0.4rem; }}
             .dot {{ width: 1rem; }}
             .dot.active {{ width: 2rem; }}
@@ -702,8 +695,6 @@ def render_slideshow(movies):
             .title {{ font-size: 24px; }} 
             .meta {{ font-size: 0.8rem; gap: 0.5rem; }} 
             .overview {{ display: none; }} 
-            .nav-btn {{ width: 35px; height: 35px; font-size: 14px; left: 0.8rem; }}
-            .nav-btn.next {{ right: 0.8rem; left: auto; }}
             .indicators {{ bottom: 1rem; gap: 0.3rem; }}
             .dot {{ width: 0.8rem; height: 2px; }}
             .dot.active {{ width: 1.5rem; }}
@@ -713,8 +704,6 @@ def render_slideshow(movies):
     <body>
         <div class="slider-wrapper">
             <div class="slides-container" id="slides-container"></div>
-            <div class="nav-btn prev" onclick="move(-1)">&#10094;</div>
-            <div class="nav-btn next" onclick="move(1)">&#10095;</div>
             <div class="indicators" id="indicators"></div>
         </div>
         <script>
