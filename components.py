@@ -632,30 +632,28 @@ def inject_custom_css():
     """, unsafe_allow_html=True)
 
 def render_slideshow(movies):
-    """Render a seamless, client-side JS cinematic slideshow that avoids Streamlit reloads."""
+    """Render a JS-powered cinematic slideshow with proper top-level navigation."""
     if not movies:
         return
-        
-    # Prepare slide data for JS
+
     slides_data = []
     for m in movies:
-        title = m.get('title', 'Unknown').replace("'", "\\'")
-        overview = m.get('overview', '').replace("'", "\\'").replace("\n", " ")
-        year = m.get('release_date', 'N/A')[:4]
+        media_type = m.get('media_type', 'movie')
+        if 'first_air_date' in m and 'title' not in m:
+            media_type = 'tv'
+        title = (m.get('title') or m.get('name', 'Unknown')).replace("'", "\\'")
+        date_str = m.get('release_date') or m.get('first_air_date', 'N/A')
+        year = date_str[:4] if date_str != 'N/A' else 'N/A'
+        overview = (m.get('overview') or '').replace("'", "\\'").replace("\n", " ")
         rating = round(m.get('vote_average', 0), 1)
-        mid = m.get('id')
-        backdrop = f"https://image.tmdb.org/t/p/original{m.get('backdrop_path')}" if m.get('backdrop_path') else "placeholder.png"
-        slides_data.append({
-            "id": mid,
-            "title": title,
-            "overview": overview,
-            "year": year,
-            "rating": rating,
-            "backdrop": backdrop
-        })
-    
+        content_id = m.get('id')
+        backdrop = f"https://image.tmdb.org/t/p/original{m.get('backdrop_path')}" if m.get('backdrop_path') else ""
+        slides_data.append({"id": content_id, "media_type": media_type, "title": title,
+                            "overview": overview, "year": year, "rating": rating, "backdrop": backdrop})
+
     slides_json = json.dumps(slides_data)
-    
+
+    # Remove onclick from slides - navigation is handled by the overlay below
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -664,135 +662,35 @@ def render_slideshow(movies):
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{ font-family: 'Poppins', sans-serif; background: transparent; overflow: hidden; }}
-        
-        .slider-wrapper {{
-            position: relative;
-            width: 100%;
-            height: 400px;
-            border-radius: 20px;
-            overflow: hidden;
-            background: #000;
-        }}
-        
-        .slides-container {{
-            display: flex;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }}
-        
-        .slide {{
-            flex: 0 0 100%;
-            height: 100%;
-            position: relative;
-            background-size: cover;
-            background-position: center 20%;
-            display: flex;
-            align-items: flex-end;
-            padding: 60px;
-            cursor: pointer;
-            text-decoration: none;
-        }}
-        
-        .slide-overlay {{
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(0deg, rgba(14,17,23,1) 0%, rgba(14,17,23,0.3) 70%, transparent 100%);
-            z-index: 1;
-        }}
-        
-        .slide-content {{
-            position: relative;
-            z-index: 2;
-            max-width: 700px;
-            color: white;
-        }}
-        
-        .badge {{
-            display: inline-block;
-            background: rgba(229,9,20,0.2);
-            color: #E50914;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            margin-bottom: 12px;
-            border: 1px solid rgba(229,9,20,0.2);
-            letter-spacing: 1.5px;
-        }}
-        
+        .slider-wrapper {{ position: relative; width: 100%; height: 400px; border-radius: 20px; overflow: hidden; background: #000; }}
+        .slides-container {{ display: flex; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }}
+        .slide {{ flex: 0 0 100%; height: 100%; position: relative; background-size: cover; background-position: center 20%; display: flex; align-items: flex-end; padding: 60px; cursor: pointer; }}
+        .slide-overlay {{ position: absolute; inset: 0; background: linear-gradient(0deg, rgba(14,17,23,1) 0%, rgba(14,17,23,0.3) 70%, transparent 100%); z-index: 1; }}
+        .slide-content {{ position: relative; z-index: 2; max-width: 700px; color: white; }}
+        .badge {{ display: inline-block; background: rgba(229,9,20,0.2); color: #E50914; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(229,9,20,0.2); letter-spacing: 1.5px; }}
         .title {{ font-size: 52px; font-weight: 900; line-height: 1.1; margin-bottom: 10px; }}
         .meta {{ font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; }}
         .year-box {{ border: 1px solid rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 6px; }}
         .rating {{ color: #FFC107; }}
         .overview {{ color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
-        
-        .nav-btn {{
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 50px;
-            height: 50px;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 100;
-            border: 1px solid rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
-            font-size: 20px;
-            transition: all 0.3s;
-        }}
+        .nav-btn {{ position: absolute; top: 50%; transform: translateY(-50%); width: 50px; height: 50px; background: rgba(0,0,0,0.5); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); font-size: 20px; transition: all 0.3s; }}
         .nav-btn:hover {{ background: #E50914; transform: translateY(-50%) scale(1.1); }}
         .prev {{ left: 20px; }}
         .next {{ right: 20px; }}
-        
-        .indicators {{
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 8px;
-            z-index: 100;
-        }}
+        .indicators {{ position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 100; }}
         .dot {{ width: 20px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.2); transition: all 0.3s; cursor: pointer; }}
         .dot.active {{ width: 40px; background: #E50914; }}
-        
-        /* Responsive Design */
-        @media (max-width: 768px) {{
-            .slider-wrapper {{ height: 400px; }}
-            .slide {{ padding: 40px 30px; }}
-            .title {{ font-size: 36px; }}
-            .meta {{ font-size: 16px; }}
-            .overview {{ font-size: 14px; -webkit-line-clamp: 2; }}
-            .nav-btn {{ width: 40px; height: 40px; font-size: 16px; }}
-        }}
-        
-        @media (max-width: 480px) {{
-            .slider-wrapper {{ height: 350px; }}
-            .slide {{ padding: 30px 20px; }}
-            .title {{ font-size: 28px; }}
-            .meta {{ font-size: 14px; }}
-            .overview {{ font-size: 13px; -webkit-line-clamp: 2; }}
-            .nav-btn {{ width: 35px; height: 35px; font-size: 14px; }}
-        }}
+        @media (max-width: 768px) {{ .slider-wrapper {{ height: 400px; }} .slide {{ padding: 40px 30px; }} .title {{ font-size: 36px; }} .meta {{ font-size: 16px; }} .overview {{ font-size: 14px; -webkit-line-clamp: 2; }} .nav-btn {{ width: 40px; height: 40px; font-size: 16px; }} }}
+        @media (max-width: 480px) {{ .slider-wrapper {{ height: 350px; }} .slide {{ padding: 30px 20px; }} .title {{ font-size: 28px; }} .meta {{ font-size: 14px; }} .overview {{ font-size: 13px; -webkit-line-clamp: 2; }} .nav-btn {{ width: 35px; height: 35px; font-size: 14px; }} }}
     </style>
     </head>
     <body>
         <div class="slider-wrapper">
-            <div class="slides-container" id="slides-container">
-                <!-- Slides injected by JS -->
-            </div>
+            <div class="slides-container" id="slides-container"></div>
             <div class="nav-btn prev" onclick="move(-1)">&#10094;</div>
             <div class="nav-btn next" onclick="move(1)">&#10095;</div>
             <div class="indicators" id="indicators"></div>
         </div>
-
         <script>
             const slides = {slides_json};
             const container = document.getElementById('slides-container');
@@ -800,80 +698,60 @@ def render_slideshow(movies):
             let currentIdx = 0;
             let autoTimer;
 
-            function escapeHtml(value) {{
-                return String(value ?? '')
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;')
-                    .replace(/'/g, '&#39;');
+            function escapeHtml(v) {{
+                return String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
             }}
 
             function init() {{
                 slides.forEach((s, i) => {{
-                    // Create slide element
                     const slide = document.createElement('div');
                     slide.className = 'slide';
-                    slide.style.backgroundImage = 'url(' + s.backdrop + ')';
-                    slide.onclick = () => {{ window.parent.location.href = '/?movie_id=' + encodeURIComponent(String(s.id)); }};
+                    slide.style.backgroundImage = s.backdrop ? 'url(' + s.backdrop + ')' : 'none';
                     slide.innerHTML =
                         '<div class="slide-overlay"></div>' +
                         '<div class="slide-content">' +
                             '<div class="badge">Featured Selection</div>' +
                             '<div class="title">' + escapeHtml(s.title) + '</div>' +
-                            '<div class="meta">' +
-                                '<span class="year-box">' + escapeHtml(s.year) + '</span>' +
-                                '<span>|</span>' +
-                                '<span class="rating">&#11088; ' + escapeHtml(s.rating) + '</span>' +
-                            '</div>' +
+                            '<div class="meta"><span class="year-box">' + escapeHtml(s.year) + '</span><span>|</span><span class="rating">&#11088; ' + escapeHtml(s.rating) + '</span></div>' +
                             '<p class="overview">' + escapeHtml(s.overview) + '</p>' +
                         '</div>';
                     container.appendChild(slide);
-
-                    // Create indicator dot
                     const dot = document.createElement('div');
                     dot.className = 'dot' + (i === 0 ? ' active' : '');
-                    dot.onclick = () => goTo(i);
+                    dot.onclick = (e) => {{ e.stopPropagation(); goTo(i); }};
                     indicators.appendChild(dot);
                 }});
-                
                 startAuto();
             }}
-
-            function goTo(idx) {{
-                currentIdx = idx;
-                update();
-                resetAuto();
-            }}
-
-            function move(step) {{
-                currentIdx = (currentIdx + step + slides.length) % slides.length;
-                update();
-                resetAuto();
-            }}
-
+            function goTo(idx) {{ currentIdx = idx; update(); resetAuto(); }}
+            function move(step) {{ currentIdx = (currentIdx + step + slides.length) % slides.length; update(); resetAuto(); }}
             function update() {{
                 container.style.transform = 'translateX(-' + (currentIdx * 100) + '%)';
-                Array.from(indicators.children).forEach((dot, i) => {{
-                    dot.className = 'dot' + (i === currentIdx ? ' active' : '');
-                }});
+                Array.from(indicators.children).forEach((d, i) => {{ d.className = 'dot' + (i === currentIdx ? ' active' : ''); }});
             }}
-
-            function startAuto() {{
-                autoTimer = setInterval(() => move(1), 8000);
-            }}
-
-            function resetAuto() {{
-                clearInterval(autoTimer);
-                startAuto();
-            }}
-
+            function startAuto() {{ autoTimer = setInterval(() => move(1), 8000); }}
+            function resetAuto() {{ clearInterval(autoTimer); startAuto(); }}
             init();
         </script>
     </body>
     </html>
     """
     st.components.v1.html(html, height=400)
+
+    # Render a transparent overlay link covering the hero area for navigation.
+    # This is via st.markdown (not iframe), so <a> tags navigate the main window.
+    first = movies[0]
+    mt = first.get('media_type', 'movie')
+    if 'first_air_date' in first and 'title' not in first:
+        mt = 'tv'
+    fid = first.get('id')
+    fhref = f"?tv_id={fid}" if mt == 'tv' else f"?movie_id={fid}"
+    st.markdown(f'''<a href="{fhref}" target="_self" style="
+        display:block; position:relative; margin-top:-410px; height:400px;
+        border-radius:20px; z-index:50; cursor:pointer;
+        text-decoration:none; color:transparent;
+    ">&nbsp;</a>''', unsafe_allow_html=True)
+
 
 def _movie_value(movie, key, default=None):
     """Fetch a field from a dict-like or attribute-based movie object."""

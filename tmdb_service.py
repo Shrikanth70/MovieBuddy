@@ -176,8 +176,43 @@ def get_movie_credits(movie_id):
     # If same person is both, we handle display logic in the UI component
     return cast, {"director": director_str, "writer": writer_str}
 
+def get_newly_released_indian_movies(limit=30):
+    """Fetch genuine newly released theatrical Indian movies from last 45 days.
+    
+    Focuses on recent theatrical releases across major Indian languages.
+    Uses a narrower time window (45 days vs 90) and lower vote count to catch recent releases.
+    """
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    forty_five_days_ago = (datetime.datetime.now() - datetime.timedelta(days=45)).strftime("%Y-%m-%d")
+    languages = ["te", "hi", "ta", "kn", "ml"]
+    
+    all_results = []
+    # Fetch movies per language with recent release focus
+    for lang in languages:
+        params = {
+            "with_original_language": lang,
+            "region": "IN",  # Focus on Indian region
+            "sort_by": "primary_release_date.desc",  # Sort by release date (most recent first)
+            "primary_release_date.gte": forty_five_days_ago,
+            "primary_release_date.lte": today,
+            "vote_count.gte": 3,  # Lower threshold to catch newer films
+            "include_adult": False
+        }
+        data = fetch_from_tmdb("discover/movie", params=params)
+        if data and data.get("results"):
+            all_results.extend(data["results"])
+            
+    # Deduplicate by ID and sort by release date (most recent first)
+    unique_movies = {m['id']: m for m in all_results}.values()
+    sorted_movies = sorted(unique_movies, key=lambda x: x.get('release_date', '0000-00-00'), reverse=True)
+    
+    return sorted_movies[:limit]
+
 def get_trending_indian(limit=120):
-    """Fetch a large pool of trending OTT movies from major Indian regional languages by fetching each separately."""
+    """Fetch a large pool of trending OTT movies from major Indian regional languages by fetching each separately.
+    
+    This represents OTT-based content, not theatrical releases.
+    """
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     ninety_days_ago = (datetime.datetime.now() - datetime.timedelta(days=90)).strftime("%Y-%m-%d")
     languages = ["te", "hi", "ta", "kn", "ml"]
@@ -240,6 +275,126 @@ def get_watch_providers(movie_id):
         # Prioritize IN, then US, then any available
         return results.get("IN") or results.get("US") or next(iter(results.values()), None)
     return None
+
+def get_trending_tv(limit=20):
+    """Fetch trending TV shows and web series."""
+    data = fetch_from_tmdb("trending/tv/week")
+    if data and data.get("results"):
+        return data["results"][:limit]
+    return []
+
+def get_popular_tv(limit=20):
+    """Fetch popular TV shows."""
+    data = fetch_from_tmdb("tv/popular")
+    if data and data.get("results"):
+        return data["results"][:limit]
+    return []
+
+def get_mixed_shows(limit=30):
+    """Fetch a curated mix of trending and newly aired TV shows."""
+    all_shows = []
+    
+    # Focus on newly aired or upcoming TV shows
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    thirty_days_ago = (datetime.datetime.now() - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
+    
+    # Get trending TV shows (real-time trending)
+    trending = fetch_from_tmdb("trending/tv/week")
+    if trending and trending.get("results"):
+        for show in trending["results"]:
+            show['media_type'] = 'tv'  # Ensure media_type is set
+            all_shows.append(show)
+    
+    # Get recently aired TV shows using discover (last 30 days)
+    params = {
+        "sort_by": "first_air_date.desc",
+        "first_air_date.gte": thirty_days_ago,
+        "first_air_date.lte": today,
+        "vote_count.gte": 50,  # Ensure watched shows
+        "include_adult": False
+    }
+    recent = fetch_from_tmdb("tv/on_the_air", params=params)
+    if recent and recent.get("results"):
+        for show in recent["results"]:
+            show['media_type'] = 'tv'  # Ensure media_type is set
+            all_shows.append(show)
+    
+    # Deduplicate by ID and sort by first_air_date (newest first)
+    unique_shows = {s['id']: s for s in all_shows}.values()
+    sorted_shows = sorted(unique_shows, key=lambda x: x.get('first_air_date', '0000-00-00'), reverse=True)
+    
+    return sorted_shows[:limit]
+
+def get_tv_details(tv_id):
+    """Fetch full TV show details including runtime and genres."""
+    return fetch_from_tmdb(f"tv/{tv_id}")
+
+def get_tv_videos(tv_id):
+    """Fetch TV show videos and filter for YouTube trailers."""
+    data = fetch_from_tmdb(f"tv/{tv_id}/videos")
+    if data and data.get("results"):
+        trailers = [v for v in data["results"] if v.get("site") == "YouTube" and v.get("type") == "Trailer"]
+        return trailers
+    return []
+
+def get_tv_credits(tv_id):
+    """Fetch cast and crew for a TV show. Returns (cast_list, crew_dict)."""
+    data = fetch_from_tmdb(f"tv/{tv_id}/credits")
+    if not data:
+        return [], {"director": "N/A", "writer": "N/A"}
+        
+    cast = data.get("cast", [])[:12]
+    crew = data.get("crew", [])
+    
+    # Extract Creator and Executive Producer or leading crew role
+    creators = [c.get("name") for c in crew if c.get("job") == "Creator"]
+    directors = [c.get("name") for c in crew if c.get("department") == "Directing" and c.get("job") == "Director"]
+    
+    creator_str = ", ".join(list(dict.fromkeys(creators))) if creators else "N/A"
+    director_str = ", ".join(list(dict.fromkeys(directors))) if directors else "N/A"
+    
+    # Prefer creator info for TV shows
+    primary = creator_str if creator_str != "N/A" else director_str
+    
+    return cast, {"director": primary, "writer": "N/A"}
+
+def get_diverse_hero_content(limit=15):
+    """Fetch diverse hero content from multiple sources for rich variety."""
+    all_content = []
+    
+    # Trending movies
+    trending_m = fetch_from_tmdb("trending/movie/week")
+    if trending_m and trending_m.get("results"):
+        for movie in trending_m["results"]:
+            movie['media_type'] = 'movie'  # Ensure media_type is set
+            all_content.append(movie)
+    
+    # Popular movies
+    popular_m = fetch_from_tmdb("movie/popular")
+    if popular_m and popular_m.get("results"):
+        for movie in popular_m["results"]:
+            movie['media_type'] = 'movie'  # Ensure media_type is set
+            all_content.append(movie)
+    
+    # Top-rated movies (broader appeal)
+    top_m = fetch_from_tmdb("movie/top_rated")
+    if top_m and top_m.get("results"):
+        for movie in top_m["results"]:
+            movie['media_type'] = 'movie'  # Ensure media_type is set
+            all_content.append(movie)
+    
+    # Trending TV shows for variety
+    trending_tv = fetch_from_tmdb("trending/tv/week")
+    if trending_tv and trending_tv.get("results"):
+        for show in trending_tv["results"]:
+            show['media_type'] = 'tv'  # Ensure media_type is set
+            all_content.append(show)
+    
+    # Deduplicate and sort by popularity
+    unique_content = {(c.get('id'), c.get('media_type', 'movie')): c for c in all_content}.values()
+    sorted_content = sorted(unique_content, key=lambda x: x.get('popularity', 0), reverse=True)
+    
+    return sorted_content[:limit]
 
 def get_image_url(path, size="w500"):
     """Format full image URL. Returns local placeholder if path is missing."""

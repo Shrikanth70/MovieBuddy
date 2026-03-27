@@ -58,8 +58,55 @@ def navigate_back():
     st.session_state.scroll_to_top = True
     st.rerun()
 
+def get_nav_history():
+    """Initialize or get the navigation history from session state."""
+    if "nav_history" not in st.session_state:
+        st.session_state.nav_history = [{"page": "home", "params": {}}]
+    return st.session_state.nav_history
+
+def push_nav_state(page, params=None):
+    """Add current page to navigation history."""
+    history = get_nav_history()
+    # Avoid pushing duplicate consecutive entries
+    if history and history[-1].get("page") == page and history[-1].get("params") == (params or {}):
+        return
+    history.append({"page": page, "params": params or {}})
+    st.session_state.nav_history = history
+
+def get_back_url():
+    """Get the URL to navigate back to the previous page."""
+    history = get_nav_history()
+    if len(history) > 1:
+        prev_state = history[-2]
+        page = prev_state.get("page", "home")
+        params = prev_state.get("params", {})
+        
+        if page == "home":
+            return "/"
+        elif page == "movie_detail":
+            movie_id = params.get("movie_id")
+            return f"/?movie_id={movie_id}" if movie_id else "/"
+        elif page == "category":
+            category_id = params.get("category_id")
+            title = params.get("title", "Category")
+            return f"/?category_id={category_id}&title={title}" if category_id else "/"
+        elif page == "search":
+            query = params.get("query")
+            return f"/?q={query}" if query else "/"
+    
+    return "/"  # Default fallback to home
+
+def navigate_to_movie(movie_id):
+    """Navigate to movie detail with history tracking."""
+    push_nav_state("movie_detail", {"movie_id": movie_id})
+    if "nav_history" in st.session_state:
+        st.session_state.nav_history = st.session_state.nav_history
+
 def render_movie_row(title, movies, key_prefix, category_id=None):
-    """Render a premium horizontal scrollable row with native clickable overlays."""
+    """Render a premium horizontal scrollable row with native clickable overlays.
+    
+    Supports both movies and TV shows/series.
+    """
     if not movies:
         return
         
@@ -68,10 +115,22 @@ def render_movie_row(title, movies, key_prefix, category_id=None):
     # Always use horizontal scroll to prevent wrapping
     movie_html = '<div class="movie-scroll">'
     for movie in movies:
-        movie_id = movie.get('id')
+        item_id = movie.get('id')
+        # Detect media type - prefer explicit media_type field, fallback to checking for TV-specific fields
+        media_type = movie.get('media_type', 'movie')
+        if 'first_air_date' in movie and 'title' not in movie:
+            media_type = 'tv'
+        
         poster_url = tmdb.get_image_url(movie.get("poster_path"))
         card_html = ui.render_movie_card(movie, poster_url)
-        movie_html += '<a href="?movie_id=' + str(movie_id) + '" target="_self" style="text-decoration: none; display: block;">'
+        
+        # Build query params based on media type
+        if media_type == 'tv':
+            href = f"?tv_id={item_id}"
+        else:
+            href = f"?movie_id={item_id}"
+        
+        movie_html += f'<a href="{href}" target="_self" style="text-decoration: none; display: block;">'
         movie_html += '<div class="movie-item">'
         movie_html += card_html
         movie_html += '</div>'
@@ -80,15 +139,30 @@ def render_movie_row(title, movies, key_prefix, category_id=None):
     movie_html += '</div>'
     st.markdown(movie_html, unsafe_allow_html=True)
 
-def render_detail_view(movie_id):
-    """Render movie details inline."""
-    with st.spinner("Loading movie details..."):
-        movie = tmdb.get_movie_details(movie_id)
-        trailers = tmdb.get_movie_videos(movie_id)
-        omdb_data = omdb.get_movie_reviews(movie.get("title"))
+def render_detail_view(movie_id=None, tv_id=None):
+    """Render movie or TV show details inline."""
+    # Determine if it's a movie or TV show
+    is_tv = tv_id is not None
+    content_id = tv_id if is_tv else movie_id
+    media_type = "tv" if is_tv else "movie"
+    
+    # Track that we're viewing a detail page
+    nav_params = {"tv_id": tv_id} if is_tv else {"movie_id": movie_id}
+    push_nav_state("movie_detail", nav_params)
+    
+    with st.spinner("Loading details..."):
+        if is_tv:
+            content = tmdb.get_tv_details(content_id)
+            trailers = tmdb.get_tv_videos(content_id)
+            cast, crew = tmdb.get_tv_credits(content_id)
+        else:
+            content = tmdb.get_movie_details(content_id)
+            trailers = tmdb.get_movie_videos(content_id)
+            cast, crew = tmdb.get_movie_credits(content_id)
+            omdb_data = omdb.get_movie_reviews(content.get("title") if content else "")
         
-    if not movie:
-        st.error("Could not load movie details.")
+    if not content:
+        st.error(f"Could not load {'TV show' if is_tv else 'movie'} details.")
         if st.button("⬅ Back"):
             st.query_params.clear()
             st.rerun()
@@ -97,21 +171,23 @@ def render_detail_view(movie_id):
     # Store previous params for back navigation
     if "previous_params" not in st.session_state:
         prev = dict(st.query_params)
-        if "movie_id" in prev:
-            del prev["movie_id"]
+        if "movie_id" in prev or "tv_id" in prev:
+            if "movie_id" in prev: del prev["movie_id"]
+            if "tv_id" in prev: del prev["tv_id"]
         st.session_state.previous_params = prev
 
     # Render Backdrop behind everything
-    backdrop_url = tmdb.get_image_url(movie.get("backdrop_path"), size="original")
-    poster_url = tmdb.get_image_url(movie.get("poster_path"))
-    ui.render_detail_hero(movie, backdrop_url, poster_url)
+    backdrop_url = tmdb.get_image_url(content.get("backdrop_path"), size="original")
+    poster_url = tmdb.get_image_url(content.get("poster_path"))
+    ui.render_detail_hero(content, backdrop_url, poster_url)
     
-    # Top Back Button
+    # Top Back Button - Use dynamic back URL
+    back_url = get_back_url()
     col_b, _ = st.columns([1.5, 8.5])
     with col_b:
         st.markdown(f'''
             <div class="back-btn-container">
-                <a href="/?home=true" target="_self" class="back-pill-btn">
+                <a href="{back_url}" target="_self" class="back-pill-btn">
                     <span style="margin-right: 8px;">←</span> BACK
                 </a>
             </div>
@@ -126,19 +202,32 @@ def render_detail_view(movie_id):
     with col2:
         st.markdown('<div class="details-info">', unsafe_allow_html=True)
         
-        title = movie.get("title")
-        year = movie.get("release_date", "N/A")[:4]
-        runtime = f"{movie.get('runtime', 'N/A')} min"
-        genres = ", ".join([g.get("name") for g in movie.get("genres", [])])
-        overview = movie.get("overview", "")
+        # Handle title differences between movies and TV
+        if is_tv:
+            title = content.get("name", "Unknown")
+            year = content.get("first_air_date", "N/A")[:4]
+            status = content.get("status", "Unknown")
+            meta_line = f"{year} &nbsp;|&nbsp; {status}"
+        else:
+            title = content.get("title", "Unknown")
+            year = content.get("release_date", "N/A")[:4]
+            runtime = f"{content.get('runtime', 'N/A')} min"
+            meta_line = f"{year} &nbsp;|&nbsp; {runtime}"
+        
+        genres = ", ".join([g.get("name") for g in content.get("genres", [])])
+        overview = content.get("overview", "")
         
         st.markdown(f'<h1 style="font-size: 48px; font-weight: 800; margin-bottom: 5px; line-height: 1.1;">{title}</h1>', unsafe_allow_html=True)
-        st.markdown(f'<div style="color: var(--gold); font-size: 16px; font-weight: 600; margin-bottom: 20px;">{year} &nbsp;|&nbsp; {runtime} &nbsp;|&nbsp; {genres}</div>', unsafe_allow_html=True)
+        
+        if genres:
+            meta_line += f" &nbsp;|&nbsp; {genres}"
+        st.markdown(f'<div style="color: var(--gold); font-size: 16px; font-weight: 600; margin-bottom: 20px;">{meta_line}</div>', unsafe_allow_html=True)
         
         st.markdown(f'<p style="color: rgba(255,255,255,0.9); font-size: 16px; line-height: 1.6; margin-bottom: 30px;">{overview}</p>', unsafe_allow_html=True)
         
-        # Display aggregated OMDB Without Reviews
-        ui.render_omdb_reviews(omdb_data)
+        # Display aggregated OMDB reviews only for movies
+        if not is_tv:
+            ui.render_omdb_reviews(omdb_data)
         
         st.markdown('</div>', unsafe_allow_html=True) # End of details-info
         
@@ -154,20 +243,19 @@ def render_detail_view(movie_id):
             st.markdown('<div style="color: var(--text-muted);">Trailer Unavailable</div>', unsafe_allow_html=True)
             
     with col_prov:
-        cast, crew = tmdb.get_movie_credits(movie_id)
         st.markdown('<div class="ott-title">Cast & Crew</div>', unsafe_allow_html=True)
         
-        # Combined Director & Writer display for cleaner hierarchy
+        # Display crew info
         director = crew.get("director", "N/A")
         writer = crew.get("writer", "N/A")
         
         crew_html = f'<div style="margin-bottom: 15px; font-size: 14px;">'
         if director != "N/A":
-            crew_html += f'<div style="margin-bottom: 5px;"><span style="color: var(--text-muted);">Director:</span> <span style="color: white; font-weight: 700;">{director}</span></div>'
-        if writer != "N/A" and writer != director:
+            crew_label = "Creator" if is_tv else "Director"
+            crew_html += f'<div style="margin-bottom: 5px;"><span style="color: var(--text-muted);">{crew_label}:</span> <span style="color: white; font-weight: 700;">{director}</span></div>'
+        if not is_tv and writer != "N/A" and writer != director:
             crew_html += f'<div><span style="color: var(--text-muted);">Writer:</span> <span style="color: white; font-weight: 700;">{writer}</span></div>'
-        elif writer != "N/A" and writer == director:
-            # Handle same person case elegantly
+        elif not is_tv and writer != "N/A" and writer == director:
             crew_html = f'<div style="margin-bottom: 15px; font-size: 14px;"><div style="margin-bottom: 5px;"><span style="color: var(--text-muted);">Director & Writer:</span> <span style="color: white; font-weight: 700;">{director}</span></div>'
         crew_html += '</div>'
         st.markdown(crew_html, unsafe_allow_html=True)
@@ -188,60 +276,70 @@ def render_detail_view(movie_id):
             cast_html += '</div>'
             st.markdown(cast_html, unsafe_allow_html=True)
         
-        # PROVIDER LINKS MAPPING
-        providers = tmdb.get_watch_providers(movie_id)
-        if providers:
-            st.markdown('<div class="ott-title" style="margin-top: 25px;">Available On</div>', unsafe_allow_html=True)
-            
-            provider_map = {
-                "Netflix": "https://www.netflix.com/",
-                "Amazon Prime Video": "https://www.primevideo.com/",
-                "Disney Plus": "https://www.disneyplus.com/",
-                "Hotstar": "https://www.hotstar.com/",
-                "Apple TV": "https://tv.apple.com/",
-                "Google Play Movies": "https://play.google.com/store/movies",
-                "YouTube": "https://www.youtube.com/",
-                "JioCinema": "https://www.jiocinema.com/",
-                "ZEE5": "https://www.zee5.com/"
-            }
-            
-            stream_list = providers.get("flatrate", [])
-            if stream_list:
-                html_prov = '<div class="provider-grid">'
-                for p in stream_list:
-                    name = p.get("provider_name")
-                    logo = f"https://image.tmdb.org/t/p/original{p.get('logo_path')}"
-                    link = provider_map.get(name, "https://www.google.com/search?q=" + name.replace(" ", "+"))
-                    html_prov += f'<a href="{link}" target="_blank" title="{name}"><img src="{logo}" class="provider-logo"></a>'
-                html_prov += '</div>'
-                st.markdown(html_prov, unsafe_allow_html=True)
-            else:
-                st.markdown('<div style="color: var(--text-muted);">Direct streaming links unavailable.</div>', unsafe_allow_html=True)
-
+        # PROVIDER LINKS MAPPING - Only for movies
+        if not is_tv:
+            providers = tmdb.get_watch_providers(content_id)
+            if providers:
+                st.markdown('<div class="ott-title" style="margin-top: 25px;">Available On</div>', unsafe_allow_html=True)
+                
+                provider_map = {
+                    "Netflix": "https://www.netflix.com/",
+                    "Amazon Prime Video": "https://www.primevideo.com/",
+                    "Disney Plus": "https://www.disneyplus.com/",
+                    "Hotstar": "https://www.hotstar.com/",
+                    "Apple TV": "https://tv.apple.com/",
+                    "Google Play Movies": "https://play.google.com/store/movies",
+                    "YouTube": "https://www.youtube.com/",
+                    "JioCinema": "https://www.jiocinema.com/",
+                    "ZEE5": "https://www.zee5.com/"
+                }
+                
+                stream_list = providers.get("flatrate", [])
+                if stream_list:
+                    html_prov = '<div class="provider-grid">'
+                    for p in stream_list:
+                        name = p.get("provider_name")
+                        logo = f"https://image.tmdb.org/t/p/original{p.get('logo_path')}"
+                        link = provider_map.get(name, "https://www.google.com/search?q=" + name.replace(" ", "+"))
+                        html_prov += f'<a href="{link}" target="_blank" title="{name}"><img src="{logo}" class="provider-logo"></a>'
+                    html_prov += '</div>'
+                    st.markdown(html_prov, unsafe_allow_html=True)
+                else:
+                    st.markdown('<div style="color: var(--text-muted);">Direct streaming links unavailable.</div>', unsafe_allow_html=True)
             
     # End of details layout
     
-    # Recommendations Fix (Using Standard Movie Row)
-    st.markdown('---')
-    local_rec_ids = rec_engine.recommend_by_id(movie_id)
-    recommendations = []
-    if local_rec_ids:
-        for r_id in local_rec_ids:
-            r_details = tmdb.get_movie_details(r_id)
-            if r_details: recommendations.append(r_details)
-    if not recommendations:
-        recommendations = tmdb.get_movie_recommendations(movie_id, limit=10)
+    # Recommendations section (only for movies)
+    if not is_tv:
+        st.markdown('---')
+        try:
+            local_rec_ids = rec_engine.recommend_by_id(movie_id)
+            recommendations = []
+            if local_rec_ids:
+                for r_id in local_rec_ids:
+                    r_details = tmdb.get_movie_details(r_id)
+                    if r_details: recommendations.append(r_details)
+            if not recommendations:
+                recommendations = tmdb.get_movie_recommendations(movie_id, limit=10)
+                
+            if recommendations:
+                render_movie_row('Recommended <span class="gold-text">Movies</span>', recommendations, "rec")
+        except:
+            # Graceful fallback if recommendations engine fails
+            pass
         
-    if recommendations:
-        render_movie_row('Recommended <span class="gold-text">Movies</span>', recommendations, "rec")
-
 def render_category_view(category_id, title):
+    # Track category view in history
+    push_nav_state("category", {"category_id": category_id, "title": title})
+    
+    # Get back URL
+    back_url = get_back_url()
     col_back, _ = st.columns([1.5, 8.5])
     with col_back:
         # Native back button for 100% styling reliability
         st.markdown(f'''
             <div class="back-btn-container">
-                <a href="/?home=true" target="_self" class="back-pill-btn">
+                <a href="{back_url}" target="_self" class="back-pill-btn">
                     <span style="margin-right: 8px;">←</span> BACK
                 </a>
             </div>
@@ -360,10 +458,12 @@ def main():
         if "previous_params" not in st.session_state:
             st.session_state.previous_params = dict(params)
         
-        # Back button for search page
-        query_string = "&".join(f"{k}={v}" for k, v in st.session_state.previous_params.items()) if "previous_params" in st.session_state else ""
-        href = f"/?{query_string}" if query_string else "/?home=true"
-        st.markdown(f'<a href="{href}" target="_self" class="back-pill-btn">← Back</a>', unsafe_allow_html=True)
+        # Push search to history
+        push_nav_state("search", {"query": search_query})
+        
+        # Back button for search page - use dynamic back URL
+        back_url = get_back_url()
+        st.markdown(f'<a href="{back_url}" target="_self" class="back-pill-btn">← Back</a>', unsafe_allow_html=True)
         
         st.markdown(f'<h2>Search Results for <span class="gold-text">"{search_query}"</span></h2>', unsafe_allow_html=True)
         results = tmdb.search_movies(search_query)
@@ -404,7 +504,11 @@ def main():
     if "movie_id" in params:
         m_id = params["movie_id"]
         if isinstance(m_id, list): m_id = m_id[0]
-        render_detail_view(int(m_id))
+        render_detail_view(movie_id=int(m_id))
+    elif "tv_id" in params:
+        tv_id = params["tv_id"]
+        if isinstance(tv_id, list): tv_id = tv_id[0]
+        render_detail_view(tv_id=int(tv_id))
     elif "category_id" in params:
         cat_id = params["category_id"]
         if isinstance(cat_id, list): cat_id = cat_id[0]
@@ -413,12 +517,25 @@ def main():
         render_category_view(cat_id, cat_title)
     else:
         # ------------ HOME PAGE CONTENT ------------
-        # Hero Slider
+        # Ensure home is in history
+        if len(get_nav_history()) == 1 or (len(get_nav_history()) > 1 and get_nav_history()[-1].get("page") != "home"):
+            push_nav_state("home", {})
+        
+        # Hero Slider with expanded diverse content and rotation logic
         if "hero_slides" not in st.session_state or not st.session_state.hero_slides:
-            st.session_state.hero_slides = tmdb.get_now_playing_movies(limit=10)
+            # Fetch diverse hero content from multiple sources (movies + shows, multiple genres)
+            diverse_slides = tmdb.get_diverse_hero_content(limit=15)
+            st.session_state.hero_slides = diverse_slides[:15] if diverse_slides else []
+        
+        # Initialize hero rotation index (changes on each app refresh/session restart)
+        if "hero_rotation_index" not in st.session_state:
+            # Use session-based rotation - index changes each time session is created
+            st.session_state.hero_rotation_index = random.randint(0, max(0, len(st.session_state.hero_slides) - 1))
         
         if st.session_state.hero_slides:
-            ui.render_slideshow(st.session_state.hero_slides)
+            # Rotate slides so first hero movie changes on refresh
+            rotated_slides = st.session_state.hero_slides[st.session_state.hero_rotation_index:] + st.session_state.hero_slides[:st.session_state.hero_rotation_index]
+            ui.render_slideshow(rotated_slides)
 
         def get_daily_shuffled_favorites():
             """Return exactly 10 movies that change daily based on current date."""
@@ -433,7 +550,8 @@ def main():
 
         # Premium Content Selection - Show all movies directly in scrollable rows
         render_movie_row("New Releases Worldwide", tmdb.get_new_releases_worldwide(limit=30), "new_releases")
-        render_movie_row("New Indian Releases", tmdb.get_trending_indian(limit=30), "ind")
+        render_movie_row("Indian Movies in OTT", tmdb.get_trending_indian(limit=30), "ind")
+        render_movie_row("Trending Shows", tmdb.get_mixed_shows(limit=30), "shows")
         render_movie_row("All-Time Favorites", get_daily_shuffled_favorites(), "fav")
         
         # Other Languages (Unified)
