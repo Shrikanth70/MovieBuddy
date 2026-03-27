@@ -675,30 +675,38 @@ def render_slideshow(movies):
         .overview {{ color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
         .nav-btn {{ position: absolute; top: 50%; transform: translateY(-50%); width: 50px; height: 50px; background: rgba(0,0,0,0.5); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); font-size: 20px; transition: all 0.3s; }}
         .nav-btn:hover {{ background: #E50914; transform: translateY(-50%) scale(1.1); }}
-        .prev {{ left: 15px; }}
-        .next {{ right: 15px; }}
-        .indicators {{ position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 100; }}
-        .dot {{ width: 14px; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.2); transition: all 0.3s; cursor: pointer; }}
-        .dot.active {{ width: 30px; background: #E50914; }}
+        .prev {{ left: 1.5rem; }}
+        .next {{ right: 1.5rem; }}
+        .indicators {{ position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.5rem; z-index: 100; }}
+        .dot {{ width: 1.25rem; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.2); transition: all 0.3s; cursor: pointer; }}
+        .dot.active {{ width: 2.5rem; background: #E50914; }}
+        @media (max-width: 1024px) {{
+            .title {{ font-size: 42px; }}
+            .nav-btn {{ width: 45px; height: 45px; font-size: 18px; }}
+        }}
         @media (max-width: 768px) {{ 
             .slider-wrapper {{ height: 350px; }} 
-            .slide {{ padding: 40px 25px; }} 
+            .slide {{ padding: 3rem 2rem; }} 
             .title {{ font-size: 32px; }} 
-            .meta {{ font-size: 14px; margin-bottom: 10px; }} 
-            .overview {{ font-size: 13px; -webkit-line-clamp: 2; }} 
-            .nav-btn {{ width: 35px; height: 35px; font-size: 14px; }}
-            .indicators {{ bottom: 15px; }}
-            .dot {{ width: 10px; }}
-            .dot.active {{ width: 20px; }}
+            .meta {{ font-size: 0.9rem; margin-bottom: 0.8rem; }} 
+            .overview {{ font-size: 0.85rem; -webkit-line-clamp: 2; }} 
+            .nav-btn {{ width: 40px; height: 40px; font-size: 16px; left: 1rem; }}
+            .nav-btn.next {{ right: 1rem; left: auto; }}
+            .indicators {{ bottom: 1.25rem; gap: 0.4rem; }}
+            .dot {{ width: 1rem; }}
+            .dot.active {{ width: 2rem; }}
         }}
         @media (max-width: 480px) {{ 
-            .slider-wrapper {{ height: 300px; }} 
-            .slide {{ padding: 30px 15px; }} 
+            .slider-wrapper {{ height: 320px; }} 
+            .slide {{ padding: 2.5rem 1.25rem; }} 
             .title {{ font-size: 24px; }} 
-            .meta {{ font-size: 12px; gap: 8px; }} 
+            .meta {{ font-size: 0.8rem; gap: 0.5rem; }} 
             .overview {{ display: none; }} 
-            .nav-btn {{ width: 30px; height: 30px; font-size: 12px; }}
-            .indicators {{ bottom: 10px; gap: 4px; }}
+            .nav-btn {{ width: 35px; height: 35px; font-size: 14px; left: 0.8rem; }}
+            .nav-btn.next {{ right: 0.8rem; left: auto; }}
+            .indicators {{ bottom: 1rem; gap: 0.3rem; }}
+            .dot {{ width: 0.8rem; height: 2px; }}
+            .dot.active {{ width: 1.5rem; }}
         }}
     </style>
     </head>
@@ -756,21 +764,33 @@ def render_slideshow(movies):
     """
     st.components.v1.html(html, height=400)
 
-    # Render a transparent overlay link covering the central hero area for navigation.
-    # We use a narrower width and height to avoid blocking the prev/next/indicator buttons in the iframe.
+    # SECURE NAVIGATION OVERLAY
+    # We use a container with pointer-events: none that covers the hero area.
+    # Inside it, we place the actual link with pointer-events: auto, centered to avoid blocking arrows and dots.
     first = movies[0]
     mt = first.get('media_type', 'movie')
     if 'first_air_date' in first and 'title' not in first:
         mt = 'tv'
     fid = first.get('id')
     fhref = f"?tv_id={fid}" if mt == 'tv' else f"?movie_id={fid}"
-    st.markdown(f'''<a href="{fhref}" target="_self" style="
-        display:block; position:relative; 
-        margin-top:-380px; height:280px; 
-        width:calc(100% - 160px); margin-left:80px;
-        z-index:50; cursor:pointer;
-        text-decoration:none; color:transparent;
-    ">&nbsp;</a>''', unsafe_allow_html=True)
+    
+    st.markdown(f'''
+        <div style="position: relative; margin-top: -400px; height: 400px; width: 100%; pointer-events: none; z-index: 1000;">
+            <a href="{fhref}" target="_self" style="
+                display: block;
+                position: absolute;
+                top: 0; 
+                left: 80px; 
+                right: 80px; 
+                bottom: 60px;
+                pointer-events: auto;
+                cursor: pointer;
+                text-decoration: none;
+                background: transparent;
+            ">&nbsp;</a>
+        </div>
+        <div style="height: 20px;"></div> <!-- Spacer to prevent layout overlap -->
+    ''', unsafe_allow_html=True)
 
 
 def _movie_value(movie, key, default=None):
