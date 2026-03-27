@@ -65,12 +65,24 @@ def get_nav_history():
     return st.session_state.nav_history
 
 def push_nav_state(page, params=None):
-    """Add current page to navigation history."""
+    """Add current page to navigation history with loop prevention."""
     history = get_nav_history()
+    params = params or {}
+    
     # Avoid pushing duplicate consecutive entries
-    if history and history[-1].get("page") == page and history[-1].get("params") == (params or {}):
+    if history and history[-1].get("page") == page and history[-1].get("params") == params:
         return
-    history.append({"page": page, "params": params or {}})
+        
+    # If we are navigating to the exact state that is one-step back in history,
+    # treat it as a 'back' navigation and truncate history rather than appending.
+    if len(history) >= 2:
+        prev_state = history[-2]
+        if prev_state.get("page") == page and prev_state.get("params") == params:
+            history.pop()
+            st.session_state.nav_history = history
+            return
+            
+    history.append({"page": page, "params": params})
     st.session_state.nav_history = history
 
 def get_back_url():
@@ -551,7 +563,6 @@ def main():
         # Premium Content Selection - Show all movies directly in scrollable rows
         render_movie_row("New Releases Worldwide", tmdb.get_new_releases_worldwide(limit=30), "new_releases")
         render_movie_row("Indian Movies in OTT", tmdb.get_trending_indian(limit=30), "ind")
-        render_movie_row("Trending Shows", tmdb.get_mixed_shows(limit=30), "shows")
         render_movie_row("All-Time Favorites", get_daily_shuffled_favorites(), "fav")
         
         # Other Languages (Unified)

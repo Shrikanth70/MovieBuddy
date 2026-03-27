@@ -675,13 +675,31 @@ def render_slideshow(movies):
         .overview {{ color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
         .nav-btn {{ position: absolute; top: 50%; transform: translateY(-50%); width: 50px; height: 50px; background: rgba(0,0,0,0.5); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); font-size: 20px; transition: all 0.3s; }}
         .nav-btn:hover {{ background: #E50914; transform: translateY(-50%) scale(1.1); }}
-        .prev {{ left: 20px; }}
-        .next {{ right: 20px; }}
-        .indicators {{ position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 100; }}
-        .dot {{ width: 20px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.2); transition: all 0.3s; cursor: pointer; }}
-        .dot.active {{ width: 40px; background: #E50914; }}
-        @media (max-width: 768px) {{ .slider-wrapper {{ height: 400px; }} .slide {{ padding: 40px 30px; }} .title {{ font-size: 36px; }} .meta {{ font-size: 16px; }} .overview {{ font-size: 14px; -webkit-line-clamp: 2; }} .nav-btn {{ width: 40px; height: 40px; font-size: 16px; }} }}
-        @media (max-width: 480px) {{ .slider-wrapper {{ height: 350px; }} .slide {{ padding: 30px 20px; }} .title {{ font-size: 28px; }} .meta {{ font-size: 14px; }} .overview {{ font-size: 13px; -webkit-line-clamp: 2; }} .nav-btn {{ width: 35px; height: 35px; font-size: 14px; }} }}
+        .prev {{ left: 15px; }}
+        .next {{ right: 15px; }}
+        .indicators {{ position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 100; }}
+        .dot {{ width: 14px; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.2); transition: all 0.3s; cursor: pointer; }}
+        .dot.active {{ width: 30px; background: #E50914; }}
+        @media (max-width: 768px) {{ 
+            .slider-wrapper {{ height: 350px; }} 
+            .slide {{ padding: 40px 25px; }} 
+            .title {{ font-size: 32px; }} 
+            .meta {{ font-size: 14px; margin-bottom: 10px; }} 
+            .overview {{ font-size: 13px; -webkit-line-clamp: 2; }} 
+            .nav-btn {{ width: 35px; height: 35px; font-size: 14px; }}
+            .indicators {{ bottom: 15px; }}
+            .dot {{ width: 10px; }}
+            .dot.active {{ width: 20px; }}
+        }}
+        @media (max-width: 480px) {{ 
+            .slider-wrapper {{ height: 300px; }} 
+            .slide {{ padding: 30px 15px; }} 
+            .title {{ font-size: 24px; }} 
+            .meta {{ font-size: 12px; gap: 8px; }} 
+            .overview {{ display: none; }} 
+            .nav-btn {{ width: 30px; height: 30px; font-size: 12px; }}
+            .indicators {{ bottom: 10px; gap: 4px; }}
+        }}
     </style>
     </head>
     <body>
@@ -738,8 +756,8 @@ def render_slideshow(movies):
     """
     st.components.v1.html(html, height=400)
 
-    # Render a transparent overlay link covering the hero area for navigation.
-    # This is via st.markdown (not iframe), so <a> tags navigate the main window.
+    # Render a transparent overlay link covering the central hero area for navigation.
+    # We use a narrower width and height to avoid blocking the prev/next/indicator buttons in the iframe.
     first = movies[0]
     mt = first.get('media_type', 'movie')
     if 'first_air_date' in first and 'title' not in first:
@@ -747,8 +765,10 @@ def render_slideshow(movies):
     fid = first.get('id')
     fhref = f"?tv_id={fid}" if mt == 'tv' else f"?movie_id={fid}"
     st.markdown(f'''<a href="{fhref}" target="_self" style="
-        display:block; position:relative; margin-top:-410px; height:400px;
-        border-radius:20px; z-index:50; cursor:pointer;
+        display:block; position:relative; 
+        margin-top:-380px; height:280px; 
+        width:calc(100% - 160px); margin-left:80px;
+        z-index:50; cursor:pointer;
         text-decoration:none; color:transparent;
     ">&nbsp;</a>''', unsafe_allow_html=True)
 
