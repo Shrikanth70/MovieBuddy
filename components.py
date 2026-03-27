@@ -632,7 +632,7 @@ def inject_custom_css():
     """, unsafe_allow_html=True)
 
 def render_slideshow(movies):
-    """Render a JS-powered cinematic slideshow with proper top-level navigation."""
+    """Render a JS-powered cinematic slideshow (Simplified: Arrows Removed)."""
     if not movies:
         return
 
