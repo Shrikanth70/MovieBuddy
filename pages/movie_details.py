@@ -4,6 +4,8 @@ import tmdb_service as tmdb
 import omdb_service as omdb
 import components as ui
 import recommendation as rec_engine
+import base64
+from html import escape
 
 def render_movie_details_page():
     """Immersive detail view (Standalone Page)."""
@@ -23,187 +25,173 @@ def render_movie_details_page():
         st.error("Invalid movie ID.")
         return
 
-    with st.spinner("Loading movie details..."):
-        movie = tmdb.get_movie_details(movie_id)
-        trailers = tmdb.get_movie_videos(movie_id)
-        omdb_data = omdb.get_movie_reviews(movie.get("title") if movie else "")
-        
+    # Fetch data
+    movie = tmdb.get_movie_details(movie_id)
     if not movie:
-        st.error("Could not load movie details.")
-        if st.button("← Back to Home"):
-            st.query_params.clear()
-            st.rerun()
+        st.error("Movie not found.")
         return
 
-    # Render Backdrop behind everything
-    backdrop_url = tmdb.get_image_url(movie.get("backdrop_path"), size="original")
-    poster_url = tmdb.get_image_url(movie.get("poster_path"))
-    ui.render_detail_hero(movie, backdrop_url, poster_url)
+    # Back button
+    ui.render_back_button()
+
+    # Hero Banner
+    backdrop = tmdb.BACKDROP_BASE_URL + movie.get("backdrop_path") if movie.get("backdrop_path") else ""
+    poster = tmdb.IMAGE_BASE_URL + movie.get("poster_path") if movie.get("poster_path") else ""
     
-    # Top Back Button
-    col_b, _ = st.columns([1.5, 8.5])
-    with col_b:
-        # Native back button for 100% styling reliability
-        st.markdown(f'''
-            <div class="back-btn-container">
-                <a href="/?home=true" target="_self" class="back-pill-btn">
-                    <span style="margin-right: 8px;">←</span> BACK
-                </a>
+    # Custom CSS for this page
+    st.markdown(f"""
+        <style>
+        .detail-hero {{
+            position: relative;
+            width: 100%;
+            height: 50vh;
+            background-image: linear-gradient(to bottom, rgba(0,0,0,0.5), #000000), url('{backdrop}');
+            background-size: cover;
+            background-position: center;
+            border-radius: 20px;
+            display: flex;
+            align-items: flex-end;
+            padding: 40px;
+            margin-bottom: 30px;
+        }}
+        .detail-content {{
+            display: flex;
+            gap: 40px;
+            margin-top: -100px;
+            position: relative;
+            z-index: 2;
+            padding: 0 40px;
+        }}
+        .detail-poster {{
+            width: 250px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }}
+        .detail-info {{
+            flex: 1;
+            padding-top: 110px;
+        }}
+        .genre-pill {{
+            background: rgba(229, 9, 20, 0.2);
+            color: #E50914;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-right: 8px;
+            border: 1px solid rgba(229, 9, 20, 0.3);
+        }}
+        .cast-scroll {{
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            padding: 10px 0;
+            scrollbar-width: none;
+        }}
+        .cast-scroll::-webkit-scrollbar {{ display: none; }}
+        .cast-card {{
+            min-width: 120px;
+            text-align: center;
+        }}
+        .cast-img {{
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 8px;
+            border: 2px solid #333;
+        }}
+        </style>
+        
+        <div class="detail-hero">
+            <div>
+                <h1 style="font-size: 3rem; margin-bottom: 10px;">{movie.get('title')}</h1>
+                <div style="margin-bottom: 20px;">
+                    <span style="color: #46d369; font-weight: bold; margin-right: 15px;">
+                        {int(movie.get('vote_average', 0)*10)}% Match
+                    </span>
+                    <span style="color: #aaa; margin-right: 15px;">{movie.get('release_date', '')[:4]}</span>
+                    <span style="color: #aaa; border: 1px solid #aaa; padding: 0 4px; font-size: 0.7rem; margin-right: 15px;">HD</span>
+                    <span style="color: #aaa;">{movie.get('runtime', 0)} min</span>
+                </div>
             </div>
-        ''', unsafe_allow_html=True)
-            
-    # 2-Column Layout
-    col1, col2 = st.columns([1, 2.5], gap="large")
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Content Layout
+    col1, col2 = st.columns([1, 2.5])
     
     with col1:
-        st.markdown(f'<div class="details-poster"><img src="{poster_url}"></div>', unsafe_allow_html=True)
-        
+        st.image(poster, use_container_width=True)
+        # Watchlist button (handled by state)
+        if st.button("+ Add to Watchlist", use_container_width=True):
+            st.toast(f"Added {movie.get('title')} to your watchlist!")
+
     with col2:
-        st.markdown('<div class="details-info">', unsafe_allow_html=True)
+        # Genres
+        genres_html = "".join([f'<span class="genre-pill">{g.get("name")}</span>' for g in movie.get("genres", [])])
+        st.markdown(genres_html, unsafe_allow_html=True)
         
-        title = movie.get("title")
-        year = movie.get("release_date", "N/A")[:4]
-        runtime = f"{movie.get('runtime', 'N/A')} min"
-        genres = ", ".join([g.get("name") for g in movie.get("genres", [])])
-        overview = movie.get("overview", "")
+        st.markdown(f"<p style='font-size: 1.1rem; color: #ddd; margin-top:20px;'>{movie.get('overview')}</p>", unsafe_allow_html=True)
         
-        st.markdown(f'<h1 style="font-size: 48px; font-weight: 800; margin-bottom: 5px; line-height: 1.1;">{title}</h1>', unsafe_allow_html=True)
-        st.markdown(f'<div style="color: rgba(255,255,255,0.65); font-size: 15px; font-weight: 600; margin-bottom: 20px; letter-spacing: 0.3px;">{year} &nbsp;|&nbsp; {runtime} &nbsp;|&nbsp; {genres}</div>', unsafe_allow_html=True)
-        
-        st.markdown(f'<p style="color: rgba(255,255,255,0.9); font-size: 16px; line-height: 1.6; margin-bottom: 30px;">{overview}</p>', unsafe_allow_html=True)
-        
-        # Display aggregated OMDB Without Reviews
-        ui.render_omdb_reviews(omdb_data)
-        
-        st.markdown('</div>', unsafe_allow_html=True) # End of details-info
-        
-    # Trailer and Where to Watch Side-by-Side (Full Width)
-    st.markdown('<br>', unsafe_allow_html=True)
-    # Bottom Section: Trailer, Crew, and Cast
-    st.markdown('<br>', unsafe_allow_html=True)
-    b_col1, b_col2 = st.columns([1.5, 1], gap="large")
-    
-    cast, crew = tmdb.get_movie_credits(movie_id)
-    
-    with b_col1:
-        st.markdown('<div class="ott-title" style="margin-bottom: 15px;">🎬 Trailer</div>', unsafe_allow_html=True)
-        if trailers:
-            st.video(f"https://www.youtube.com/watch?v={trailers[0].get('key')}")
-        else:
-            st.markdown('<div style="color: var(--text-muted); padding: 40px; background: rgba(255,255,255,0.03); border-radius: 12px; text-align: center;">Trailer Unavailable</div>', unsafe_allow_html=True)
+        # Crew Info
+        cast, crew = tmdb.get_movie_credits(movie_id)
+        st.markdown(f'<div style="margin-top: 20px; color: #aaa;"><p><span style="color: #777;">Director:</span> <span style="color: #eee;">{crew.get("director")}</span></p><p><span style="color: #777;">Writers:</span> <span style="color: #eee;">{crew.get("writer")}</span></p></div>', unsafe_allow_html=True)
 
-    with b_col2:
-        st.markdown('<div class="ott-title" style="margin-bottom: 15px;">Production</div>', unsafe_allow_html=True)
-        director = crew.get("director", "N/A")
-        writer = crew.get("writer", "N/A")
-        
-        crew_html = '<div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">'
-        if director != "N/A":
-            crew_html += f'<div style="margin-bottom: 12px;"><div style="color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Director</div><div style="font-size: 18px; font-weight: 700; color: white;">{director}</div></div>'
-        if writer != "N/A" and writer != director:
-            crew_html += f'<div><div style="color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Writer</div><div style="font-size: 18px; font-weight: 700; color: white;">{writer}</div></div>'
-        crew_html += '</div>'
-        st.markdown(crew_html, unsafe_allow_html=True)
+    # Video Trailer
+    st.markdown("### Trailer & Clips")
+    videos = tmdb.get_movie_videos(movie_id)
+    if videos:
+        trailer_key = videos[0].get("key")
+        st.markdown(f'<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; background: #111;"><iframe src="https://www.youtube-nocookie.com/embed/{trailer_key}?rel=0&modestbranding=1" title="Movie Trailer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" sandbox="allow-scripts allow-same-origin allow-presentation allow-forms" allowfullscreen loading="lazy"></iframe></div>', unsafe_allow_html=True)
+    else:
+        st.info("No trailers available for this title.")
 
-    # Monolithic Cast Row (Iframe-based for absolute CSS isolation)
+    # Cast Section
+    st.markdown("### Top Cast")
     if cast:
-        st.markdown('<div class="ott-title" style="margin-top: 40px; margin-bottom: 20px;">Cast & Crew</div>', unsafe_allow_html=True)
-        placeholder_b64 = ui.get_base64_image("placeholder.png")
-        fallback_cast_img = (
-            f"data:image/png;base64,{placeholder_b64}"
-            if placeholder_b64
-            else "https://image.tmdb.org/t/p/w185"
-        )
-
-        # Build the HTML for the cast row inside the iframe
         cast_items_html = ""
-        for actor in cast[:12]:
-            profile_path = actor.get("profile_path")
-            img = f"https://image.tmdb.org/t/p/w185{profile_path}" if profile_path else fallback_cast_img
-            name = actor.get('name', 'Unknown')
-            char = actor.get('character', 'Character')
-            
+        for actor in cast:
+            img = actor.get('profile_path')
+            img_url = tmdb.IMAGE_BASE_URL + img if img else "https://ui-avatars.com/api/?name=" + actor.get('name')
             cast_items_html += f'''
                 <div class="cast-card">
-                    <img src="{img}" class="cast-img">
-                    <div class="cast-name" title="{name}">{name}</div>
-                    <div class="cast-char" title="{char}">{char}</div>
+                    <img src="{img_url}" class="cast-img">
+                    <div style="font-size: 0.8rem; font-weight: bold; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100px;">{actor.get('name')}</div>
+                    <div style="font-size: 0.7rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100px;">{actor.get('character')}</div>
                 </div>
             '''
-            
+        
         iframe_html = f'''
-        <style>
-            body {{
-                margin: 0;
-                padding: 0;
-                background: transparent;
-                color: white;
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                overflow: hidden;
-            }}
-            .cast-row {{
-                display: flex;
-                gap: 20px;
-                overflow-x: auto;
-                padding: 10px 5px 30px 5px;
-                scrollbar-width: none;
-                -ms-overflow-style: none;
-            }}
-            .cast-row::-webkit-scrollbar {{ display: none; }}
-            .cast-card {{
-                flex: 0 0 100px;
-                width: 100px;
-                text-align: center;
-                transition: transform 0.3s ease;
-            }}
-            .cast-img {{
-                width: 100px;
-                height: 150px;
-                border-radius: 12px;
-                object-fit: cover;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.7);
-                border: 1px solid rgba(255,255,255,0.1);
-                margin-bottom: 12px;
-            }}
-            .cast-name {{
-                font-size: 11px;
-                font-weight: 700;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                width: 100px;
-                margin-bottom: 2px;
-            }}
-            .cast-char {{
-                font-size: 10px;
-                color: rgba(255,255,255,0.5);
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                width: 100px;
-            }}
-        </style>
-        <div class="cast-row">
-            {cast_items_html}
-        </div>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{ background: transparent; color: white; margin: 0; font-family: sans-serif; overflow-x: auto; -webkit-overflow-scrolling: touch; }}
+                .cast-scroll {{ display: flex; gap: 20px; padding: 10px 0; }}
+                .cast-card {{ flex: 0 0 100px; text-align: center; }}
+                .cast-img {{ width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 8px; border: 2px solid #333; }}
+                ::-webkit-scrollbar {{ display: none; }}
+            </style>
+        </head>
+        <body>
+            <div class="cast-scroll">
+                {cast_items_html}
+            </div>
+        </body>
+        </html>
         '''
-        components_v1.html(iframe_html, height=250, scrolling=False, width=None)
+        # B64 encoding avoids markdown indentation traps and escaping issues
+        b64_html = base64.b64encode(iframe_html.encode()).decode()
+        st.markdown(f'<iframe src="data:text/html;base64,{b64_html}" style="width: 100%; height: 250px; border: none; overflow: hidden; background: #000;" sandbox="allow-scripts allow-same-origin"></iframe>', unsafe_allow_html=True)
 
     # Recommendations
     st.markdown('---')
-    recs = tmdb.get_movie_recommendations(movie_id, limit=10) or []
+    st.markdown("### Similar Titles You Might Like")
+    recs = tmdb.get_movie_recommendations(movie_id)
     if recs:
-        st.markdown('<div class="ott-title" style="margin-bottom: 20px;">People also watched</div>', unsafe_allow_html=True)
-        rendered_recs = ui.render_movie_grid(recs, key_prefix="page_recs")
-        if rendered_recs == 0:
-            st.markdown('<div style="color: var(--text-muted);">Recommendations unavailable.</div>', unsafe_allow_html=True)
+        ui.render_movie_row("", recs, f"detail_rec_{movie_id}")
+    else:
+        st.info("No similar titles found.")
 
 if __name__ == "__main__":
-    try:
-        ui.inject_custom_css()
-    except Exception as e:
-        st.error(f"CSS injection failed: {e}")
-        print(f"CSS Error: {e}")
-    # Background Texture
-    st.markdown('<div class="bg-texture"></div>', unsafe_allow_html=True)
     render_movie_details_page()

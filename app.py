@@ -16,7 +16,7 @@ import random
 # Set page config
 st.set_page_config(
     page_title="MovieBuddy | Premium OTT",
-    page_icon="🎞️",
+    page_icon="favicon.svg",
     layout="wide"
 )
 
@@ -250,9 +250,20 @@ def render_detail_view(movie_id=None, tv_id=None):
     with col_vid:
         st.markdown('<div class="ott-title" style="margin-bottom: 10px;">🎬 Trailer</div>', unsafe_allow_html=True)
         if trailers:
-            st.video(f"https://www.youtube.com/watch?v={trailers[0].get('key')}")
+            trailer_key = trailers[0].get('key')
+            st.markdown(f'''
+                <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+                    <iframe 
+                        src="https://www.youtube-nocookie.com/embed/{trailer_key}?rel=0&modestbranding=1" 
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen
+                        loading="lazy">
+                    </iframe>
+                </div>
+            ''', unsafe_allow_html=True)
         else:
-            st.markdown('<div style="color: var(--text-muted);">Trailer Unavailable</div>', unsafe_allow_html=True)
+            st.markdown('<div style="color: var(--text-muted); padding: 40px; background: rgba(255,255,255,0.03); border-radius: 12px; text-align: center;">Trailer Unavailable</div>', unsafe_allow_html=True)
             
     with col_prov:
         st.markdown('<div class="ott-title">Cast & Crew</div>', unsafe_allow_html=True)
@@ -378,7 +389,7 @@ def render_category_view(category_id, title):
         elif category_id == "trending_ml":
             movies = tmdb.get_trending_by_language("ml", limit=40)
         elif category_id == "trending_indian":
-            movies = tmdb.get_trending_indian(limit=40)
+            movies = tmdb.get_trending_indian(limit=200)
         elif category_id == "other_lang":
             movies = tmdb.get_other_languages_ott(limit=40)
         elif str(category_id).startswith("rec_"):
@@ -417,38 +428,14 @@ def main():
     
     # Robust scroll-to-top fix
     if st.session_state.get("scroll_to_top"):
-        st.components.v1.html("""
-        <script>
-        function scrollToTop() {
-            try {
-                window.scrollTo(0, 0);
-                if (window.parent) {
-                    window.parent.scrollTo(0, 0);
-                    var mainContent = window.parent.document.querySelector('.main') || 
-                                     window.parent.document.querySelector('.stApp');
-                    if (mainContent) mainContent.scrollTop = 0;
-                }
-            } catch (e) {
-                console.error("Scroll error:", e);
-                window.scrollTo(0, 0);
-            }
-        }
-        scrollToTop();
-        window.onload = scrollToTop;
-        setTimeout(scrollToTop, 10);
-        setTimeout(scrollToTop, 100);
-        </script>
-        """, height=0)
+        # Manual iframe injection avoids Streamlit's default 'allow' flags and 'sandbox' escape warnings
+        st.markdown(f'<iframe srcdoc="<script>function scrollToTop() {{ try {{ window.parent.scrollTo(0, 0); var mainContent = window.parent.document.querySelector(\'.main\') || window.parent.document.querySelector(\'.stApp\'); if (mainContent) mainContent.scrollTop = 0; }} catch (e) {{ console.log(\'Scroll sync\', e); }} }} scrollToTop(); window.onload = scrollToTop; setTimeout(scrollToTop, 10); setTimeout(scrollToTop, 100);</script>" style="height: 0; width: 0; border: none; visibility: hidden; display: none;" sandbox="allow-scripts allow-same-origin"></iframe>', unsafe_allow_html=True)
         st.session_state.scroll_to_top = False
 
     # --- GLOBAL UI: Header, Logo, & Search Bar ---
     head_col1, head_col2 = st.columns([4, 2], gap="large")
     with head_col1:
-        st.markdown(f'''
-            <a href="/?home=true" target="_self" class="logo-link">
-                <span class="logo-text"><span class="logo-movie">Movie</span><span class="logo-buddy">Buddy</span></span>
-            </a>
-        ''', unsafe_allow_html=True)
+        st.markdown(f'<a href="/?home=true" target="_self" class="logo-link"><span class="logo-text"><span class="logo-movie">Movie</span><span class="logo-buddy">Buddy</span></span></a>', unsafe_allow_html=True)
     with head_col2:
         st.markdown('<div class="search-input-wrapper">', unsafe_allow_html=True)
         search_query = st.text_input("Search", placeholder="Search movies, actors, genres...", value=st.session_state.query, key="global_search_input", label_visibility="collapsed")
@@ -562,12 +549,13 @@ def main():
 
         # Premium Content Selection - Show all movies directly in scrollable rows
         render_movie_row("New Releases Worldwide", tmdb.get_new_releases_worldwide(limit=30), "new_releases")
-        render_movie_row("Indian Movies in OTT", tmdb.get_trending_indian(limit=30), "ind")
-        render_movie_row("All-Time Favorites", get_daily_shuffled_favorites(), "fav")
+        render_movie_row("Indian Movies in OTT", tmdb.get_trending_indian(limit=60), "ind")
         
         # Other Languages (Unified)
         other_movies = tmdb.get_other_languages_ott(limit=30)
         render_movie_row("Trending Worldwide (Regional)", other_movies, "other")
+        
+        render_movie_row("All-Time Favorites", get_daily_shuffled_favorites(), "fav")
 
     # --- GLOBAL UI: Footer ---
     st.markdown("""

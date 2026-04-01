@@ -625,35 +625,30 @@ def inject_custom_css():
     /* MOBILE RESPONSIVENESS */
     @media (max-width: 768px) {
         .details-container { padding: 20px; gap: 20px; }
-    }
-
     .accent-text { color: var(--accent); }
     </style>
     """, unsafe_allow_html=True)
 
-def render_slideshow(movies):
-    """Render a JS-powered cinematic slideshow (Simplified: Arrows Removed)."""
+def render_slideshow(movies, key_suffix=""):
+    """Render a premium hero slideshow with navigation support."""
     if not movies:
         return
-
+    
     slides_data = []
-    for m in movies:
-        media_type = m.get('media_type', 'movie')
-        if 'first_air_date' in m and 'title' not in m:
-            media_type = 'tv'
-        title = (m.get('title') or m.get('name', 'Unknown')).replace("'", "\\'")
-        date_str = m.get('release_date') or m.get('first_air_date', 'N/A')
-        year = date_str[:4] if date_str != 'N/A' else 'N/A'
-        overview = (m.get('overview') or '').replace("'", "\\'").replace("\n", " ")
-        rating = round(m.get('vote_average', 0), 1)
+    for m in movies[:15]:  # Limit to top 15 for performance
+        title = m.get('title') or m.get('name') or "Untitled"
+        overview = m.get('overview', '')
+        year = m.get('release_date', '')[:4] or m.get('first_air_date', '')[:4] or "N/A"
+        rating = f"{m.get('vote_average', 0):.1f}"
         content_id = m.get('id')
+        media_type = m.get('media_type', 'movie')
         backdrop = f"https://image.tmdb.org/t/p/original{m.get('backdrop_path')}" if m.get('backdrop_path') else ""
-        slides_data.append({"id": content_id, "media_type": media_type, "title": title,
+        slides_data.append({"id": content_id, "media_type": media_type, "title": title, 
                             "overview": overview, "year": year, "rating": rating, "backdrop": backdrop})
 
     slides_json = json.dumps(slides_data)
 
-    # Remove onclick from slides - navigation is handled by the overlay below
+    # SECURE HTML FOR IFRAME
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -661,18 +656,18 @@ def render_slideshow(movies):
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{ font-family: 'Poppins', sans-serif; background: transparent; overflow: hidden; }}
-        .slider-wrapper {{ position: relative; width: 100%; height: 400px; border-radius: 20px; overflow: hidden; background: #000; }}
-        .slides-container {{ display: flex; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }}
+        html, body {{ height: 100% !important; width: 100% !important; margin: 0 !important; padding: 0 !important; background: #000 !important; background-color: #000 !important; overflow: hidden !important; }}
+        .slider-wrapper {{ position: relative; width: 100%; height: 100%; border-radius: 20px; overflow: hidden; background: #000 !important; }}
+        .slides-container {{ display: flex; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); background: #000 !important; }}
         .slide {{ flex: 0 0 100%; height: 100%; position: relative; background-size: cover; background-position: center 20%; display: flex; align-items: flex-end; padding: 60px; cursor: pointer; }}
         .slide-overlay {{ position: absolute; inset: 0; background: linear-gradient(0deg, rgba(14,17,23,1) 0%, rgba(14,17,23,0.3) 70%, transparent 100%); z-index: 1; }}
         .slide-content {{ position: relative; z-index: 2; max-width: 700px; color: white; }}
         .badge {{ display: inline-block; background: rgba(229,9,20,0.2); color: #E50914; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(229,9,20,0.2); letter-spacing: 1.5px; }}
-        .title {{ font-size: 52px; font-weight: 900; line-height: 1.1; margin-bottom: 10px; }}
-        .meta {{ font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; }}
+        .title {{ font-size: 52px; font-weight: 900; line-height: 1.1; margin-bottom: 10px; font-family: 'Poppins', sans-serif; }}
+        .meta {{ font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; font-family: 'Poppins', sans-serif; }}
         .year-box {{ border: 1px solid rgba(255,255,255,0.3); padding: 2px 10px; border-radius: 6px; }}
         .rating {{ color: #FFC107; }}
-        .overview {{ color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
+        .overview {{ color: rgba(255,255,255,0.8); font-size: 15px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-family: 'Poppins', sans-serif; }}
         .indicators {{ position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.5rem; z-index: 100; }}
         .dot {{ width: 1.25rem; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.2); transition: all 0.3s; cursor: pointer; }}
         .dot.active {{ width: 2.5rem; background: #E50914; }}
@@ -680,24 +675,18 @@ def render_slideshow(movies):
             .title {{ font-size: 42px; }}
         }}
         @media (max-width: 768px) {{ 
-            .slider-wrapper {{ height: 350px; }} 
             .slide {{ padding: 3rem 2rem; }} 
             .title {{ font-size: 32px; }} 
             .meta {{ font-size: 0.9rem; margin-bottom: 0.8rem; }} 
             .overview {{ font-size: 0.85rem; -webkit-line-clamp: 2; }} 
             .indicators {{ bottom: 1.25rem; gap: 0.4rem; }}
-            .dot {{ width: 1rem; }}
-            .dot.active {{ width: 2rem; }}
         }}
         @media (max-width: 480px) {{ 
-            .slider-wrapper {{ height: 320px; }} 
             .slide {{ padding: 2.5rem 1.25rem; }} 
             .title {{ font-size: 24px; }} 
             .meta {{ font-size: 0.8rem; gap: 0.5rem; }} 
             .overview {{ display: none; }} 
             .indicators {{ bottom: 1rem; gap: 0.3rem; }}
-            .dot {{ width: 0.8rem; height: 2px; }}
-            .dot.active {{ width: 1.5rem; }}
         }}
     </style>
     </head>
@@ -751,7 +740,10 @@ def render_slideshow(movies):
     </body>
     </html>
     """
-    st.components.v1.html(html, height=400)
+    
+    # Use st.components.v1.html for the most reliable rendering of complex HTML/JS
+    # It automatically handles the iframe wrapping and security sandboxing.
+    st.components.v1.html(html, height=400, scrolling=False)
 
     # SECURE NAVIGATION OVERLAY
     # We use a container with pointer-events: none that covers the hero area.
@@ -763,23 +755,7 @@ def render_slideshow(movies):
     fid = first.get('id')
     fhref = f"?tv_id={fid}" if mt == 'tv' else f"?movie_id={fid}"
     
-    st.markdown(f'''
-        <div style="position: relative; margin-top: -400px; height: 400px; width: 100%; pointer-events: none; z-index: 1000;">
-            <a href="{fhref}" target="_self" style="
-                display: block;
-                position: absolute;
-                top: 0; 
-                left: 80px; 
-                right: 80px; 
-                bottom: 60px;
-                pointer-events: auto;
-                cursor: pointer;
-                text-decoration: none;
-                background: transparent;
-            ">&nbsp;</a>
-        </div>
-        <div style="height: 20px;"></div> <!-- Spacer to prevent layout overlap -->
-    ''', unsafe_allow_html=True)
+    st.markdown(f'<div style="position: relative; margin-top: -400px; height: 400px; width: 100%; pointer-events: none; z-index: 1000;"><a href="{fhref}" target="_self" style="display: block; position: absolute; top: 0; left: 80px; right: 80px; bottom: 60px; pointer-events: auto; cursor: pointer; text-decoration: none; background: transparent;">&nbsp;</a></div><div style="height: 20px;"></div>', unsafe_allow_html=True)
 
 
 def _movie_value(movie, key, default=None):
